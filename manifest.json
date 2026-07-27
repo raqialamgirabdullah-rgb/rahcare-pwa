@@ -1,0 +1,24 @@
+{
+  "name": "Rah Care",
+  "short_name": "Rah Care",
+  "start_url": "https://YOUR-BLOG-ADDRESS.blogspot.com/",
+  "scope": "https://YOUR-BLOG-ADDRESS.blogspot.com/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#1b5e20",
+  "icons": [
+    {
+      "src": "https://YOUR-GITHUB-USERNAME.github.io/rahcare-pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://YOUR-GITHUB-USERNAME.github.io/rahcare-pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
