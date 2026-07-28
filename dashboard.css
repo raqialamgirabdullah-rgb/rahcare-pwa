@@ -1,0 +1,59 @@
+:root{--primary-color:#4f46e5;--text-color:#1f2937;--bg-color:#f3f4f6;--card-bg:#ffffff}
+body{font-family:'Segoe UI',Roboto,sans-serif;background-color:var(--bg-color);margin:0;padding:5px;color:var(--text-color)}
+.dashboard-container{width:100%;box-sizing:border-box;background:var(--card-bg);padding:10px;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.05)}
+.dashboard-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #e5e7eb;padding-bottom:12px;margin-bottom:12px}
+.dashboard-header h2{margin:0;color:var(--primary-color);font-size:18px;font-weight:700}
+.filter-section{display:flex;align-items:center;justify-content:flex-end;gap:8px;font-size:13px;font-weight:700;color:#2563eb;min-width:120px;text-align:right}
+#monthText{display:inline-block}
+.filter-wrapper{position:relative;cursor:pointer;display:inline-flex;align-items:center}
+.filter-text{text-decoration:underline;color:#2563eb;padding:2px 0;display:inline-block;min-height:16px}
+.date-nav-btn{background:#eef2ff;border:none;color:#4338ca;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;flex-shrink:0;padding:0}
+.date-nav-btn:active{background:#c7d2fe}
+.hidden-filter-input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.inline-alert-box{display:none;background:#f8fafc;border:1px solid #e2e8f0;border-left:4px solid #4f46e5;padding:10px;border-radius:6px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.inline-alert-box h3{margin:0 0 10px;color:#1e293b;font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px}
+.inline-alert-box h3 button{background:0 0;border:none;color:#64748b;margin-left:auto;cursor:pointer;font-size:14px;padding:0}
+.cat-section{margin-bottom:10px}
+.cat-title{font-size:12px;font-weight:700;display:block;margin:0 0 6px;padding-bottom:2px;border-bottom:1px dashed #e2e8f0}
+.cat-today{color:#16a34a}
+.cat-tomorrow{color:#0284c7}
+.cat-yesterday{color:#dc2626}
+.inline-alert-list{margin:0;padding:0;list-style:none;font-size:12px;color:#334155}
+.inline-alert-list li{margin-bottom:5px;line-height:1.4;display:flex;align-items:center;justify-content:between;gap:5px;padding-left:0}
+.whatsapp-icon-btn{display:inline-flex;align-items:center;justify-content:center;background-color:#25d366;color:#fff;border:none;border-radius:50%;width:18px;height:18px;font-size:11px;text-decoration:none;margin-left:auto}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+td,th{padding:8px 2px;border-bottom:1px solid #e2e8f0;font-size:12px;overflow:hidden;text-align:center}
+th{background-color:#f8fafc;color:#64748b;font-weight:600}
+td:first-child,th:first-child{width:20%}
+td:nth-child(2),th:nth-child(2){width:24%}
+td:nth-child(3),th:nth-child(3){width:28%}
+td:nth-child(4),th:nth-child(4){width:15%}
+td:nth-child(5),th:nth-child(5){width:13%}
+td:nth-child(2){word-break:break-word;white-space:normal;line-height:1.2}
+td:nth-child(3){white-space:nowrap;word-break:keep-all}
+.touch-date-container{position:relative;display:inline-block;cursor:pointer;font-weight:600}
+.touch-date-input{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0;cursor:pointer;padding:0;margin:0}
+.name-btn{background:0 0;border:none;padding:0;color:inherit;font-size:inherit;cursor:pointer;text-align:center;width:100%;font-family:inherit}
+#authOverlay{position:fixed;inset:0;background:#f3f4f6;display:flex;align-items:center;justify-content:center;font-size:14px;color:#64748b;z-index:9999}
+.c-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:10000;align-items:center;justify-content:center}
+.c-modal.show{display:flex}
+.c-box{background:#fff;border-radius:10px;padding:20px 24px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.15)}
+.c-box h3{margin:0 0 14px;font-size:15px;color:#1e293b}
+.c-row{display:flex;gap:12px;justify-content:center}
+.c-yes{flex:1;padding:9px 20px;border:none;border-radius:6px;background:#dc2626;color:#fff;font-size:13px;font-weight:700;cursor:pointer}
+.c-no{flex:1;padding:9px 20px;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;color:#475569;font-size:13px;cursor:pointer}
+.due-label{display:block;font-size:10px;color:#ef4444;font-weight:700;margin-top:2px}
+.fee-banner{position:sticky;top:0;z-index:9998;background:#fffbeb;border-bottom:1px solid #fcd34d;padding:8px 12px;display:none}
+.fee-banner-inner{display:flex;align-items:center;gap:8px;font-size:12px;color:#92400e;line-height:1.4}
+.fee-btn-pay{margin-left:auto;background:#d97706;color:#fff;border:none;padding:7px 12px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.fee-num-box{display:flex;align-items:center;justify-content:center;gap:10px;background:#f8fafc;border:1px dashed #cbd5e1;border-radius:8px;padding:10px;font-size:16px;font-weight:700;color:#1e293b;letter-spacing:1px;margin-bottom:6px}
+.fee-copy-btn{background:0 0;border:none;color:#4f46e5;cursor:pointer;font-size:14px;padding:4px}
+.fee-action-row{display:flex;gap:8px;margin-bottom:14px}
+.fee-action-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;padding:9px 6px;font-size:11px;font-weight:700;cursor:pointer;text-decoration:none}
+.fee-toast{display:none;position:fixed;top:16px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 18px;border-radius:8px;font-size:13px;font-weight:600;z-index:10001;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.site-notice{position:sticky;top:0;z-index:9997;background:#eef2ff;border-bottom:1px solid #c7d2fe;padding:8px 12px;display:none}
+.site-notice-inner{display:flex;align-items:center;gap:8px;font-size:12px;color:#3730a3;line-height:1.4}
+.site-notice-close{margin-left:auto;background:0 0;border:none;color:#3730a3;font-size:16px;cursor:pointer;flex-shrink:0;padding:0 4px}
+.fee-banner-pending{background:#f0f9ff;border-bottom:1px solid #bae6fd}
+.fee-banner-pending .fee-banner-inner{color:#075985}
+#adminPanelLink{text-decoration:none;font-size:14px;margin-left:6px}
