@@ -1,0 +1,25 @@
+{
+  "customerId":      { "x": 206,  "y": 240, "size": 15 },
+  "customerName":    { "x": 206,  "y": 277, "size": 15 },
+  "customerAge":     { "x": 206,  "y": 305, "size": 15 },
+  "contact":         { "x": 206,  "y": 333, "size": 15 },
+  "paymentMethod":   { "x": 206,  "y": 364, "size": 15 },
+
+  "invoiceDate":     { "x": 985,  "y": 265, "size": 14 },
+  "gender":          { "x": 985,  "y": 296, "size": 14 },
+  "serviceType":     { "x": 985,  "y": 324, "size": 14 },
+
+  "table": {
+    "startY": 433,
+    "maxRowHeight": 37,
+    "maxTableHeight": 112,
+    "columns": [30, 108, 777, 891, 1052, 1234]
+  },
+
+  "subTotal":        { "x": 1060, "y": 559, "size": 14 },
+  "discountPercent": { "x": 1060, "y": 586, "size": 14 },
+  "discountAmount":  { "x": 1060, "y": 613, "size": 14 },
+  "totalAmount":     { "x": 1060, "y": 641, "size": 14 },
+  "paidAmount":      { "x": 1060, "y": 667, "size": 14 },
+  "dueAmount":       { "x": 1060, "y": 697, "size": 14, "color": "#c00" }
+}
