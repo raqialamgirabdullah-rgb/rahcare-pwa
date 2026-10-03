@@ -142,8 +142,14 @@ export function createLabels(data, save) {
     document.body.appendChild(bar);
   };
 
+  let restored = false;
   const apply = root => {
     root = root || document;
+    if (!restored) {
+      restored = true;
+      const pg = detectEditPage();
+      if (pg && getEditMode(pg) && !on) toggle(pg);
+    }
     root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
     root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
     if (on) pencils();
@@ -152,6 +158,7 @@ export function createLabels(data, save) {
   const toggle = (page, cb) => {
     on = !on; curPage = page; cbk = cb || null;
     document.body.classList.toggle("lb-on", on);
+    setEditMode(page, on);
     document.querySelectorAll("[data-lbt]").forEach(e => {
       if (e.dataset.t0 === undefined) e.dataset.t0 = e.textContent;
       e.textContent = on ? (e.dataset.on || "✔ Done") : e.dataset.t0;
@@ -162,3 +169,63 @@ export function createLabels(data, save) {
   return { L, apply, toggle, raw };
 }
 /* ===== LABELS শেষ ===== */
+
+/* ===== EDIT MODE (প্রতি পেজের আলাদা + All) ===== */
+export const EDIT_PAGES = [
+  ["appointment", "Appointment"],
+  ["billing", "Billing"],
+  ["dashboard", "Dashboard"]
+];
+const EM_KEY = p => "rc_edit_" + p;
+export function getEditMode(page) {
+  try { return localStorage.getItem(EM_KEY(page)) === "1"; } catch (e) { return false; }
+}
+export function setEditMode(page, on) {
+  if (!page) return;
+  try { localStorage.setItem(EM_KEY(page), on ? "1" : "0"); } catch (e) {}
+}
+function detectEditPage() {
+  if (window.RC_PAGE) return window.RC_PAGE;
+  const path = (location.pathname || "").toLowerCase();
+  const hit = EDIT_PAGES.find(([k]) => path.includes(k));
+  return hit ? hit[0] : null;
+}
+/* Report পেজে কল করুন: mountEditModeToggles("editModeBox") */
+export function mountEditModeToggles(containerId) {
+  const box = document.getElementById(containerId);
+  if (!box) return;
+  if (!document.getElementById("em-style")) {
+    const st = document.createElement("style");
+    st.id = "em-style";
+    st.textContent =
+      ".em-row{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:600}" +
+      ".em-row.em-all{font-weight:700;color:#4f46e5;border-bottom:2px solid #e5e7eb}" +
+      ".em-sw{position:relative;display:inline-block;width:38px;height:20px;flex-shrink:0;cursor:pointer}" +
+      ".em-sw input{opacity:0;width:0;height:0;position:absolute}" +
+      ".em-sl{position:absolute;inset:0;background:#ccc;transition:.2s;border-radius:20px}" +
+      ".em-sl:before{position:absolute;content:'';height:14px;width:14px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:50%}" +
+      ".em-sw input:checked+.em-sl{background:#4f46e5}" +
+      ".em-sw input:checked+.em-sl:before{transform:translateX(18px)}";
+    document.head.appendChild(st);
+  }
+  const row = (id, label, cls) =>
+    '<div class="em-row ' + (cls || "") + '"><span>' + label + '</span><label class="em-sw"><input type="checkbox" id="' + id + '"><span class="em-sl"></span></label></div>';
+  box.innerHTML =
+    row("em-all", "✎ All Edit", "em-all") +
+    EDIT_PAGES.map(([k, n]) => row("em-" + k, n)).join("");
+  const all = document.getElementById("em-all");
+  const sync = () => {
+    EDIT_PAGES.forEach(([k]) => { document.getElementById("em-" + k).checked = getEditMode(k); });
+    all.checked = EDIT_PAGES.every(([k]) => getEditMode(k));
+  };
+  EDIT_PAGES.forEach(([k]) => {
+    document.getElementById("em-" + k).addEventListener("change", e => { setEditMode(k, e.target.checked); sync(); });
+  });
+  all.addEventListener("change", e => {
+    EDIT_PAGES.forEach(([k]) => setEditMode(k, e.target.checked));
+    sync();
+  });
+  window.addEventListener("pageshow", sync);
+  sync();
+}
+/* ===== EDIT MODE শেষ ===== */
