@@ -65,60 +65,100 @@ export function createLabels(data, save) {
     return String(raw(k)).replace(/\{(\w+)\}/g, (m, n) =>
       n in v ? v[n] : (d < 3 && n in LB_BASE ? L(n, v, d + 1) : m));
   };
-  const apply = root => {
-    root = root || document;
-    root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
-    root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
-  };
   const mk = (tag, cls, txt) => {
     const e = document.createElement(tag);
     if (cls) e.className = cls;
     if (txt) e.textContent = txt;
     return e;
   };
-  const edit = (page, onDone) => {
-    const keys = LB_PAGES[page] || Object.keys(LB_BASE);
+  let on = false, curPage = null, cbk = null;
+
+  /* একটি লেখা এডিট করার ছোট পপআপ */
+  const editOne = k => {
     const ov = mk("div", "lb-ov"), box = mk("div", "lb-box");
-    box.appendChild(mk("div", "lb-h", "✎ Labels (খালি রাখলে ডিফল্ট)"));
-    const inputs = {};
-    keys.forEach(k => {
-      const w = mk("div", "lb-row");
-      w.appendChild(mk("div", "lb-k", k));
-      const inp = mk("input", "lb-in");
-      inp.value = user[k] || "";
-      inp.placeholder = dflt(k);
-      inputs[k] = inp;
-      w.appendChild(inp);
-      box.appendChild(w);
-    });
-    box.appendChild(mk("div", "lb-hint", "{name} {date} {time} {msg} {person} {persons} ব্যবহার করা যাবে"));
+    box.appendChild(mk("div", "lb-h", "✎ " + k));
+    const d0 = String(dflt(k));
+    const inp = mk(d0.length > 40 ? "textarea" : "input", "lb-in");
+    if (inp.tagName === "TEXTAREA") inp.rows = 4;
+    inp.value = user[k] || "";
+    inp.placeholder = d0;
+    box.appendChild(inp);
+    const vars = d0.match(/\{\w+\}/g);
+    if (vars) box.appendChild(mk("div", "lb-hint", "ব্যবহারযোগ্য: " + vars.join(" ")));
     const row = mk("div", "lb-btns");
-    const cancel = mk("button", "lb-b", "Cancel"), ok = mk("button", "lb-b lb-ok", "Save");
-    cancel.type = ok.type = "button";
+    const reset = mk("button", "lb-b", "Default"), cancel = mk("button", "lb-b", "Cancel"), ok = mk("button", "lb-b lb-ok", "Save");
+    reset.type = cancel.type = ok.type = "button";
     const close = () => ov.remove();
-    cancel.onclick = close;
-    ov.onclick = e => { if (e.target === ov) close(); };
-    ok.onclick = async () => {
-      const ch = {};
-      keys.forEach(k => {
-        const val = inputs[k].value.trim();
-        if (val !== (user[k] || "")) ch["labels." + k] = val;
-      });
-      if (!Object.keys(ch).length) return close();
+    const go = async val => {
+      if (val === (user[k] || "")) return close();
       try {
-        await save(ch);
-        Object.keys(ch).forEach(f => { user[f.slice(7)] = ch[f]; });
+        await save({ ["labels." + k]: val });
+        user[k] = val;
         apply();
-        if (onDone) onDone();
+        if (cbk) cbk();
         close();
       } catch (err) {
         console.error(err);
         alert("Save failed: " + err.message);
       }
     };
-    row.appendChild(cancel); row.appendChild(ok); box.appendChild(row);
+    reset.onclick = () => go("");
+    cancel.onclick = close;
+    ok.onclick = () => go(inp.value.trim());
+    ov.onclick = e => { if (e.target === ov) close(); };
+    row.appendChild(reset); row.appendChild(cancel); row.appendChild(ok);
+    box.appendChild(row);
     ov.appendChild(box); document.body.appendChild(ov);
+    inp.focus();
   };
-  return { L, apply, edit, raw };
+
+  const clearUI = () => {
+    document.querySelectorAll(".lb-ed,.lb-msgs").forEach(e => e.remove());
+  };
+
+  /* Edit Mode চালু থাকলে ✎ আইকন ও নিচের Messages সারি */
+  const pencils = () => {
+    clearUI();
+    document.querySelectorAll("[data-l],[data-lp]").forEach(e => {
+      if (e.offsetParent === null) return;
+      const k = e.dataset.l || e.dataset.lp;
+      const p = mk("span", "lb-ed", "✎");
+      p.dataset.k = k;
+      p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editOne(k); };
+      if (e.tagName === "INPUT") e.after(p); else e.appendChild(p);
+    });
+    const shown = new Set([...document.querySelectorAll(".lb-ed")].map(e => e.dataset.k));
+    const keys = (LB_PAGES[curPage] || []).filter(k => !shown.has(k));
+    if (!keys.length) return;
+    const bar = mk("div", "lb-msgs");
+    bar.appendChild(mk("div", "lb-msgs-h", "✎ Messages & hidden texts"));
+    keys.forEach(k => {
+      const t = L(k);
+      const c = mk("span", "lb-chip", t.length > 24 ? t.slice(0, 24) + "…" : t);
+      c.title = k;
+      c.onclick = () => editOne(k);
+      bar.appendChild(c);
+    });
+    document.body.appendChild(bar);
+  };
+
+  const apply = root => {
+    root = root || document;
+    root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
+    root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
+    if (on) pencils();
+  };
+
+  const toggle = (page, cb) => {
+    on = !on; curPage = page; cbk = cb || null;
+    document.body.classList.toggle("lb-on", on);
+    document.querySelectorAll("[data-lbt]").forEach(e => {
+      if (e.dataset.t0 === undefined) e.dataset.t0 = e.textContent;
+      e.textContent = on ? (e.dataset.on || "✔ Done") : e.dataset.t0;
+    });
+    if (on) pencils(); else clearUI();
+  };
+
+  return { L, apply, toggle, raw };
 }
 /* ===== LABELS শেষ ===== */
