@@ -34,15 +34,15 @@ const LB_BASE = {
   rmsgTomorrow: "Session tomorrow. Please confirm.",
   rmsgMissed: "Missed yesterday. Please share a new time.",
   waHello: "Assalamu Alaikum, {name}. {msg}",
-  billingTitle: "Billing", msgNoPerson: "No {person}!", notFound: "Not found"
+  billingTitle: "Billing", dashboardTitle: "Dashboard", msgNoPerson: "No {person}!", notFound: "Not found"
 };
 /* শুধু শুরুর প্রিসেট, সীমা নয় */
 const LB_PRESETS = {
   patient: {},
-  student: { person: "Student", persons: "students" },
-  worker: { person: "Worker", persons: "workers" },
-  client: { person: "Client", persons: "clients" },
-  staff: { person: "Staff", persons: "staff" }
+  student: { person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard" },
+  worker: { person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard" },
+  client: { person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard" },
+  staff: { person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard" }
 };
 /* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
 const LB_PAGES = {
@@ -152,7 +152,22 @@ export function createLabels(data, save) {
     }
     root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
     root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
+    relabel();
+    if (!obs && (preset.person || preset.dashboardTitle)) {
+      obs = new MutationObserver(relabel);
+      obs.observe(document.body, { childList: true, subtree: true, characterData: true });
+    }
     if (on) pencils();
+  };
+  /* পেজের কোডে হার্ডকোড করা ডিফল্ট লেখা (কলামের "Patient", টাইটেলের "Dashboard") ম্যানেজমেন্ট টাইপ অনুযায়ী বদলায় */
+  let obs = null;
+  const relabel = () => {
+    if (!preset.person && !preset.dashboardTitle) return;
+    document.querySelectorAll("th").forEach(t => {
+      if (preset.person && t.textContent.trim() === "Patient") t.textContent = L("person");
+    });
+    const ti = document.getElementById("ti");
+    if (ti && preset.dashboardTitle && ti.textContent.trim() === "Dashboard") ti.textContent = L("dashboardTitle");
   };
 
   const toggle = (page, cb) => {
