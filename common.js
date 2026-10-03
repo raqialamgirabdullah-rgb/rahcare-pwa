@@ -15,3 +15,110 @@ export async function RQ(ref,list,name){name=(name||"").trim();if(!name||list.so
 export const MY=(c,k,v)=>QU(CO(db,c),WH(k,"==",v));export{CO,DO,GD,AD,UPD as UP,DL,ON};
 export async function loadUser(t,e="https://rahcare.blogspot.com/p/login.html"){let r=DO(db,"users",t.uid),d={};try{const s=await GS(MY("users","uid",t.uid));s.empty||(d=s.docs[0].data(),r=s.docs[0].ref)}catch(s){console.error(s)}return d.suspended?(alert("Suspended"),SO(auth).then(()=>{location.href=e}),null):{ref:r,d}}
 export function initFeeNotice(u,G,B="01780972945"){const x=$("fx");if(!x)return{upd(){},stop(){}};let FE=[],NT=[],nid=null,amt=0;x.innerHTML=`<div class="site-notice" id="sn"><div class="site-notice-inner">ℹ️<span id="snt"></span><button class="site-notice-close" onclick="DN()">&times;</button></div></div><div class="fee-banner" id="fb"><div class="fee-banner-inner">🔔<span id="fbt"></span><button class="fee-btn-pay" onclick="OF()">Pay</button></div></div><div class="fee-banner fee-banner-pending" id="fp"><div class="fee-banner-inner">⏳<span id="fpt"></span></div></div><div id="mf" class="c-modal"><div class="c-box" style="max-width:300px"><h3>📱 Platform Fee</h3><p id="fmd" style="font-size:13px;color:#475569;margin:0 0 12px"></p><div class="fee-num-box"><span id="fbn"></span><button class="fee-copy-btn" onclick="CB()">📋</button></div><div class="fee-num-box"><span id="fav"></span><button class="fee-copy-btn" onclick="CA()">📋</button></div><div class="fee-action-row"><a href="tel:*247%23" class="fee-action-btn">☎️ *247#</a><button class="fee-action-btn" onclick="OB()">📱 App</button></div><p style="font-size:11px;color:#94a3b8;margin:10px 0 16px">Tap after sending.</p><div class="c-row"><button class="c-yes" style="background:#16a34a" onclick="PF()">Paid</button></div><button class="c-no c-no-full" style="margin-top:8px" onclick="md('mf',0)">Close</button></div></div><div id="ft" class="fee-toast">✅ Confirmed</div>`;const sb=(i,o)=>sh(i,o?"block":"none"),LB=a=>a.map(z=>monthLabel(z.period)).join(", "),DS=()=>{try{return JSON.parse(localStorage.getItem("dismissedNotices")||"[]")}catch{return[]}},FW=()=>{const t=new Date,e=[];for(let n=1;n<=6;n++){const m=toISOMonth(new Date(t.getFullYear(),t.getMonth()-n,1));if(FE.some(z=>z.period===m))continue;const s=new Set;G().forEach(g=>{g.date&&(g.date+"").slice(0,7)===m&&isPaid(g)&&s.add((g.phone||"").trim()+"|"+(g.name||"").trim())});s.size&&e.push({period:m,count:s.size,amount:50*s.size})}return e},FB=()=>{const n=FW(),p=FE.filter(z=>z.status==="pending");n.length&&($("fbt").innerHTML=`<b>${LB(n)}</b>: ${SM(n,"count")} pts, due <b>Tk ${SM(n,"amount")}</b>`);sb("fb",n.length);p.length&&($("fpt").innerHTML=`<b>${LB(p)}</b>: Tk ${SM(p,"amount")} verifying`);sb("fp",p.length)},NZ=()=>{const e=DS(),n=NT.filter(t=>(t.scope==="global"||t.scope===u)&&!e.includes(t.id))[0];n&&(nid=n.id,$("snt").textContent=n.message||"");sb("sn",n)},mp=s=>s.docs.map(z=>({id:z.id,...z.data()})),a=ON(MY("platformFees","uid",u),s=>{FE=mp(s);FB()}),b=ON(MY("notices","active",!0),s=>{NT=mp(s);NZ()});Object.assign(window,{DN:()=>{if(!nid)return;const t=DS();t.includes(nid)||t.push(nid);try{localStorage.setItem("dismissedNotices",JSON.stringify(t))}catch{}NZ()},OF:()=>{amt=SM(FW(),"amount");$("fbn").textContent=B;$("fav").textContent="Tk "+amt;$("fmd").innerHTML=`Send <b>Tk ${amt}</b> via bKash, then tap Paid.`;md("mf",1)},CB:()=>copyToClipboard(B),CA:()=>copyToClipboard(amt),OB:()=>{location.href="intent://#Intent;package=com.bKash.customerapp;S.browser_fallback_url=https%3A%2F%2Fplay.google.com%2Fstore%2Fapps%2Fdetails%3Fid%3Dcom.bKash.customerapp;end"},PF:async()=>{try{await Promise.all(FW().map(t=>AD(CO(db,"platformFees"),{uid:u,period:t.period,patientCount:t.count,amount:t.amount,status:"pending",confirmedAt:(new Date).toISOString()})));md("mf",0);const e=$("ft");e.querySelector("span")||(e.innerHTML="✅ <span>Submitted, awaiting verification</span>");e.style.display="block";setTimeout(()=>e.style.display="none",2500)}catch(e){ER(e)}},md});return{upd:FB,stop(){a();b()}}}
+
+/* ===== LABELS: common.js-এর একদম শেষে পেস্ট করুন ===== */
+/* অগ্রাধিকার: ইউজারের নিজের লেবেল (users/{uid}.labels) > managementType প্রিসেট > BASE ডিফল্ট
+   শুধু স্ক্রিনের লেখা বদলায়, ডাটাবেসের কী (name, phone, idNumber...) কখনো না */
+const LB_BASE = {
+  person: "Patient", persons: "patients",
+  appointmentTitle: "Appointment", appointmentSub: "নিচের তথ্যগুলো পূরণ করুন",
+  submit: "Submit", clear: "Clear",
+  msgFill: "Please fill in all information correctly.",
+  msgOk: "Appointment Submitted Successfully!",
+  msgWa: "আসসালামু আলাইকুম {name}, আপনার অ্যাপয়েন্টমেন্ট {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।",
+  msgTime: " {time} সময়ে",
+  searchPh: "🔍 Name/ID/Phone", addCard: "Add Card",
+  emptyToday: "No {persons} today", results: "Results", noMatch: "No match",
+  reminders: "Reminders", rToday: "Today", rTomorrow: "Tomorrow", rMissed: "Missed Yesterday",
+  rmsgToday: "Session today. Please come on time.",
+  rmsgTomorrow: "Session tomorrow. Please confirm.",
+  rmsgMissed: "Missed yesterday. Please share a new time.",
+  waHello: "Assalamu Alaikum, {name}. {msg}",
+  billingTitle: "Billing", msgNoPerson: "No {person}!", notFound: "Not found"
+};
+/* শুধু শুরুর প্রিসেট, সীমা নয় */
+const LB_PRESETS = {
+  patient: {},
+  student: { person: "Student", persons: "students" },
+  worker: { person: "Worker", persons: "workers" },
+  client: { person: "Client", persons: "clients" },
+  staff: { person: "Staff", persons: "staff" }
+};
+/* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
+const LB_PAGES = {
+  appointment: ["appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
+  dashboard: ["searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello"],
+  billing: ["billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
+};
+
+export function createLabels(data, save) {
+  data = data || {};
+  const user = Object.assign({}, data.labels || {});
+  const preset = LB_PRESETS[String(data.managementType || "").toLowerCase().trim()] || {};
+  const dflt = k => (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : k));
+  const raw = k => {
+    const u = user[k];
+    return typeof u === "string" && u.trim() ? u : dflt(k);
+  };
+  const L = (k, v, d) => {
+    v = v || {}; d = d || 0;
+    return String(raw(k)).replace(/\{(\w+)\}/g, (m, n) =>
+      n in v ? v[n] : (d < 3 && n in LB_BASE ? L(n, v, d + 1) : m));
+  };
+  const apply = root => {
+    root = root || document;
+    root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
+    root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
+  };
+  const mk = (tag, cls, txt) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt) e.textContent = txt;
+    return e;
+  };
+  const edit = (page, onDone) => {
+    const keys = LB_PAGES[page] || Object.keys(LB_BASE);
+    const ov = mk("div", "lb-ov"), box = mk("div", "lb-box");
+    box.appendChild(mk("div", "lb-h", "✎ Labels (খালি রাখলে ডিফল্ট)"));
+    const inputs = {};
+    keys.forEach(k => {
+      const w = mk("div", "lb-row");
+      w.appendChild(mk("div", "lb-k", k));
+      const inp = mk("input", "lb-in");
+      inp.value = user[k] || "";
+      inp.placeholder = dflt(k);
+      inputs[k] = inp;
+      w.appendChild(inp);
+      box.appendChild(w);
+    });
+    box.appendChild(mk("div", "lb-hint", "{name} {date} {time} {msg} {person} {persons} ব্যবহার করা যাবে"));
+    const row = mk("div", "lb-btns");
+    const cancel = mk("button", "lb-b", "Cancel"), ok = mk("button", "lb-b lb-ok", "Save");
+    cancel.type = ok.type = "button";
+    const close = () => ov.remove();
+    cancel.onclick = close;
+    ov.onclick = e => { if (e.target === ov) close(); };
+    ok.onclick = async () => {
+      const ch = {};
+      keys.forEach(k => {
+        const val = inputs[k].value.trim();
+        if (val !== (user[k] || "")) ch["labels." + k] = val;
+      });
+      if (!Object.keys(ch).length) return close();
+      try {
+        await save(ch);
+        Object.keys(ch).forEach(f => { user[f.slice(7)] = ch[f]; });
+        apply();
+        if (onDone) onDone();
+        close();
+      } catch (err) {
+        console.error(err);
+        alert("Save failed: " + err.message);
+      }
+    };
+    row.appendChild(cancel); row.appendChild(ok); box.appendChild(row);
+    ov.appendChild(box); document.body.appendChild(ov);
+  };
+  return { L, apply, edit, raw };
+}
+/* ===== LABELS শেষ ===== */
