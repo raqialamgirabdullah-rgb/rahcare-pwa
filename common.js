@@ -186,6 +186,9 @@ export function setEditMode(page, on) {
 }
 function detectEditPage() {
   if (window.RC_PAGE) return window.RC_PAGE;
+  if (document.getElementById("slipTemplate")) return "appointment";
+  if (document.getElementById("billingWrap")) return "billing";
+  if (document.getElementById("dw")) return "dashboard";
   const path = (location.pathname || "").toLowerCase();
   const hit = EDIT_PAGES.find(([k]) => path.includes(k));
   return hit ? hit[0] : null;
@@ -241,6 +244,21 @@ export function mountEditModeToggles(containerId) {
     const second = wrap.querySelectorAll(":scope > .wrap")[1];
     second ? wrap.insertBefore(card, second) : wrap.appendChild(card);
     mountEditModeToggles("editModeBox");
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
+})();
+
+/* টাইটেলের বাম পাশে পেজের আইকন; ✎ সুইচ আর ক্লিক-টগল বন্ধ (টগল এখন Report পেজে) */
+(function pageIcons() {
+  const go = () => {
+    const pg = detectEditPage();
+    const ICON = { appointment: "📅", billing: "🧾", dashboard: "📊" };
+    document.querySelectorAll(".lb-sw").forEach(e => {
+      e.removeAttribute("data-lbt");
+      e.removeAttribute("onclick");
+      e.onclick = null;
+      if (ICON[pg]) e.textContent = ICON[pg];
+    });
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
