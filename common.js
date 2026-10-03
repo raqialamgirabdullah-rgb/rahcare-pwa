@@ -229,3 +229,18 @@ export function mountEditModeToggles(containerId) {
   sync();
 }
 /* ===== EDIT MODE শেষ ===== */
+
+/* Report পেজে (#myReportWrap আছে) Edit Mode টগল নিজে থেকে বসবে */
+(function autoMountEditToggles() {
+  const go = () => {
+    const wrap = document.getElementById("myReportWrap");
+    if (!wrap || document.getElementById("editModeBox")) return;
+    const card = document.createElement("div");
+    card.className = "wrap";
+    card.innerHTML = '<div class="sec"><div class="sec-title">✎ Edit Mode</div><div id="editModeBox"></div></div>';
+    const second = wrap.querySelectorAll(":scope > .wrap")[1];
+    second ? wrap.insertBefore(card, second) : wrap.appendChild(card);
+    mountEditModeToggles("editModeBox");
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
+})();
