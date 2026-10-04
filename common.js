@@ -521,3 +521,22 @@ function mtSelectSync(v) {
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", start) : start();
 })();
+
+/* ===== সাইটে একটিভ থাকার সময় (অ্যাডমিন প্যানেলের পাসওয়ার্ড ১৫ মিনিট নিষ্ক্রিয়তার পর আবার চাইবে) ===== */
+(function siteActivity() {
+  const LIM = 15 * 60 * 1000;
+  let t = 0;
+  const beat = () => {
+    const n = Date.now();
+    if (n - t < 5000) return;
+    t = n;
+    try {
+      const last = +localStorage.getItem("rcActive") || 0;
+      if (last && n - last > LIM) localStorage.removeItem("rcAdminOK");
+      localStorage.setItem("rcActive", n);
+    } catch (e) {}
+  };
+  ["pointerdown", "keydown", "touchstart", "scroll"].forEach(ev => addEventListener(ev, beat, { passive: true, capture: true }));
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) beat(); });
+  beat();
+})();
