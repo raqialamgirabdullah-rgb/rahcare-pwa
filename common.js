@@ -356,7 +356,7 @@ export const UP = (ref, data) => {
 /* ===== Custom ⇄ Default শেষ ===== */
 
 /* ===== ম্যানেজমেন্ট টাইপ: কেন্দ্রীয় সেটআপ ===== */
-let MT_TYPE = "", MT_LOADED = false, MT_OBS = null, MT_RAF = 0;
+let MT_TYPE = "", MT_LOADED = false, MT_OBS = null, MT_RAF = 0, MT_SEL_VAL = "";
 const MT_FIELDS = {
   student: { name: "Student Name", time: "Class Time", date: "Admission Date" },
   worker: { name: "Worker Name", time: "Shift Time", date: "Work Date" },
@@ -407,7 +407,6 @@ r(auth, async u => {
   } catch (e) { console.error(e); }
 });
 /* Report পেজে টাইপ বদলানোর সিলেক্ট (Edit Mode কার্ডের ভেতরে) */
-let MT_SEL_VAL = "";
 function mtSelectSync(v) {
   MT_SEL_VAL = String(v || "").toLowerCase().trim() || "patient";
   const sel = document.getElementById("mtSel");
