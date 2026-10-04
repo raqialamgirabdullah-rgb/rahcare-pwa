@@ -36,6 +36,7 @@ const LB_BASE = {
   waHello: "Assalamu Alaikum, {name}. {msg}",
   billingTitle: "Billing", dashboardTitle: "Dashboard", msgNoPerson: "No {person}!", notFound: "Not found"
 };
+let MT_SEL_VAL = ""; /* ফাইলের শুরুতে, কারণ নিচের autoMountEditToggles লোডের সময়ই এটা ব্যবহার করে */
 /* শুধু শুরুর প্রিসেট, সীমা নয় */
 const LB_PRESETS = {
   patient: {},
@@ -356,7 +357,7 @@ export const UP = (ref, data) => {
 /* ===== Custom ⇄ Default শেষ ===== */
 
 /* ===== ম্যানেজমেন্ট টাইপ: কেন্দ্রীয় সেটআপ ===== */
-let MT_TYPE = "", MT_LOADED = false, MT_OBS = null, MT_RAF = 0, MT_SEL_VAL = "";
+let MT_TYPE = "", MT_LOADED = false, MT_OBS = null, MT_RAF = 0;
 const MT_FIELDS = {
   student: { name: "Student Name", time: "Class Time", date: "Admission Date" },
   worker: { name: "Worker Name", time: "Shift Time", date: "Work Date" },
