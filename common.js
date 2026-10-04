@@ -21,6 +21,7 @@ export function initFeeNotice(u,G,B="01780972945"){const x=$("fx");if(!x)return{
    শুধু স্ক্রিনের লেখা বদলায়, ডাটাবেসের কী (name, phone, idNumber...) কখনো না */
 const LB_BASE = {
   person: "Patient", persons: "patients",
+  symptomDx: "Symptom Diagnosis", responseDx: "Response Diagnosis", prescription: "Prescription",
   appointmentTitle: "Appointment", appointmentSub: "নিচের তথ্যগুলো পূরণ করুন",
   submit: "Submit", clear: "Clear",
   msgFill: "Please fill in all information correctly.",
@@ -56,7 +57,7 @@ const LB_PRESETS = {
 /* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
 const LB_PAGES = {
   appointment: ["appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
-  dashboard: ["searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello"],
+  dashboard: ["searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello", "symptomDx", "responseDx", "prescription"],
   billing: ["billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
 };
 
@@ -207,6 +208,7 @@ export function createLabels(data, save) {
     watch();
   };
 
+  window.__rcL = L;
   return { L, apply, toggle, raw };
 }
 /* ===== LABELS শেষ ===== */
@@ -557,35 +559,96 @@ function mtSelectSync(v) {
   beat();
 })();
 
-/* ===== ম্যানেজমেন্ট টাইপ অনুযায়ী ড্যাশবোর্ড কলামের নাম (স্বয়ংক্রিয়) ===== */
+/* ===== ড্যাশবোর্ড: টাইপ অনুযায়ী কলামের নাম, সমান প্রস্থ, ID ক্লিক = অপশন, নামে ক্লিক = ৩ অপশনের মেনু ===== */
 (function dynColumns() {
   let lastCard = "", raf = 0;
+  const PAGES = {
+    symptomDx: "https://rahcare.blogspot.com/p/symptom-diagnosis.html",
+    responseDx: "https://rahcare.blogspot.com/p/response-diagnosis.html",
+    prescription: "https://rahcare.blogspot.com/p/prescription.html"
+  };
+  const T = k => (window.__rcL ? window.__rcL(k) : LB_BASE[k]);
   const cardOf = el => {
     const cs = el && el.closest && el.closest(".cs"), sp = cs && cs.querySelector(".ch>span");
     return sp && sp.firstChild ? sp.firstChild.textContent.trim() : "";
   };
   const provider = card => mtPreset().doctor || (/^hijama/i.test(card) ? "Therapist" : "Raqi");
-  /* নাম লম্বা হলে ওই কলাম চওড়া করে, যাতে শব্দ না ভাঙে */
-  const widen = t => {
-    const tr = t.parentElement, tbl = t.closest("table");
-    if (!tr || !tbl || t.textContent.trim().length <= 5) return;
-    const idx = [...tr.children].indexOf(t), cur = tr.style.gridTemplateColumns.match(/[\d.]+(?=fr)/g);
-    if (!cur || idx < 0 || +cur[idx] >= 4.5) return;
+
+  /* ডিফল্ট প্রস্থ (সেভ করা নেই) হলে কলামগুলো সমান ভাগ; ইউজারের নিজের সেট করা প্রস্থ অপরিবর্তিত */
+  const DEF = [5, 6, 3, 5, 3];
+  const equalize = tbl => {
+    const head = tbl.querySelector("thead tr");
+    if (!head) return;
+    const cur = head.style.gridTemplateColumns.match(/[\d.]+(?=fr)/g);
+    if (!cur) return;
+    const n = cur.map(Number), k = Math.min(n.length, DEF.length);
+    if (!(n.slice(0, k).every((v, i) => v === DEF[i]) && n.slice(k).every(v => v === 4))) return;
     tbl.querySelectorAll("tr").forEach(r => {
-      let i = 0;
-      r.style.gridTemplateColumns = r.style.gridTemplateColumns.replace(/[\d.]+(?=fr)/g, m => i++ === idx ? "4.5" : m);
+      r.style.gridTemplateColumns = r.style.gridTemplateColumns.replace(/[\d.]+(?=fr)/g, "1");
     });
   };
+
+  /* ID কলামের ঘর ক্লিকযোগ্য */
+  const markIds = tbl => {
+    const idx = [...tbl.querySelectorAll("thead th")].findIndex(t => /^id$/i.test(t.textContent.trim()));
+    if (idx < 0) return;
+    tbl.querySelectorAll("tbody tr").forEach(r => {
+      const td = r.children[idx];
+      if (!td || td.classList.contains("rc-idcell") || td.classList.contains("rc-empty")) return;
+      const nb = r.querySelector('.name-btn[onclick^="AM("]');
+      const m = nb && nb.getAttribute("onclick").match(/AM\('([^']+)'\)/);
+      if (!m) return;
+      td.classList.add("rc-idcell");
+      td.dataset.doc = m[1];
+      td.style.cursor = "pointer";
+      const sp = td.firstElementChild;
+      if (sp && sp.tagName === "SPAN") {
+        if (!sp.textContent.trim()) sp.textContent = "--";
+        sp.style.cssText = "color:var(--primary-color,#4f46e5);font-weight:700;text-decoration:underline";
+      }
+    });
+  };
+
   const run = () => {
     const p = mtPreset();
     document.querySelectorAll("th").forEach(t => {
       const x = t.textContent.trim();
-      if (x === "Raqi") { const v = provider(cardOf(t)); if (v !== x) { t.textContent = v; widen(t); } }
-      else if (x === "Bill" && p.billingTitle) { t.textContent = p.billingTitle; widen(t); }
+      if (x === "Raqi") { const v = provider(cardOf(t)); if (v !== x) t.textContent = v; }
+      else if (x === "Bill" && p.billingTitle) t.textContent = p.billingTitle;
     });
+    document.querySelectorAll("table").forEach(tbl => { equalize(tbl); markIds(tbl); });
     const h = document.querySelector("#mr h3"), pv = provider(lastCard);
     if (h && h.textContent.trim() !== pv) h.textContent = pv;
   };
+
+  /* নামে ক্লিক করলে ছোট মেনু: Symptom / Response / Prescription পেজ */
+  const menu = () => {
+    let m = document.getElementById("rc-pm");
+    if (m) return m;
+    m = document.createElement("div");
+    m.id = "rc-pm";
+    m.className = "c-modal";
+    m.innerHTML = '<div class="c-box" style="width:calc(100% - 32px);max-width:300px"><h3 id="rc-pm-t" style="word-break:break-word"></h3><div id="rc-pm-b"></div><button class="c-no c-no-full" type="button" style="margin-top:4px">Close</button></div>';
+    m.onclick = e => { if (e.target === m || e.target.closest("button")) m.classList.remove("show"); };
+    document.body.appendChild(m);
+    return m;
+  };
+  const openMenu = (doc, name, num) => {
+    const m = menu();
+    m.querySelector("#rc-pm-t").textContent = name;
+    const b = m.querySelector("#rc-pm-b");
+    b.innerHTML = "";
+    Object.keys(PAGES).forEach(k => {
+      const a = document.createElement("a");
+      a.className = "c-no c-no-full";
+      a.textContent = T(k);
+      a.href = PAGES[k] + "?d=" + encodeURIComponent(doc) + (num ? "&id=" + encodeURIComponent(num) : "");
+      a.style.cssText = "display:block;text-align:center;text-decoration:none;margin-bottom:8px;box-sizing:border-box";
+      b.appendChild(a);
+    });
+    m.classList.add("show");
+  };
+
   const start = () => {
     new MutationObserver(() => {
       if (raf) return;
@@ -593,8 +656,30 @@ function mtSelectSync(v) {
     }).observe(document.body, { childList: true, subtree: true, characterData: true });
     document.addEventListener("rc-preset", run);
     document.addEventListener("click", e => {
-      const b = e.target.closest && e.target.closest(".name-btn");
-      if (b) { lastCard = cardOf(b); run(); }
+      const t = e.target;
+      const idc = t.closest && t.closest(".rc-idcell");
+      if (idc && window.AM) {
+        e.preventDefault(); e.stopPropagation();
+        window.AM(idc.dataset.doc);
+        return;
+      }
+      const b = t.closest && t.closest(".name-btn");
+      if (!b) return;
+      lastCard = cardOf(b);
+      const m = /^AM\('([^']+)'\)/.exec(b.getAttribute("onclick") || "");
+      if (m) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        const row = b.closest("tr"), c = row && row.querySelector(".rc-idcell");
+        let num = c ? c.textContent.trim() : "";
+        if (num === "--") num = "";
+        if (!num && row) {
+          const bl = row.querySelector('a[href*="billing.html?id="]');
+          if (bl) { try { num = new URL(bl.href).searchParams.get("id") || ""; } catch (x) {} }
+        }
+        openMenu(m[1], b.textContent.replace("❌", "").trim() || "Patient", num);
+        return;
+      }
+      run();
     }, true);
     run();
   };
