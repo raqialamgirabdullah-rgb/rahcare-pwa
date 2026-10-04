@@ -38,3 +38,12 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 .name-label-row label{white-space:nowrap}
 .name-label-row .type-cat-inline{flex-wrap:wrap;justify-content:flex-end;gap:6px 8px}
 .name-label-row .rc-chip{white-space:nowrap}
+
+/* Edit Form: Custom ⇄ Default সুইচ ("+" লাইনের ডান পাশে) */
+.la.fm-host,.fm-row.fm-host{justify-content:space-between;align-items:center;padding:6px 10px}
+.fm-sw{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:#94a3b8;cursor:pointer;user-select:none}
+.fm-sw b{font-weight:700}
+.fm-sw b.on{color:var(--primary)}
+.fm-sw i{position:relative;width:38px;height:20px;border-radius:20px;background:var(--primary);display:inline-block;transition:.2s}
+.fm-sw i:before{content:"";position:absolute;left:3px;bottom:3px;width:14px;height:14px;border-radius:50%;background:#fff;transition:.2s}
+.fm-sw i.on:before{transform:translateX(18px)}
