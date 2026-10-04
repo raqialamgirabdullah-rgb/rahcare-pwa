@@ -180,6 +180,21 @@ export function createLabels(data, save) {
     if (ti && preset.dashboardTitle && ti.textContent.trim() === "Dashboard") ti.textContent = L("dashboardTitle");
   };
 
+  /* পেজ লুকানো অবস্থায় (লোড হওয়ার আগে) এডিট মোড রিস্টোর হলে ✎ বসতে পারে না; পেজ দেখা গেলেই বাকি ✎ বসিয়ে দেয় */
+  const missing = () => [...document.querySelectorAll("[data-l],[data-lp]")].some(e =>
+    e.offsetParent !== null &&
+    !(e.tagName === "INPUT" ? (e.nextElementSibling && e.nextElementSibling.classList.contains("lb-ed")) : e.querySelector(".lb-ed")));
+  let wobs = null, wt = 0;
+  const watch = () => {
+    if (!on) { if (wobs) { wobs.disconnect(); wobs = null; } return; }
+    if (wobs) return;
+    wobs = new MutationObserver(() => {
+      clearTimeout(wt);
+      wt = setTimeout(() => { if (on && missing()) pencils(); }, 150);
+    });
+    wobs.observe(document.body, { attributes: true, subtree: true, attributeFilter: ["style", "class", "hidden"] });
+  };
+
   const toggle = (page, cb) => {
     on = !on; curPage = page; cbk = cb || null;
     document.body.classList.toggle("lb-on", on);
@@ -189,6 +204,7 @@ export function createLabels(data, save) {
       e.textContent = on ? (e.dataset.on || "✔ Done") : e.dataset.t0;
     });
     if (on) pencils(); else clearUI();
+    watch();
   };
 
   return { L, apply, toggle, raw };
