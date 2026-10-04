@@ -7,7 +7,7 @@ SM=(a,k)=>a.reduce((m,z)=>m+(z[k]||0),0),
 OD=t=>{const e=new Date;return e.setDate(e.getDate()+t),toISODate(e)};
 export function mountEditModals(t="Edit Form"){if($("mh"))return;window.MD=md;document.body.insertAdjacentHTML("beforeend",`<div id="mh" class="c-modal" onclick="MD('mh',0)"><div class="c-box" style="width:calc(100% - 32px);max-width:560px" onclick="event.stopPropagation()"><h3>${t}</h3><div id="hl" class="lb lbx"></div><div class="bx"><button class="c-no c-no-sm" onclick="MD('mh',0)">Cancel</button><button class="c-yes" onclick="HV()">Save</button></div></div></div><div id="mi" class="c-modal"><div class="c-box" style="width:calc(100% - 32px);max-width:300px"><h3 id="it"></h3><input class="rc-input" id="in" maxlength="40" autocomplete="off" style="margin-bottom:12px" onkeydown="event.key=='Enter'&&FS()"><div class="bx"><button class="c-no c-no-sm" id="id" onclick="FD()">Delete</button><button class="c-no c-no-sm" onclick="MD('mi',0)">Cancel</button><button class="c-yes" onclick="FS()">Save</button></div></div></div>`)}
 export const renderEditList=(hc,mx,w)=>{$("hl").innerHTML=hc.map((c,i)=>`<div class="lr"><span class="ar${i?"":" off"}" onclick="HM(${i},-1)">▲</span><span class="ar${i<hc.length-1?"":" off"}" onclick="HM(${i},1)">▼</span><span class="nm">${ES(c.n)}</span>${w?`<select class="ws" onchange="HW(${i},this.value)">${[1,2,3,4].map(n=>`<option${n==c.w?" selected":""}>${n}</option>`).join("")}</select>`:""}<span class="ed" onclick="HE(${i})">✎</span></div>`).join("")+(hc.length<mx?`<div class="lr la" onclick="HE(-1)">+</div>`:"")};
-export function createFormEditor({defaults:D0,max:mx=12,get:gt,apply:ap,save:sv}){const D=D0.map(([k,n,w])=>({k,n,w:w||(k=="name"||k=="items"?1:2)})),WS={},FK={pName:"name",phone:"phone",gBtn:"gender",addrVal:"addr",ageInput:"age",timeVal:"time",dateInput:"date"},paint=()=>{const f=$("ff");f&&f.querySelectorAll(":scope>:not(.rc-row-2),:scope>.rc-row-2>*").forEach(e=>{const m=e.querySelector("#pName,#phone,#gBtn,#addrVal,#ageInput,#timeVal,#dateInput,[data-x]"),w=WS[e.dataset.k||m&&(FK[m.id]||m.dataset.x)];w&&(e.style.gridColumn="span "+12/w)})};let hc=[],ce=-1;const parse=s=>{const r=(s||"").split("|").filter(Boolean).map(z=>{const i=z.indexOf(":"),[k,w]=z.slice(0,i).split("~");return{k,n:z.slice(i+1),w:+w}}).filter(z=>z.n&&(D.some(d=>d.k==z.k)||/^c[a-z0-9]+$/.test(z.k)));r.forEach(z=>z.w>0&&z.w<5||(z.w=(D.find(d=>d.k==z.k)||{w:2}).w));D.forEach(d=>r.some(z=>z.k==d.k)||r.push({...d}));r.forEach(z=>WS[z.k]=z.w);return r},RL=()=>renderEditList(hc,mx,1);mountEditModals();$("ff")&&new MutationObserver(paint).observe($("ff"),{childList:true});Object.assign(window,{MD:md,EF:()=>{hc=gt().map(z=>({...z}));RL();md("mh",1)},HW:(i,v)=>{hc[i].w=+v},HM:(i,d)=>{hc[i+d]&&([hc[i],hc[i+d]]=[hc[i+d],hc[i]],RL())},HE:i=>{ce=i;$("it").textContent=i<0?"Add Field":"Edit Field";$("in").value=i<0?"":hc[i].n;$("id").style.display=i>=0&&hc[i].k[0]=="c"?"":"none";md("mi",1);$("in").focus()},FS:()=>{const n=$("in").value.trim().replace(/[|\s]+/g," ");if(!n)return alert("Enter name");ce<0?hc.push({k:"c"+Date.now().toString(36),n,w:2}):hc[ce].n=n;md("mi",0);RL()},FD:()=>{confirm("Delete?")&&(hc.splice(ce,1),md("mi",0),RL())},HV:async()=>{try{await sv(hc.map(z=>z.k+"~"+z.w+":"+z.n).join("|"));hc.forEach(z=>WS[z.k]=z.w);ap(hc);paint();md("mh",0)}catch(e){ER(e)}}});return{parse}}
+export function createFormEditor({defaults:D0,max:mx=12,get:gt,apply:ap,save:sv}){const D=D0.map(([k,n,w])=>({k,n,w:w||(k=="name"||k=="items"?1:2)})),WS={},FK={pName:"name",phone:"phone",gBtn:"gender",addrVal:"addr",ageInput:"age",timeVal:"time",dateInput:"date"},paint=()=>{const f=$("ff");f&&f.querySelectorAll(":scope>:not(.rc-row-2),:scope>.rc-row-2>*").forEach(e=>{const m=e.querySelector("#pName,#phone,#gBtn,#addrVal,#ageInput,#timeVal,#dateInput,[data-x]"),w=WS[e.dataset.k||m&&(FK[m.id]||m.dataset.x)];w&&(e.style.gridColumn="span "+12/w)})};let hc=[],ce=-1;const parse=s=>{const r=(s||"").split("|").filter(Boolean).map(z=>{const i=z.indexOf(":"),[k,w]=z.slice(0,i).split("~");return{k,n:z.slice(i+1),w:+w}}).filter(z=>z.n&&(D.some(d=>d.k==z.k)||/^c[a-z0-9]+$/.test(z.k)));r.forEach(z=>z.w>0&&z.w<5||(z.w=(D.find(d=>d.k==z.k)||{w:2}).w));D.forEach(d=>r.some(z=>z.k==d.k)||r.push({...d,n:mtFieldName(d.k)||d.n}));r.forEach(z=>WS[z.k]=z.w);return r},RL=()=>renderEditList(hc,mx,1);mountEditModals();$("ff")&&new MutationObserver(paint).observe($("ff"),{childList:true});Object.assign(window,{MD:md,EF:()=>{hc=gt().map(z=>({...z}));RL();md("mh",1)},HW:(i,v)=>{hc[i].w=+v},HM:(i,d)=>{hc[i+d]&&([hc[i],hc[i+d]]=[hc[i+d],hc[i]],RL())},HE:i=>{ce=i;$("it").textContent=i<0?"Add Field":"Edit Field";$("in").value=i<0?"":hc[i].n;$("id").style.display=i>=0&&hc[i].k[0]=="c"?"":"none";md("mi",1);$("in").focus()},FS:()=>{const n=$("in").value.trim().replace(/[|\s]+/g," ");if(!n)return alert("Enter name");ce<0?hc.push({k:"c"+Date.now().toString(36),n,w:2}):hc[ce].n=n;md("mi",0);RL()},FD:()=>{confirm("Delete?")&&(hc.splice(ce,1),md("mi",0),RL())},HV:async()=>{try{await sv(hc.map(z=>z.k+"~"+z.w+":"+z.n).join("|"));hc.forEach(z=>WS[z.k]=z.w);ap(hc);paint();md("mh",0)}catch(e){ER(e)}}});return{parse}}
 export async function addLogos(root,u,ids){const url=u.logoUrl||u.logo||u.centerLogo||"";root.classList.toggle("hasLogo",!!url);for(const d of ids){let w=$(d);w||(w=new Image,w.id=d,w.className=/WM$/.test(d)?"wm":"lg",w.crossOrigin="anonymous",root.appendChild(w));if(!url){w.style.display="none";continue}await new Promise(r=>{w.onload=w.onerror=r,w.src=url});w.style.display=w.naturalWidth?"block":"none"}}
 export const getExtras=p=>{const o={...p};document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=i.value.trim();t?o[i.dataset.x]=t:delete o[i.dataset.x]});return o},setExtras=x=>{x&&document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=x[i.dataset.x];t&&(i.value=t)})};
 function fitMenu(m){const g=m.closest("#ff");if(!g||!m.classList.contains("rc-dd-grid"))return;const a=m.parentElement.getBoundingClientRect(),b=g.getBoundingClientRect(),s=m.style;s.width=b.width+"px";s.left=b.left-a.left+"px";s.right="auto"}
@@ -39,10 +39,18 @@ const LB_BASE = {
 /* শুধু শুরুর প্রিসেট, সীমা নয় */
 const LB_PRESETS = {
   patient: {},
-  student: { person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard" },
-  worker: { person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard" },
-  client: { person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard" },
-  staff: { person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard" }
+  student: { person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard",
+    doctor: "Teacher", slipTitle: "Admission Slip", slipId: "Student ID", bnPerson: "স্টুডেন্ট",
+    msgOk: "Admission Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ভর্তি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
+  worker: { person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard",
+    doctor: "Supervisor", slipTitle: "Work Slip", slipId: "Worker ID", bnPerson: "কর্মী",
+    msgOk: "Work Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার কাজ {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
+  client: { person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard",
+    doctor: "Consultant", slipTitle: "Booking Slip", slipId: "Client ID", bnPerson: "ক্লায়েন্ট",
+    msgOk: "Booking Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার বুকিং {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
+  staff: { person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard",
+    doctor: "Manager", slipTitle: "Duty Slip", slipId: "Staff ID", bnPerson: "স্টাফ",
+    msgOk: "Staff Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ডিউটি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" }
 };
 /* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
 const LB_PAGES = {
@@ -53,6 +61,7 @@ const LB_PAGES = {
 
 export function createLabels(data, save) {
   data = data || {};
+  if (Object.keys(data).length) mtSetType(data.managementType);
   const user = Object.assign({}, data.labels || {});
   const preset = LB_PRESETS[String(data.managementType || "").toLowerCase().trim()] || {};
   const dflt = k => (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : k));
@@ -259,6 +268,7 @@ export function mountEditModeToggles(containerId) {
     const second = wrap.querySelectorAll(":scope > .wrap")[1];
     second ? wrap.insertBefore(card, second) : wrap.appendChild(card);
     mountEditModeToggles("editModeBox");
+    mountMgmtSelect();
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
@@ -277,6 +287,86 @@ export function mountEditModeToggles(containerId) {
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
+
+/* ===== ম্যানেজমেন্ট টাইপ: কেন্দ্রীয় সেটআপ ===== */
+let MT_TYPE = "", MT_LOADED = false, MT_OBS = null, MT_RAF = 0;
+const MT_FIELDS = {
+  student: { name: "Student Name", time: "Class Time", date: "Admission Date" },
+  worker: { name: "Worker Name", time: "Shift Time", date: "Work Date" },
+  client: { name: "Client Name", time: "Booking Time", date: "Booking Date" },
+  staff: { name: "Staff Name", time: "Duty Time", date: "Duty Date" }
+};
+function mtPreset() { return LB_PRESETS[MT_TYPE] || {}; }
+function mtFieldName(k) { const f = MT_FIELDS[MT_TYPE]; return (f && f[k]) || null; }
+function mtSetType(t) {
+  MT_LOADED = true;
+  MT_TYPE = String(t || "").toLowerCase().trim();
+  if (!LB_PRESETS[MT_TYPE]) MT_TYPE = "";
+  document.dispatchEvent(new Event("rc-preset"));
+}
+/* স্ক্রিনের বাড়তি লেখা: ব্লগারের "Add Patient" মেনু, স্লিপের টাইটেল ও ID, Report-এর বাংলা "পেশেন্ট" */
+function mtRelabel() {
+  const p = mtPreset();
+  if (!MT_TYPE || !p.person) return;
+  const map = { "Add Patient": "Add " + p.person, "Appointment Slip": p.slipTitle, "Patient ID": p.slipId };
+  const w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = w.nextNode())) {
+    const par = n.parentNode && n.parentNode.nodeName;
+    if (par === "SCRIPT" || par === "STYLE" || par === "TEXTAREA") continue;
+    const t = n.nodeValue, k = t.trim();
+    if (map[k] && map[k] !== k) n.nodeValue = t.replace(k, map[k]);
+    else if (p.bnPerson && t.indexOf("পেশেন্ট") > -1) n.nodeValue = t.split("পেশেন্ট").join(p.bnPerson);
+  }
+}
+document.addEventListener("rc-preset", () => {
+  if (!MT_TYPE) return;
+  mtRelabel();
+  if (!MT_OBS) {
+    MT_OBS = new MutationObserver(() => {
+      if (MT_RAF) return;
+      MT_RAF = requestAnimationFrame(() => { MT_RAF = 0; mtRelabel(); });
+    });
+    MT_OBS.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
+});
+/* যে পেজ createLabels ব্যবহার করে না (যেমন Report), সেখানে ইউজারের টাইপ নিজে লোড করি */
+r(auth, async u => {
+  if (!u || detectEditPage()) return;
+  try {
+    const s = await GD(DO(db, "users", u.uid));
+    if (s.exists() && !MT_LOADED) mtSetType(s.data().managementType);
+    mtSelectSync(s.exists() ? s.data().managementType : "");
+  } catch (e) { console.error(e); }
+});
+/* Report পেজে টাইপ বদলানোর সিলেক্ট (Edit Mode কার্ডের ভেতরে) */
+let MT_SEL_VAL = "";
+function mtSelectSync(v) {
+  MT_SEL_VAL = String(v || "").toLowerCase().trim() || "patient";
+  const sel = document.getElementById("mtSel");
+  if (sel) sel.value = LB_PRESETS[MT_SEL_VAL] ? MT_SEL_VAL : "patient";
+}
+function mountMgmtSelect() {
+  const box = document.getElementById("editModeBox");
+  if (!box || document.getElementById("mtSel")) return;
+  const row = document.createElement("div");
+  row.className = "em-row";
+  row.innerHTML = '<span>Management Type</span><select id="mtSel" style="font-size:13px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;background:#fff">' +
+    Object.keys(LB_PRESETS).map(k => '<option value="' + k + '">' + k.charAt(0).toUpperCase() + k.slice(1) + '</option>').join("") + '</select>';
+  box.appendChild(row);
+  const sel = row.querySelector("select");
+  sel.value = LB_PRESETS[MT_SEL_VAL] ? MT_SEL_VAL : "patient";
+  sel.addEventListener("change", async () => {
+    const u = auth.currentUser;
+    if (!u) return alert("Login required");
+    try {
+      await UPD(DO(db, "users", u.uid), { managementType: sel.value });
+      mtSetType(sel.value);
+      alert("Saved. Other pages will update when opened.");
+    } catch (e) { console.error(e); alert("Save failed: " + e.message); }
+  });
+}
+/* ===== ম্যানেজমেন্ট টাইপ শেষ ===== */
 
 /* ===== Doctor চিপ (Appointment পেজ): Name-এর ডান পাশে, ড্রপডাউনে নাম যোগ/এডিট/ডিলিট (শুধু এডিট মোডে) ===== */
 (function doctorChip() {
@@ -298,7 +388,7 @@ export function mountEditModeToggles(containerId) {
       const menu = document.getElementById("docMenu"), btn = document.getElementById("docBtn"), val = document.getElementById("docVal");
       if (!menu || !btn || !val) return;
       menu.innerHTML = menuHTML();
-      btn.textContent = selected || "Doctor";
+      btn.textContent = selected || (mtPreset().doctor || "Doctor");
       btn.classList.toggle("selected", !!selected);
       val.value = selected;
     };
@@ -332,7 +422,7 @@ export function mountEditModeToggles(containerId) {
     const nameInput = document.getElementById("docModalName");
     const openDocModal = idx => {
       editIdx = idx;
-      document.getElementById("docModalTitle").textContent = idx >= 0 ? "Edit Doctor" : "Add Doctor";
+      document.getElementById("docModalTitle").textContent = (idx >= 0 ? "Edit " : "Add ") + (mtPreset().doctor || "Doctor");
       nameInput.value = idx >= 0 ? list[idx] : "";
       document.getElementById("docDel").hidden = idx < 0;
       openModal("docModal");
@@ -373,6 +463,7 @@ export function mountEditModeToggles(containerId) {
       closeModal("docModal");
     };
 
+    document.addEventListener("rc-preset", () => { paint(); });
     new MutationObserver(inject).observe(ff, { childList: true });
     inject();
     r(auth, async u => {
