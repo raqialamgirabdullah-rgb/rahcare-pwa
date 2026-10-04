@@ -29,7 +29,7 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 .lb-sw,body.lb-on .lb-sw{pointer-events:none;background:none;padding:0}
 
 /* Doctor চিপ ও মেনু */
-#docMenu{left:auto;right:0;width:200px;top:26px}
+#docMenu{left:auto;right:0;width:200px;top:26px;bottom:auto;white-space:normal}
 #docChipDD .rc-chip{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
 #docMenu .item-row span.doc-name{flex:1;padding:8px 12px;cursor:pointer;font-size:13px;text-align:left}
 #docMenu .doc-empty{padding:8px 12px;font-size:12px;color:#94a3b8}
