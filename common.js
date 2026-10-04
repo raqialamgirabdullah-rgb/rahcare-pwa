@@ -565,12 +565,23 @@ function mtSelectSync(v) {
     return sp && sp.firstChild ? sp.firstChild.textContent.trim() : "";
   };
   const provider = card => mtPreset().doctor || (/^hijama/i.test(card) ? "Therapist" : "Raqi");
+  /* নাম লম্বা হলে ওই কলাম চওড়া করে, যাতে শব্দ না ভাঙে */
+  const widen = t => {
+    const tr = t.parentElement, tbl = t.closest("table");
+    if (!tr || !tbl || t.textContent.trim().length <= 5) return;
+    const idx = [...tr.children].indexOf(t), cur = tr.style.gridTemplateColumns.match(/[\d.]+(?=fr)/g);
+    if (!cur || idx < 0 || +cur[idx] >= 4.5) return;
+    tbl.querySelectorAll("tr").forEach(r => {
+      let i = 0;
+      r.style.gridTemplateColumns = r.style.gridTemplateColumns.replace(/[\d.]+(?=fr)/g, m => i++ === idx ? "4.5" : m);
+    });
+  };
   const run = () => {
     const p = mtPreset();
     document.querySelectorAll("th").forEach(t => {
       const x = t.textContent.trim();
-      if (x === "Raqi") { const v = provider(cardOf(t)); if (v !== x) t.textContent = v; }
-      else if (x === "Bill" && p.billingTitle) t.textContent = p.billingTitle;
+      if (x === "Raqi") { const v = provider(cardOf(t)); if (v !== x) { t.textContent = v; widen(t); } }
+      else if (x === "Bill" && p.billingTitle) { t.textContent = p.billingTitle; widen(t); }
     });
     const h = document.querySelector("#mr h3"), pv = provider(lastCard);
     if (h && h.textContent.trim() !== pv) h.textContent = pv;
