@@ -9,7 +9,7 @@ export function mountEditModals(t="Edit Form"){if($("mh"))return;window.MD=md;do
 export const renderEditList=(hc,mx,w)=>{$("hl").innerHTML=hc.map((c,i)=>`<div class="lr"><span class="ar${i?"":" off"}" onclick="HM(${i},-1)">▲</span><span class="ar${i<hc.length-1?"":" off"}" onclick="HM(${i},1)">▼</span><span class="nm">${ES(c.n)}</span>${w?`<select class="ws" onchange="HW(${i},this.value)">${[1,2,3,4].map(n=>`<option${n==c.w?" selected":""}>${n}</option>`).join("")}</select>`:""}<span class="ed" onclick="HE(${i})">✎</span></div>`).join("")+(hc.length<mx?`<div class="lr la" onclick="HE(-1)">+</div>`:"")};
 export function createFormEditor({defaults:D0,max:mx=12,get:gt,apply:ap,save:sv}){const D=D0.map(([k,n,w])=>({k,n,w:w||(k=="name"||k=="items"?1:2)})),WS={},FK={pName:"name",phone:"phone",gBtn:"gender",addrVal:"addr",ageInput:"age",timeVal:"time",dateInput:"date"},paint=()=>{const f=$("ff");f&&f.querySelectorAll(":scope>:not(.rc-row-2),:scope>.rc-row-2>*").forEach(e=>{const m=e.querySelector("#pName,#phone,#gBtn,#addrVal,#ageInput,#timeVal,#dateInput,[data-x]"),w=WS[e.dataset.k||m&&(FK[m.id]||m.dataset.x)];w&&(e.style.gridColumn="span "+12/w)})};let hc=[],ce=-1;const parse=s=>{const r=(s||"").split("|").filter(Boolean).map(z=>{const i=z.indexOf(":"),[k,w]=z.slice(0,i).split("~");return{k,n:z.slice(i+1),w:+w}}).filter(z=>z.n&&(D.some(d=>d.k==z.k)||/^c[a-z0-9]+$/.test(z.k)));r.forEach(z=>z.w>0&&z.w<5||(z.w=(D.find(d=>d.k==z.k)||{w:2}).w));D.forEach(d=>r.some(z=>z.k==d.k)||r.push({...d,n:mtFieldName(d.k)||d.n}));r.forEach(z=>{z.k=="name"&&(z.w=1);WS[z.k]=z.w});return r},RL=()=>renderEditList(hc,mx,1);mountEditModals();$("ff")&&new MutationObserver(paint).observe($("ff"),{childList:true});Object.assign(window,{MD:md,EF:()=>{hc=gt().map(z=>({...z}));RL();md("mh",1)},HW:(i,v)=>{hc[i].w=+v},HM:(i,d)=>{hc[i+d]&&([hc[i],hc[i+d]]=[hc[i+d],hc[i]],RL())},HE:i=>{ce=i;$("it").textContent=i<0?"Add Field":"Edit Field";$("in").value=i<0?"":hc[i].n;$("id").style.display=i>=0&&hc[i].k[0]=="c"?"":"none";md("mi",1);$("in").focus()},FS:()=>{const n=$("in").value.trim().replace(/[|\s]+/g," ");if(!n)return alert("Enter name");ce<0?hc.push({k:"c"+Date.now().toString(36),n,w:2}):hc[ce].n=n;md("mi",0);RL()},FD:()=>{confirm("Delete?")&&(hc.splice(ce,1),md("mi",0),RL())},HV:async()=>{try{await sv(hc.map(z=>z.k+"~"+z.w+":"+z.n).join("|"));hc.forEach(z=>WS[z.k]=z.w);ap(hc);paint();md("mh",0)}catch(e){ER(e)}}});return{parse}}
 export async function addLogos(root,u,ids){const url=u.logoUrl||u.logo||u.centerLogo||"";root.classList.toggle("hasLogo",!!url);for(const d of ids){let w=$(d);w||(w=new Image,w.id=d,w.className=/WM$/.test(d)?"wm":"lg",w.crossOrigin="anonymous",root.appendChild(w));if(!url){w.style.display="none";continue}await new Promise(r=>{w.onload=w.onerror=r,w.src=url});w.style.display=w.naturalWidth?"block":"none"}}
-export const getExtras=p=>{const o={...p};document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=i.value.trim();t?o[i.dataset.x]=t:delete o[i.dataset.x]});return o},setExtras=x=>{x&&document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=x[i.dataset.x];t&&(i.value=t)})};
+export const getExtras=p=>{const o={...p};document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=i.value.trim();t?o[i.dataset.x]=t:delete o[i.dataset.x]});window.__rcDoctor&&(o.doctor=window.__rcDoctor);return o},setExtras=x=>{x&&document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=x[i.dataset.x];t&&(i.value=t)})};
 function fitMenu(m){const g=m.closest("#ff");if(!g||!m.classList.contains("rc-dd-grid"))return;const a=m.parentElement.getBoundingClientRect(),b=g.getBoundingClientRect(),s=m.style;s.width=b.width+"px";s.left=b.left-a.left+"px";s.right="auto"}
 export async function RQ(ref,list,name){name=(name||"").trim();if(!name||list.some(x=>x.toLowerCase()===name.toLowerCase()))return list;const nl=[...list,name];await UPD(ref,{raqiList:nl});return nl}
 export const MY=(c,k,v)=>QU(CO(db,c),WH(k,"==",v));export{CO,DO,GD,AD,UPD as UP,DL,ON};
@@ -385,12 +385,13 @@ function mountMgmtSelect() {
       return rows + '<div class="item-add-row"><span data-dadd="1">+</span></div>';
     };
     const paint = () => {
-      const menu = document.getElementById("docMenu"), btn = document.getElementById("docBtn"), val = document.getElementById("docVal");
-      if (!menu || !btn || !val) return;
+      window.__rcDoctor = selected;
+      const menu = document.getElementById("docMenu"), btn = document.getElementById("docBtn");
+      if (!menu || !btn) return;
       menu.innerHTML = menuHTML();
-      btn.textContent = selected || (mtPreset().doctor || "Doctor");
-      btn.classList.toggle("selected", !!selected);
-      val.value = selected;
+      const shown = selected || (mtPreset().doctor || "Doctor");
+      btn.textContent = shown.length > 14 ? shown.slice(0, 13) + "…" : shown;
+      btn.title = shown;
     };
     const persist = async () => {
       const u = auth.currentUser;
@@ -403,7 +404,7 @@ function mountMgmtSelect() {
       const wrap = document.createElement("div");
       wrap.className = "rc-chip-dd";
       wrap.id = "docChipDD";
-      wrap.innerHTML = '<span class="rc-chip" id="docBtn">Doctor</span><div class="rc-dd-menu" id="docMenu"></div><input type="hidden" data-x="doctor" id="docVal">';
+      wrap.innerHTML = '<span class="rc-chip selected" id="docBtn">Doctor</span><div class="rc-dd-menu" id="docMenu"></div>';
       if (tc.style.display === "none") {
         tc.querySelectorAll(".rc-chip-dd").forEach(x => { x.style.display = "none"; });
         tc.style.display = "flex";
@@ -431,7 +432,16 @@ function mountMgmtSelect() {
 
     document.addEventListener("click", e => {
       const menu = document.getElementById("docMenu");
-      if (e.target.closest("#docBtn")) { toggleDropdown(menu); return; }
+      if (e.target.closest("#docBtn")) {
+        toggleDropdown(menu);
+        if (menu.classList.contains("open")) {
+          menu.style.right = "0px";
+          const rc = menu.getBoundingClientRect(), vw = document.documentElement.clientWidth;
+          if (rc.left < 8) menu.style.right = (rc.left - 8) + "px";
+          else if (rc.right > vw - 8) menu.style.right = (rc.right - vw + 8) + "px";
+        }
+        return;
+      }
       if (!e.target.closest("#docMenu")) return;
       const ed = e.target.closest("[data-ei]"), nm = e.target.closest("[data-di]"), ad = e.target.closest("[data-dadd]");
       if (ed) { e.stopPropagation(); openDocModal(+ed.dataset.ei); }
