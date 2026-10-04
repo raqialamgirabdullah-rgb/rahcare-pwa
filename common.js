@@ -556,3 +556,36 @@ function mtSelectSync(v) {
   document.addEventListener("visibilitychange", () => { if (!document.hidden) beat(); });
   beat();
 })();
+
+/* ===== ম্যানেজমেন্ট টাইপ অনুযায়ী ড্যাশবোর্ড কলামের নাম (স্বয়ংক্রিয়) ===== */
+(function dynColumns() {
+  let lastCard = "", raf = 0;
+  const cardOf = el => {
+    const cs = el && el.closest && el.closest(".cs"), sp = cs && cs.querySelector(".ch>span");
+    return sp && sp.firstChild ? sp.firstChild.textContent.trim() : "";
+  };
+  const provider = card => mtPreset().doctor || (/^hijama/i.test(card) ? "Therapist" : "Raqi");
+  const run = () => {
+    const p = mtPreset();
+    document.querySelectorAll("th").forEach(t => {
+      const x = t.textContent.trim();
+      if (x === "Raqi") { const v = provider(cardOf(t)); if (v !== x) t.textContent = v; }
+      else if (x === "Bill" && p.billingTitle) t.textContent = p.billingTitle;
+    });
+    const h = document.querySelector("#mr h3"), pv = provider(lastCard);
+    if (h && h.textContent.trim() !== pv) h.textContent = pv;
+  };
+  const start = () => {
+    new MutationObserver(() => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => { raf = 0; run(); });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+    document.addEventListener("rc-preset", run);
+    document.addEventListener("click", e => {
+      const b = e.target.closest && e.target.closest(".name-btn");
+      if (b) { lastCard = cardOf(b); run(); }
+    }, true);
+    run();
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", start) : start();
+})();
