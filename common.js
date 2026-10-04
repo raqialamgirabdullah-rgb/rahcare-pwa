@@ -277,20 +277,3 @@ export function mountEditModeToggles(containerId) {
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
-
-/* imgbb আপলোড: পেজ সরাসরি imgbb-কে ডাকলেও অনুরোধ Cloudflare Worker-এ যায়; কী Worker-এর সিক্রেটে থাকে */
-(function imgbbProxy() {
-  const WORKER = "https://rahcare-upload.raqialamgirabdullah.workers.dev/";
-  const orig = window.fetch.bind(window);
-  window.fetch = async (input, init) => {
-    const url = typeof input === "string" ? input : (input && input.url) || "";
-    if (url.startsWith("https://api.imgbb.com/1/upload")) {
-      const user = auth.currentUser;
-      if (!user) return new Response(JSON.stringify({ success: false, error: { message: "Login required" } }), { status: 401 });
-      const tk = await user.getIdToken();
-      const headers = Object.assign({}, (init && init.headers) || {}, { Authorization: "Bearer " + tk });
-      return orig(WORKER, Object.assign({}, init, { headers }));
-    }
-    return orig(input, init);
-  };
-})();
