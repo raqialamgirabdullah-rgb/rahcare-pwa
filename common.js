@@ -218,7 +218,7 @@ function detectEditPage() {
   const hit = EDIT_PAGES.find(([k]) => path.includes(k));
   return hit ? hit[0] : null;
 }
-/* Report পেজে কল করুন: mountEditModeToggles("editModeBox") */
+/* Report পেজে কল করুন: mountEditModeToggles("editModeBox") — একটাই টগল, অন করলে পুরো সাইটের সব পেজে এডিট মোড চালু */
 export function mountEditModeToggles(containerId) {
   const box = document.getElementById(containerId);
   if (!box) return;
@@ -226,8 +226,6 @@ export function mountEditModeToggles(containerId) {
     const st = document.createElement("style");
     st.id = "em-style";
     st.textContent =
-      ".em-row{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid #e5e7eb;font-size:13px;font-weight:600}" +
-      ".em-row.em-all{font-weight:700;color:#4f46e5;border-bottom:2px solid #e5e7eb}" +
       ".em-sw{position:relative;display:inline-block;width:38px;height:20px;flex-shrink:0;cursor:pointer}" +
       ".em-sw input{opacity:0;width:0;height:0;position:absolute}" +
       ".em-sl{position:absolute;inset:0;background:#ccc;transition:.2s;border-radius:20px}" +
@@ -236,19 +234,9 @@ export function mountEditModeToggles(containerId) {
       ".em-sw input:checked+.em-sl:before{transform:translateX(18px)}";
     document.head.appendChild(st);
   }
-  const row = (id, label, cls) =>
-    '<div class="em-row ' + (cls || "") + '"><span>' + label + '</span><label class="em-sw"><input type="checkbox" id="' + id + '"><span class="em-sl"></span></label></div>';
-  box.innerHTML =
-    row("em-all", "✎ All Edit", "em-all") +
-    EDIT_PAGES.map(([k, n]) => row("em-" + k, n)).join("");
+  box.innerHTML = '<label class="em-sw"><input type="checkbox" id="em-all"><span class="em-sl"></span></label>';
   const all = document.getElementById("em-all");
-  const sync = () => {
-    EDIT_PAGES.forEach(([k]) => { document.getElementById("em-" + k).checked = getEditMode(k); });
-    all.checked = EDIT_PAGES.every(([k]) => getEditMode(k));
-  };
-  EDIT_PAGES.forEach(([k]) => {
-    document.getElementById("em-" + k).addEventListener("change", e => { setEditMode(k, e.target.checked); sync(); });
-  });
+  const sync = () => { all.checked = EDIT_PAGES.every(([k]) => getEditMode(k)); };
   all.addEventListener("change", e => {
     EDIT_PAGES.forEach(([k]) => setEditMode(k, e.target.checked));
     sync();
@@ -265,11 +253,10 @@ export function mountEditModeToggles(containerId) {
     if (!wrap || document.getElementById("editModeBox")) return;
     const card = document.createElement("div");
     card.className = "wrap";
-    card.innerHTML = '<div class="sec"><div class="sec-title">✎ Edit Mode</div><div id="editModeBox"></div></div>';
+    card.innerHTML = '<div class="sec" style="margin-bottom:0"><div class="sec-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0"><span>✎ Edit Mode</span><span id="editModeBox"></span></div></div>';
     const second = wrap.querySelectorAll(":scope > .wrap")[1];
     second ? wrap.insertBefore(card, second) : wrap.appendChild(card);
     mountEditModeToggles("editModeBox");
-    mountMgmtSelect();
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
@@ -407,31 +394,11 @@ r(auth, async u => {
     mtSelectSync(s.exists() ? s.data().managementType : "");
   } catch (e) { console.error(e); }
 });
-/* Report পেজে টাইপ বদলানোর সিলেক্ট (Edit Mode কার্ডের ভেতরে) */
+/* Report পেজে টাইপ সিঙ্ক (সিলেক্ট কার্ড থেকে সরানো হয়েছে; টাইপ সেভ করা সেটিং থেকেই চলে) */
 function mtSelectSync(v) {
   MT_SEL_VAL = String(v || "").toLowerCase().trim() || "patient";
   const sel = document.getElementById("mtSel");
   if (sel) sel.value = LB_PRESETS[MT_SEL_VAL] ? MT_SEL_VAL : "patient";
-}
-function mountMgmtSelect() {
-  const box = document.getElementById("editModeBox");
-  if (!box || document.getElementById("mtSel")) return;
-  const row = document.createElement("div");
-  row.className = "em-row";
-  row.innerHTML = '<span>Management Type</span><select id="mtSel" style="font-size:13px;padding:4px 8px;border:1px solid #cbd5e1;border-radius:4px;background:#fff">' +
-    Object.keys(LB_PRESETS).map(k => '<option value="' + k + '">' + k.charAt(0).toUpperCase() + k.slice(1) + '</option>').join("") + '</select>';
-  box.appendChild(row);
-  const sel = row.querySelector("select");
-  sel.value = LB_PRESETS[MT_SEL_VAL] ? MT_SEL_VAL : "patient";
-  sel.addEventListener("change", async () => {
-    const u = auth.currentUser;
-    if (!u) return alert("Login required");
-    try {
-      await UPD(DO(db, "users", u.uid), { managementType: sel.value });
-      mtSetType(sel.value);
-      alert("Saved. Other pages will update when opened.");
-    } catch (e) { console.error(e); alert("Save failed: " + e.message); }
-  });
 }
 /* ===== ম্যানেজমেন্ট টাইপ শেষ ===== */
 
