@@ -277,3 +277,112 @@ export function mountEditModeToggles(containerId) {
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
 })();
+
+/* ===== Doctor চিপ (Appointment পেজ): Name-এর ডান পাশে, ড্রপডাউনে নাম যোগ/এডিট/ডিলিট (শুধু এডিট মোডে) ===== */
+(function doctorChip() {
+  const start = () => {
+    if (detectEditPage() !== "appointment") return;
+    const ff = document.getElementById("ff");
+    if (!ff) return;
+    let list = [], selected = "", editIdx = -1;
+
+    const menuHTML = () => {
+      const rows = list.length
+        ? list.map((n, i) =>
+            '<div class="item-row"><span class="doc-name' + (n === selected ? " checked" : "") + '" data-di="' + i + '">' + ES(n) +
+            '</span><span class="edit-ic" data-ei="' + i + '">&#9998;</span></div>').join("")
+        : '<div class="item-row"><span class="doc-empty">No doctor added</span></div>';
+      return rows + '<div class="item-add-row"><span data-dadd="1">+</span></div>';
+    };
+    const paint = () => {
+      const menu = document.getElementById("docMenu"), btn = document.getElementById("docBtn"), val = document.getElementById("docVal");
+      if (!menu || !btn || !val) return;
+      menu.innerHTML = menuHTML();
+      btn.textContent = selected || "Doctor";
+      btn.classList.toggle("selected", !!selected);
+      val.value = selected;
+    };
+    const persist = async () => {
+      const u = auth.currentUser;
+      if (!u) return alert("Login required");
+      try { await UPD(DO(db, "users", u.uid), { doctorList: list }); } catch (err) { console.error(err); alert("Save failed: " + err.message); }
+    };
+    const inject = () => {
+      const tc = document.getElementById("tcInline");
+      if (!tc || document.getElementById("docChipDD")) return;
+      const wrap = document.createElement("div");
+      wrap.className = "rc-chip-dd";
+      wrap.id = "docChipDD";
+      wrap.innerHTML = '<span class="rc-chip" id="docBtn">Doctor</span><div class="rc-dd-menu" id="docMenu"></div><input type="hidden" data-x="doctor" id="docVal">';
+      if (tc.style.display === "none") {
+        tc.querySelectorAll(".rc-chip-dd").forEach(x => { x.style.display = "none"; });
+        tc.style.display = "flex";
+      }
+      tc.appendChild(wrap);
+      selected = "";
+      paint();
+    };
+
+    document.body.insertAdjacentHTML("beforeend",
+      '<div class="rc-modal" id="docModal"><div class="rc-modal-box"><h3 id="docModalTitle">Add Doctor</h3>' +
+      '<input class="rc-input" id="docModalName" placeholder="Doctor name" autocomplete="off">' +
+      '<div class="rc-modal-actions" style="margin-top:14px"><button class="c-no" id="docDel" type="button" hidden>Delete</button>' +
+      '<button class="c-no" id="docCancel" type="button">Cancel</button>' +
+      '<button class="rc-btn rc-btn-primary" style="flex:1" id="docSave" type="button">Save</button></div></div></div>');
+    const nameInput = document.getElementById("docModalName");
+    const openDocModal = idx => {
+      editIdx = idx;
+      document.getElementById("docModalTitle").textContent = idx >= 0 ? "Edit Doctor" : "Add Doctor";
+      nameInput.value = idx >= 0 ? list[idx] : "";
+      document.getElementById("docDel").hidden = idx < 0;
+      openModal("docModal");
+      nameInput.focus();
+    };
+
+    document.addEventListener("click", e => {
+      const menu = document.getElementById("docMenu");
+      if (e.target.closest("#docBtn")) { toggleDropdown(menu); return; }
+      if (!e.target.closest("#docMenu")) return;
+      const ed = e.target.closest("[data-ei]"), nm = e.target.closest("[data-di]"), ad = e.target.closest("[data-dadd]");
+      if (ed) { e.stopPropagation(); openDocModal(+ed.dataset.ei); }
+      else if (ad) { e.stopPropagation(); openDocModal(-1); }
+      else if (nm) {
+        const name = list[+nm.dataset.di];
+        selected = selected === name ? "" : name;
+        paint();
+        menu.classList.remove("open");
+      }
+    });
+    document.getElementById("docCancel").onclick = () => closeModal("docModal");
+    document.getElementById("docSave").onclick = async () => {
+      const name = nameInput.value.trim().replace(/\s+/g, " ");
+      if (!name) return alert("Enter name");
+      if (list.some((n, i) => i !== editIdx && n.toLowerCase() === name.toLowerCase())) return alert("Name exists");
+      if (editIdx >= 0) { if (selected === list[editIdx]) selected = name; list[editIdx] = name; }
+      else list.push(name);
+      await persist();
+      paint();
+      closeModal("docModal");
+    };
+    document.getElementById("docDel").onclick = async () => {
+      if (editIdx < 0 || !confirm("Delete?")) return;
+      if (selected === list[editIdx]) selected = "";
+      list.splice(editIdx, 1);
+      await persist();
+      paint();
+      closeModal("docModal");
+    };
+
+    new MutationObserver(inject).observe(ff, { childList: true });
+    inject();
+    r(auth, async u => {
+      if (!u) return;
+      try {
+        const s = await GD(DO(db, "users", u.uid));
+        if (s.exists() && Array.isArray(s.data().doctorList)) list = s.data().doctorList.slice();
+      } catch (err) { console.error(err); }
+      paint();
+    });
+  };
+  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", start) : start();
+})();
