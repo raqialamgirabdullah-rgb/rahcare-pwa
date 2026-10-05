@@ -9,7 +9,7 @@ export function mountEditModals(t="Edit Form"){if($("mh"))return;window.MD=md;do
 export const renderEditList=(hc,mx,w)=>{$("hl").innerHTML=hc.map((c,i)=>`<div class="lr"><span class="ar${i?"":" off"}" onclick="HM(${i},-1)">▲</span><span class="ar${i<hc.length-1?"":" off"}" onclick="HM(${i},1)">▼</span><span class="nm">${ES(c.n)}</span>${w?`<select class="ws" onchange="HW(${i},this.value)">${[1,2,3,4].map(n=>`<option${n==c.w?" selected":""}>${n}</option>`).join("")}</select>`:""}<span class="ed" onclick="HE(${i})">✎</span></div>`).join("")+(hc.length<mx?`<div class="lr la" onclick="HE(-1)">+</div>`:"")};
 export function createFormEditor({defaults:D0,max:mx=12,get:gt,apply:ap,save:sv}){const D=D0.map(([k,n,w])=>({k,n,w:w||(k=="name"||k=="items"?1:2)})),WS={},FK={pName:"name",phone:"phone",gBtn:"gender",addrVal:"addr",ageInput:"age",timeVal:"time",dateInput:"date"},paint=()=>{const f=$("ff");f&&f.querySelectorAll(":scope>:not(.rc-row-2),:scope>.rc-row-2>*").forEach(e=>{const m=e.querySelector("#pName,#phone,#gBtn,#addrVal,#ageInput,#timeVal,#dateInput,[data-x]"),w=WS[e.dataset.k||m&&(FK[m.id]||m.dataset.x)];w&&(e.style.gridColumn="span "+12/w)})};let hc=[],ce=-1,RAW="";const parse=s=>{s==null||(RAW=s);const fk=detectEditPage();fk&&FORM_DEFAULT[fk]&&(s="");const r=(s||"").split("|").filter(Boolean).map(z=>{const i=z.indexOf(":"),[k,w]=z.slice(0,i).split("~");return{k,n:z.slice(i+1),w:+w}}).filter(z=>z.n&&(D.some(d=>d.k==z.k)||/^c[a-z0-9]+$/.test(z.k)));r.forEach(z=>z.w>0&&z.w<5||(z.w=(D.find(d=>d.k==z.k)||{w:2}).w));D.forEach(d=>r.some(z=>z.k==d.k)||r.push({...d,n:mtFieldName(d.k)||d.n}));r.forEach(z=>{z.k=="name"&&(z.w=1);WS[z.k]=z.w});return r},RL=()=>renderEditList(hc,mx,1);mountEditModals();$("ff")&&new MutationObserver(paint).observe($("ff"),{childList:true});Object.assign(window,{MD:md,EF:()=>{hc=gt().map(z=>({...z}));RL();md("mh",1)},HW:(i,v)=>{hc[i].w=+v},HM:(i,d)=>{hc[i+d]&&([hc[i],hc[i+d]]=[hc[i+d],hc[i]],RL())},HE:i=>{ce=i;$("it").textContent=i<0?"Add Field":"Edit Field";$("in").value=i<0?"":hc[i].n;$("id").style.display=i>=0&&hc[i].k[0]=="c"?"":"none";md("mi",1);$("in").focus()},FS:()=>{const n=$("in").value.trim().replace(/[|\s]+/g," ");if(!n)return alert("Enter name");ce<0?hc.push({k:"c"+Date.now().toString(36),n,w:2}):hc[ce].n=n;md("mi",0);RL()},FD:()=>{confirm("Delete?")&&(hc.splice(ce,1),md("mi",0),RL())},HV:async()=>{try{const str=hc.map(z=>z.k+"~"+z.w+":"+z.n).join("|");await sv(str);RAW=str;const fk=detectEditPage();if(fk&&FORM_DEFAULT[fk]){FORM_DEFAULT[fk]=false;try{await UPD(DO(db,"users",auth.currentUser.uid),{["formDefault."+fk]:false})}catch(x){console.error(x)}}hc.forEach(z=>WS[z.k]=z.w);ap(hc);paint();md("mh",0)}catch(e){ER(e)}},__rcFormMode:()=>{const rows=parse(RAW);ap(rows);hc=gt().map(z=>({...z}));RL()}});return{parse}}
 export async function addLogos(root,u,ids){const url=u.logoUrl||u.logo||u.centerLogo||"";root.classList.toggle("hasLogo",!!url);for(const d of ids){let w=$(d);w||(w=new Image,w.id=d,w.className=/WM$/.test(d)?"wm":"lg",w.crossOrigin="anonymous",root.appendChild(w));if(!url){w.style.display="none";continue}await new Promise(r=>{w.onload=w.onerror=r,w.src=url});w.style.display=w.naturalWidth?"block":"none"}}
-export const getExtras=p=>{const o={...p};document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=i.value.trim();t?o[i.dataset.x]=t:delete o[i.dataset.x]});window.__rcDoctor&&(o.doctor=window.__rcDoctor);return o},setExtras=x=>{x&&document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=x[i.dataset.x];t&&(i.value=t)})};
+export const getExtras=p=>{const o={...p};document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=i.value.trim();t?o[i.dataset.x]=t:delete o[i.dataset.x]});window.__rcDoctor&&(o.doctor=window.__rcDoctor,o.raqi=window.__rcDoctor);return o},setExtras=x=>{x&&document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=x[i.dataset.x];t&&(i.value=t)})};
 function fitMenu(m){const g=m.closest("#ff");if(!g||!m.classList.contains("rc-dd-grid"))return;const a=m.parentElement.getBoundingClientRect(),b=g.getBoundingClientRect(),s=m.style;s.width=b.width+"px";s.left=b.left-a.left+"px";s.right="auto"}
 export async function RQ(ref,list,name){name=(name||"").trim();if(!name||list.some(x=>x.toLowerCase()===name.toLowerCase()))return list;const nl=[...list,name];await UPD(ref,{raqiList:nl});return nl}
 export const MY=(c,k,v)=>QU(CO(db,c),WH(k,"==",v));export{CO,DO,GD,AD,DL,ON};
@@ -136,7 +136,7 @@ export function createLabels(data, save) {
       const p = mk("span", "lb-ed", "✎");
       p.dataset.k = k;
       p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editOne(k); };
-      if (e.tagName === "INPUT") e.after(p); else e.appendChild(p);
+      if (e.tagName === "INPUT" || e.tagName === "BUTTON") e.after(p); else e.appendChild(p);
     });
     const shown = new Set([...document.querySelectorAll(".lb-ed")].map(e => e.dataset.k));
     const keys = (LB_PAGES[curPage] || []).filter(k => !shown.has(k));
@@ -420,20 +420,39 @@ function mtSelectSync(v) {
 }
 /* ===== ম্যানেজমেন্ট টাইপ শেষ ===== */
 
-/* ===== Doctor চিপ (Appointment পেজ): Name-এর ডান পাশে, ড্রপডাউনে নাম যোগ/এডিট/ডিলিট (শুধু এডিট মোডে) ===== */
+/* ===== Raqi / Therapist চিপ (Appointment পেজ): Ruqyah = Raqi তালিকা, Hijama = Therapist তালিকা (আলাদা); নাম যোগ/এডিট এডিট মোড ছাড়াই ===== */
 (function doctorChip() {
   const start = () => {
     if (detectEditPage() !== "appointment") return;
     const ff = document.getElementById("ff");
     if (!ff) return;
-    let list = [], selected = "", editIdx = -1;
+    const lists = { raqi: [], th: [] };
+    let selected = "", editIdx = -1, editKey = "raqi", loaded = false;
+
+    const st = document.createElement("style");
+    st.textContent = "body:not(.lb-on) #docMenu .edit-ic{display:inline-block!important}body:not(.lb-on) #docMenu .item-add-row{display:flex!important}";
+    document.head.appendChild(st);
+
+    const cats = () => window.selectedCategories || new Set(["Ruqyah"]);
+    const kind = () => { const c = cats(); return c.has("Hijama") ? (c.has("Ruqyah") ? "both" : "th") : "raqi"; };
+    const labelOf = () => mtPreset().doctor || ({ th: "Therapist", both: "Raqi/Therapist", raqi: "Raqi" })[kind()];
+    const uniq = a => { const seen = new Set(), o = []; a.forEach(n => { const k = String(n).toLowerCase(); if (!seen.has(k)) { seen.add(k); o.push(n); } }); return o; };
+    const items = () => {
+      const k = kind();
+      const r = lists.raqi.map((n, i) => ({ n, key: "raqi", i })), t = lists.th.map((n, i) => ({ n, key: "th", i }));
+      if (k === "th") return t;
+      if (k === "both") { const have = new Set(r.map(x => x.n.toLowerCase())); return r.concat(t.filter(x => !have.has(x.n.toLowerCase()))); }
+      return r;
+    };
+    const addKey = () => (kind() === "th" ? "th" : "raqi");
 
     const menuHTML = () => {
-      const rows = list.length
-        ? list.map((n, i) =>
-            '<div class="item-row"><span class="doc-name' + (n === selected ? " checked" : "") + '" data-di="' + i + '">' + ES(n) +
-            '</span><span class="edit-ic" data-ei="' + i + '">&#9998;</span></div>').join("")
-        : '<div class="item-row"><span class="doc-empty">No doctor added</span></div>';
+      const it = items();
+      const rows = it.length
+        ? it.map((o, j) =>
+            '<div class="item-row"><span class="doc-name' + (o.n === selected ? " checked" : "") + '" data-di="' + j + '">' + ES(o.n) +
+            '</span><span class="edit-ic" data-ei="' + j + '">&#9998;</span></div>').join("")
+        : '<div class="item-row"><span class="doc-empty">No name added</span></div>';
       return rows + '<div class="item-add-row"><span data-dadd="1">+</span></div>';
     };
     const paint = () => {
@@ -441,14 +460,15 @@ function mtSelectSync(v) {
       const menu = document.getElementById("docMenu"), btn = document.getElementById("docBtn");
       if (!menu || !btn) return;
       menu.innerHTML = menuHTML();
-      const shown = selected || (mtPreset().doctor || "Doctor");
+      const shown = selected || labelOf();
       btn.textContent = shown.length > 14 ? shown.slice(0, 13) + "…" : shown;
       btn.title = shown;
     };
     const persist = async () => {
       const u = auth.currentUser;
       if (!u) return alert("Login required");
-      try { await UPD(DO(db, "users", u.uid), { doctorList: list }); } catch (err) { console.error(err); alert("Save failed: " + err.message); }
+      if (!loaded) return alert("Loading, please try again");
+      try { await UPD(DO(db, "users", u.uid), { doctorList: lists.raqi, raqiList: lists.raqi, therapistList: lists.th }); } catch (err) { console.error(err); alert("Save failed: " + err.message); }
     };
     const inject = () => {
       const tc = document.getElementById("tcInline");
@@ -467,16 +487,18 @@ function mtSelectSync(v) {
     };
 
     document.body.insertAdjacentHTML("beforeend",
-      '<div class="rc-modal" id="docModal"><div class="rc-modal-box"><h3 id="docModalTitle">Add Doctor</h3>' +
-      '<input class="rc-input" id="docModalName" placeholder="Doctor name" autocomplete="off">' +
+      '<div class="rc-modal" id="docModal"><div class="rc-modal-box"><h3 id="docModalTitle">Add Raqi</h3>' +
+      '<input class="rc-input" id="docModalName" placeholder="Name" autocomplete="off">' +
       '<div class="rc-modal-actions" style="margin-top:14px"><button class="c-no" id="docDel" type="button" hidden>Delete</button>' +
       '<button class="c-no" id="docCancel" type="button">Cancel</button>' +
       '<button class="rc-btn rc-btn-primary" style="flex:1" id="docSave" type="button">Save</button></div></div></div>');
     const nameInput = document.getElementById("docModalName");
-    const openDocModal = idx => {
-      editIdx = idx;
-      document.getElementById("docModalTitle").textContent = (idx >= 0 ? "Edit " : "Add ") + (mtPreset().doctor || "Doctor");
-      nameInput.value = idx >= 0 ? list[idx] : "";
+    const openDocModal = (key, idx) => {
+      editKey = key; editIdx = idx;
+      const lb = mtPreset().doctor || (key === "th" ? "Therapist" : "Raqi");
+      document.getElementById("docModalTitle").textContent = (idx >= 0 ? "Edit " : "Add ") + lb;
+      nameInput.placeholder = lb + " name";
+      nameInput.value = idx >= 0 ? lists[key][idx] : "";
       document.getElementById("docDel").hidden = idx < 0;
       openModal("docModal");
       nameInput.focus();
@@ -496,11 +518,12 @@ function mtSelectSync(v) {
       }
       if (!e.target.closest("#docMenu")) return;
       const ed = e.target.closest("[data-ei]"), nm = e.target.closest("[data-di]"), ad = e.target.closest("[data-dadd]");
-      if (ed) { e.stopPropagation(); openDocModal(+ed.dataset.ei); }
-      else if (ad) { e.stopPropagation(); openDocModal(-1); }
+      if (ed) { e.stopPropagation(); const o = items()[+ed.dataset.ei]; if (o) openDocModal(o.key, o.i); }
+      else if (ad) { e.stopPropagation(); openDocModal(addKey(), -1); }
       else if (nm) {
-        const name = list[+nm.dataset.di];
-        selected = selected === name ? "" : name;
+        const o = items()[+nm.dataset.di];
+        if (!o) return;
+        selected = selected === o.n ? "" : o.n;
         paint();
         menu.classList.remove("open");
       }
@@ -509,30 +532,41 @@ function mtSelectSync(v) {
     document.getElementById("docSave").onclick = async () => {
       const name = nameInput.value.trim().replace(/\s+/g, " ");
       if (!name) return alert("Enter name");
-      if (list.some((n, i) => i !== editIdx && n.toLowerCase() === name.toLowerCase())) return alert("Name exists");
-      if (editIdx >= 0) { if (selected === list[editIdx]) selected = name; list[editIdx] = name; }
-      else list.push(name);
+      const arr = lists[editKey];
+      if (arr.some((n, i) => i !== editIdx && n.toLowerCase() === name.toLowerCase())) return alert("Name exists");
+      if (editIdx >= 0) { if (selected === arr[editIdx]) selected = name; arr[editIdx] = name; }
+      else { arr.push(name); selected = name; }
       await persist();
       paint();
       closeModal("docModal");
     };
     document.getElementById("docDel").onclick = async () => {
       if (editIdx < 0 || !confirm("Delete?")) return;
-      if (selected === list[editIdx]) selected = "";
-      list.splice(editIdx, 1);
+      const arr = lists[editKey];
+      if (selected === arr[editIdx]) selected = "";
+      arr.splice(editIdx, 1);
       await persist();
       paint();
       closeModal("docModal");
     };
 
     document.addEventListener("rc-preset", () => { paint(); });
+    document.addEventListener("rc-cat", () => {
+      if (selected && !items().some(o => o.n === selected)) selected = "";
+      paint();
+    });
     new MutationObserver(inject).observe(ff, { childList: true });
     inject();
     r(auth, async u => {
       if (!u) return;
       try {
         const s = await GD(DO(db, "users", u.uid));
-        if (s.exists() && Array.isArray(s.data().doctorList)) list = s.data().doctorList.slice();
+        if (s.exists()) {
+          const d = s.data();
+          lists.raqi = uniq([...(Array.isArray(d.doctorList) ? d.doctorList : []), ...(Array.isArray(d.raqiList) ? d.raqiList : [])]);
+          lists.th = Array.isArray(d.therapistList) ? d.therapistList.slice() : [];
+        }
+        loaded = true;
       } catch (err) { console.error(err); }
       paint();
     });
