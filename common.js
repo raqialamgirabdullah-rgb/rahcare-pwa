@@ -61,6 +61,7 @@ const LB_PAGES = {
   billing: ["billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
 };
 
+const LB_SHOW_MSGS = false; /* true করলে Edit Mode-এ নিচে "Messages & hidden texts" সারি আবার দেখাবে */
 export function createLabels(data, save) {
   data = data || {};
   if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); }
@@ -136,11 +137,13 @@ export function createLabels(data, save) {
       const p = mk("span", "lb-ed", "✎");
       p.dataset.k = k;
       p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editOne(k); };
-      if (e.tagName === "INPUT" || e.tagName === "BUTTON") e.after(p); else e.appendChild(p);
+      if (e.tagName === "INPUT") e.after(p);
+      else if (e.tagName === "BUTTON" && e.closest(".footer-form,.bill-foot")) { if (e.classList.contains("rc-btn-secondary")) e.before(p); else e.after(p); }
+      else e.appendChild(p);
     });
     const shown = new Set([...document.querySelectorAll(".lb-ed")].map(e => e.dataset.k));
     const keys = (LB_PAGES[curPage] || []).filter(k => !shown.has(k));
-    if (!keys.length) return;
+    if (!LB_SHOW_MSGS || !keys.length) return;
     const bar = mk("div", "lb-msgs");
     bar.appendChild(mk("div", "lb-msgs-h", "✎ Messages & hidden texts"));
     keys.forEach(k => {
@@ -184,7 +187,7 @@ export function createLabels(data, save) {
   /* পেজ লুকানো অবস্থায় (লোড হওয়ার আগে) এডিট মোড রিস্টোর হলে ✎ বসতে পারে না; পেজ দেখা গেলেই বাকি ✎ বসিয়ে দেয় */
   const missing = () => [...document.querySelectorAll("[data-l],[data-lp]")].some(e =>
     e.offsetParent !== null &&
-    !(e.tagName === "INPUT" ? (e.nextElementSibling && e.nextElementSibling.classList.contains("lb-ed")) : e.querySelector(".lb-ed")));
+    !(e.querySelector(".lb-ed") || [e.previousElementSibling, e.nextElementSibling].some(x => x && x.classList && x.classList.contains("lb-ed") && x.dataset.k === (e.dataset.l || e.dataset.lp))));
   let wobs = null, wt = 0;
   const watch = () => {
     if (!on) { if (wobs) { wobs.disconnect(); wobs = null; } return; }
