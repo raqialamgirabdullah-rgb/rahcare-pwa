@@ -4,6 +4,8 @@
 (function () {
   var cs = document.currentScript;
   if (!cs) return;
+  /* Install-App প্রম্পট দেরিতে ধরা পড়লে হারিয়ে যায়, তাই লোডারই সবার আগে ধরে রাখে */
+  try { addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); window.__bip = e; dispatchEvent(new Event("bip")); }); } catch (e) {}
   var name = cs.getAttribute("data-page");
   var base = cs.src.replace(/[^\/]*$/, "");
   var beta = false;
