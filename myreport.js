@@ -40,7 +40,7 @@ const ask=user=>new Promise(ok=>{const g=v("pwGate"),p=v("pwInput"),m=v("pwErr")
 const go=async()=>{if(!p.value)return;b.disabled=!0;m.textContent="";try{const u=getAuth().currentUser||user;await RA(u,EP.credential(u.email,p.value));g.style.display="none";ok()}catch{m.textContent="❌ Wrong password";p.value=""}b.disabled=!1;p.focus()};
 b.onclick=go;p.onkeydown=e=>e.key==="Enter"&&go()});
 const IMG={logo:["logoUrl","logoActive","Logo"],invoice:["invoiceTemplateUrl","invoiceActive","Invoice"],appointment:["appointmentTemplateUrl","appointmentActive","Appointment"]},
-UPLOAD_URL="https://api.imgbb.com/1/upload?key=3b6f46bb62a66593eb4ab3da0666e8d5",
+UPLOAD_URL="https://imgbb-proxy.raqialamgirabdullah.workers.dev",
 imgBox=v("imgBox");
 let uDoc=null;const UNF="User not found";
 const updU=async p=>{await UD(D(db,"users",uDoc),p);uData&&(Object.assign(uData,p),refreshManifest())},
