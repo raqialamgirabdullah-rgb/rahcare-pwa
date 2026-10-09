@@ -186,10 +186,10 @@ export function createLabels(data, save) {
   const pencils = () => {
     clearUI();
     document.querySelectorAll(".lb-sw").forEach(e => {
-      const p = mk("span", "lb-ed", "✎");
+      const p = mk("span", "lb-ed lb-ed-l", "✎");
       p.dataset.k = "__icon";
       p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editIcon(); };
-      e.after(p);
+      e.before(p);
     });
     document.querySelectorAll("[data-l],[data-lp]").forEach(e => {
       if (e.offsetParent === null) return;
