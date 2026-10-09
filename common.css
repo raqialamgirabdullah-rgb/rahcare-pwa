@@ -54,3 +54,4 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 .dashboard-container.dashboard-container:has(.category-section){padding-bottom:0}
 #dailyWrap>.category-section:last-child,#allMonthsWrap>.category-section:last-child{margin-bottom:0}
 .wrap>.sec:last-child{margin-bottom:0}
+.lr .hd{padding:4px 6px;font-size:15px;cursor:pointer}.lr.hid .nm{opacity:.45;text-decoration:line-through}.dd-tag{font-size:11px;color:#64748b;font-weight:400}select.rc-input{appearance:auto;background:#fff;cursor:pointer}.lb-btns{flex-wrap:wrap}.lb-btns .lb-b{flex:1 1 28%}

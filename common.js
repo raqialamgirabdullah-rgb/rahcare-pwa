@@ -5,9 +5,9 @@ ER=e=>{console.error(e);alert("Error")},
 ES=t=>(t+"").replace(/[&<>"]/g,z=>"&#"+z.charCodeAt(0)+";"),
 SM=(a,k)=>a.reduce((m,z)=>m+(z[k]||0),0),
 OD=t=>{const e=new Date;return e.setDate(e.getDate()+t),toISODate(e)};
-export function mountEditModals(t="Edit Form"){if($("mh"))return;window.MD=md;document.body.insertAdjacentHTML("beforeend",`<div id="mh" class="c-modal" onclick="MD('mh',0)"><div class="c-box" style="width:calc(100% - 32px);max-width:560px" onclick="event.stopPropagation()"><h3>${t}</h3><div id="hl" class="lb lbx"></div><div class="bx"><button class="c-no c-no-sm" onclick="MD('mh',0)">Cancel</button><button class="c-yes" onclick="HV()">Save</button></div></div></div><div id="mi" class="c-modal"><div class="c-box" style="width:calc(100% - 32px);max-width:300px"><h3 id="it"></h3><input class="rc-input" id="in" maxlength="40" autocomplete="off" style="margin-bottom:12px" onkeydown="event.key=='Enter'&&FS()"><div class="bx"><button class="c-no c-no-sm" id="id" onclick="FD()">Delete</button><button class="c-no c-no-sm" onclick="MD('mi',0)">Cancel</button><button class="c-yes" onclick="FS()">Save</button></div></div></div>`);const hl=$("hl");hl&&new MutationObserver(fmToggle).observe(hl,{childList:true})}
-export const renderEditList=(hc,mx,w)=>{$("hl").innerHTML=hc.map((c,i)=>`<div class="lr"><span class="ar${i?"":" off"}" onclick="HM(${i},-1)">▲</span><span class="ar${i<hc.length-1?"":" off"}" onclick="HM(${i},1)">▼</span><span class="nm">${ES(c.n)}</span>${w?`<select class="ws" onchange="HW(${i},this.value)">${[1,2,3,4].map(n=>`<option${n==c.w?" selected":""}>${n}</option>`).join("")}</select>`:""}<span class="ed" onclick="HE(${i})">✎</span></div>`).join("")+(hc.length<mx?`<div class="lr la" onclick="HE(-1)">+</div>`:"")};
-export function createFormEditor({defaults:D0,max:mx=12,get:gt,apply:ap,save:sv}){const D=D0.map(([k,n,w])=>({k,n,w:w||(k=="name"||k=="items"?1:2)})),WS={},FK={pName:"name",phone:"phone",gBtn:"gender",addrVal:"addr",ageInput:"age",timeVal:"time",dateInput:"date"},paint=()=>{const f=$("ff");f&&f.querySelectorAll(":scope>:not(.rc-row-2),:scope>.rc-row-2>*").forEach(e=>{const m=e.querySelector("#pName,#phone,#gBtn,#addrVal,#ageInput,#timeVal,#dateInput,[data-x]"),w=WS[e.dataset.k||m&&(FK[m.id]||m.dataset.x)];w&&(e.style.gridColumn="span "+12/w)})};let hc=[],ce=-1,RAW="";const parse=s=>{s==null||(RAW=s);const fk=detectEditPage();fk&&FORM_DEFAULT[fk]&&(s="");const r=(s||"").split("|").filter(Boolean).map(z=>{const i=z.indexOf(":"),[k,w]=z.slice(0,i).split("~");return{k,n:z.slice(i+1),w:+w}}).filter(z=>z.n&&(D.some(d=>d.k==z.k)||/^c[a-z0-9]+$/.test(z.k)));r.forEach(z=>z.w>0&&z.w<5||(z.w=(D.find(d=>d.k==z.k)||{w:2}).w));D.forEach(d=>r.some(z=>z.k==d.k)||r.push({...d,n:mtFieldName(d.k)||d.n}));r.forEach(z=>{z.k=="name"&&(z.w=1);WS[z.k]=z.w});return r},RL=()=>renderEditList(hc,mx,1);mountEditModals();$("ff")&&new MutationObserver(paint).observe($("ff"),{childList:true});Object.assign(window,{MD:md,EF:()=>{hc=gt().map(z=>({...z}));RL();md("mh",1)},HW:(i,v)=>{hc[i].w=+v},HM:(i,d)=>{hc[i+d]&&([hc[i],hc[i+d]]=[hc[i+d],hc[i]],RL())},HE:i=>{ce=i;$("it").textContent=i<0?"Add Field":"Edit Field";$("in").value=i<0?"":hc[i].n;$("id").style.display=i>=0&&hc[i].k[0]=="c"?"":"none";md("mi",1);$("in").focus()},FS:()=>{const n=$("in").value.trim().replace(/[|\s]+/g," ");if(!n)return alert("Enter name");ce<0?hc.push({k:"c"+Date.now().toString(36),n,w:2}):hc[ce].n=n;md("mi",0);RL()},FD:()=>{confirm("Delete?")&&(hc.splice(ce,1),md("mi",0),RL())},HV:async()=>{try{const str=hc.map(z=>z.k+"~"+z.w+":"+z.n).join("|");await sv(str);RAW=str;const fk=detectEditPage();if(fk&&FORM_DEFAULT[fk]){FORM_DEFAULT[fk]=false;try{await UPD(DO(db,"users",auth.currentUser.uid),{["formDefault."+fk]:false})}catch(x){console.error(x)}}hc.forEach(z=>WS[z.k]=z.w);ap(hc);paint();md("mh",0)}catch(e){ER(e)}},__rcFormMode:()=>{const rows=parse(RAW);ap(rows);hc=gt().map(z=>({...z}));RL()}});return{parse}}
+export function mountEditModals(t="Edit Form"){if($("mh"))return;window.MD=md;document.body.insertAdjacentHTML("beforeend",`<div id="mh" class="c-modal" onclick="MD('mh',0)"><div class="c-box" style="width:calc(100% - 32px);max-width:560px" onclick="event.stopPropagation()"><h3>${t}</h3><div id="hl" class="lb lbx"></div><div class="bx"><button class="c-no c-no-sm" onclick="MD('mh',0)">Cancel</button><button class="c-yes" onclick="HV()">Save</button></div></div></div><div id="mi" class="c-modal"><div class="c-box" style="width:calc(100% - 32px);max-width:300px"><h3 id="it"></h3><input class="rc-input" id="in" maxlength="40" autocomplete="off" style="margin-bottom:12px" onkeydown="event.key=='Enter'&&FS()"><div id="mt" style="display:none"><select class="rc-input" id="mty" onchange="MT()" style="margin-bottom:8px"><option value="t">Text field</option><option value="d">Dropdown (options)</option></select><textarea class="rc-input" id="mop" rows="4" style="height:auto;padding:8px 12px;margin-bottom:12px;display:none" placeholder="One option per line"></textarea></div><div class="bx"><button class="c-no c-no-sm" id="id" onclick="FD()">Delete</button><button class="c-no c-no-sm" onclick="MD('mi',0)">Cancel</button><button class="c-yes" onclick="FS()">Save</button></div></div></div>`);const hl=$("hl");hl&&new MutationObserver(fmToggle).observe(hl,{childList:true})}
+export const renderEditList=(hc,mx,w)=>{$("hl").innerHTML=hc.map((c,i)=>`<div class="lr${w&&c.h?" hid":""}"><span class="ar${i?"":" off"}" onclick="HM(${i},-1)">▲</span><span class="ar${i<hc.length-1?"":" off"}" onclick="HM(${i},1)">▼</span><span class="nm">${ES(c.n)}${c.o&&c.o.length?' <small class="dd-tag">▾ '+c.o.length+'</small>':""}</span>${w?`<select class="ws" onchange="HW(${i},this.value)">${[1,2,3,4].map(n=>`<option${n==c.w?" selected":""}>${n}</option>`).join("")}</select><span class="hd" title="Show / Hide" onclick="HH(${i})">${c.h?"🚫":"👁"}</span>`:""}<span class="ed" onclick="HE(${i})">✎</span></div>`).join("")+(hc.length<mx?`<div class="lr la" onclick="HE(-1)">+</div>`:"")};
+export function createFormEditor({defaults:D0,max:mx=12,get:gt,apply:ap,save:sv}){const D=D0.map(([k,n,w])=>({k,n,w:w||(k=="name"||k=="items"?1:2)})),WS={},FK={pName:"name",phone:"phone",gBtn:"gender",addrVal:"addr",ageInput:"age",timeVal:"time",dateInput:"date"},paint=()=>{const f=$("ff");f&&f.querySelectorAll(":scope>:not(.rc-row-2),:scope>.rc-row-2>*").forEach(e=>{const m=e.querySelector("#pName,#phone,#gBtn,#addrVal,#ageInput,#timeVal,#dateInput,[data-x]"),w=WS[e.dataset.k||m&&(FK[m.id]||m.dataset.x)];w&&(e.style.gridColumn="span "+12/w)})};let hc=[],ce=-1,RAW="";const parse=s=>{s==null||(RAW=s);const fk=detectEditPage();fk&&FORM_DEFAULT[fk]&&(s="");const r=(s||"").split("|").filter(Boolean).map(z=>{const i=z.indexOf(":"),[k,w,fl]=z.slice(0,i).split("~"),q=z.slice(i+1).split("\u241E");return{k,n:q[0],w:+w,h:/h/.test(fl||""),o:q[1]?q[1].split("\u241F").filter(Boolean):[]}}).filter(z=>z.n&&(D.some(d=>d.k==z.k)||/^c[a-z0-9]+$/.test(z.k)));r.forEach(z=>z.w>0&&z.w<5||(z.w=(D.find(d=>d.k==z.k)||{w:2}).w));D.forEach(d=>r.some(z=>z.k==d.k)||r.push({...d,n:mtFieldName(d.k)||d.n}));r.forEach(z=>{z.k=="name"&&(z.w=1);WS[z.k]=z.w});return r},RL=()=>renderEditList(hc,1/0,1);mountEditModals();$("ff")&&new MutationObserver(paint).observe($("ff"),{childList:true});Object.assign(window,{MD:md,EF:()=>{hc=gt().map(z=>({...z}));RL();md("mh",1)},HW:(i,v)=>{hc[i].w=+v},HH:i=>{hc[i].h=!hc[i].h;RL()},MT:()=>{$("mop").style.display=$("mty").value=="d"?"":"none"},HM:(i,d)=>{hc[i+d]&&([hc[i],hc[i+d]]=[hc[i+d],hc[i]],RL())},HE:i=>{ce=i;$("it").textContent=i<0?"Add Field":"Edit Field";$("in").value=i<0?"":hc[i].n;const cu=i<0||hc[i].k[0]=="c";$("id").style.display=i>=0&&hc[i].k[0]=="c"?"":"none";$("mt").style.display=cu?"":"none";$("mty").value=i>=0&&hc[i].o&&hc[i].o.length?"d":"t";$("mop").value=i>=0&&hc[i].o?hc[i].o.join("\n"):"";$("mop").style.display=$("mty").value=="d"?"":"none";md("mi",1);$("in").focus()},FS:()=>{const n=$("in").value.trim().replace(/[|\s]+/g," ");if(!n)return alert("Enter name");const cu=ce<0||hc[ce].k[0]=="c";let o=[];if(cu&&$("mty").value=="d"){o=[...new Set($("mop").value.split("\n").map(x=>x.replace(/[|\u241E\u241F]/g," ").replace(/\s+/g," ").trim()).filter(Boolean))];if(!o.length)return alert("Add at least one option")}ce<0?hc.push({k:"c"+Date.now().toString(36),n,w:2,o}):(hc[ce].n=n,cu&&(hc[ce].o=o));md("mi",0);RL()},FD:()=>{confirm("Delete?")&&(hc.splice(ce,1),md("mi",0),RL())},HV:async()=>{try{const str=hc.map(z=>z.k+"~"+z.w+(z.h?"~h":"")+":"+z.n+(z.o&&z.o.length?"\u241E"+z.o.join("\u241F"):"")).join("|");await sv(str);RAW=str;const fk=detectEditPage();if(fk&&FORM_DEFAULT[fk]){FORM_DEFAULT[fk]=false;try{await UPD(DO(db,"users",auth.currentUser.uid),{["formDefault."+fk]:false})}catch(x){console.error(x)}}hc.forEach(z=>WS[z.k]=z.w);ap(hc);paint();md("mh",0)}catch(e){ER(e)}},__rcFormMode:()=>{const rows=parse(RAW);ap(rows);hc=gt().map(z=>({...z}));RL()}});return{parse}}
 export async function addLogos(root,u,ids){const url=u.logoUrl||u.logo||u.centerLogo||"";root.classList.toggle("hasLogo",!!url);for(const d of ids){let w=$(d);w||(w=new Image,w.id=d,w.className=/WM$/.test(d)?"wm":"lg",w.crossOrigin="anonymous",root.appendChild(w));if(!url){w.style.display="none";continue}await new Promise(r=>{w.onload=w.onerror=r,w.src=url});w.style.display=w.naturalWidth?"block":"none"}}
 export const getExtras=p=>{const o={...p};document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=i.value.trim();t?o[i.dataset.x]=t:delete o[i.dataset.x]});window.__rcDoctor&&(o.doctor=window.__rcDoctor,o.raqi=window.__rcDoctor);return o},setExtras=x=>{x&&document.querySelectorAll("#ff [data-x]").forEach(i=>{const t=x[i.dataset.x];t&&(i.value=t)})};
 function fitMenu(m){const g=m.closest("#ff");if(!g||!m.classList.contains("rc-dd-grid"))return;const a=m.parentElement.getBoundingClientRect(),b=g.getBoundingClientRect(),s=m.style;s.width=b.width+"px";s.left=b.left-a.left+"px";s.right="auto"}
@@ -61,6 +61,7 @@ const LB_PAGES = {
   billing: ["billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
 };
 
+const PAGE_ICONS = { appointment: "📅", billing: "🧾", dashboard: "📊" };
 const LB_SHOW_MSGS = false; /* true করলে Edit Mode-এ নিচে "Messages & hidden texts" সারি আবার দেখাবে */
 export function createLabels(data, save) {
   data = data || {};
@@ -124,6 +125,59 @@ export function createLabels(data, save) {
     inp.focus();
   };
 
+  /* হেডিং আইকন: নতুন আইকন / Hide / Delete / Default */
+  const iconState = () => {
+    const pg = detectEditPage(), v = user["icon_" + pg];
+    return { pg, none: v === "__none__", custom: typeof v === "string" && v && v !== "__none__" ? v : "", hide: user["iconHide_" + pg] === "1" };
+  };
+  const applyIcon = () => {
+    const st = iconState();
+    if (!st.pg) return;
+    const txt = st.none ? "" : (st.custom || PAGE_ICONS[st.pg] || "");
+    document.querySelectorAll(".lb-sw").forEach(e => {
+      e.dataset.ci = "1";
+      e.textContent = txt;
+      e.style.display = (st.hide || !txt) ? "none" : "";
+    });
+  };
+  const editIcon = () => {
+    const st = iconState();
+    if (!st.pg) return;
+    const ov = mk("div", "lb-ov"), box = mk("div", "lb-box");
+    box.appendChild(mk("div", "lb-h", "✎ Icon"));
+    const inp = mk("input", "lb-in");
+    inp.maxLength = 8; inp.value = st.custom; inp.placeholder = PAGE_ICONS[st.pg] || "";
+    box.appendChild(inp);
+    box.appendChild(mk("div", "lb-hint", "ইমোজি বা ছোট লেখা দিয়ে Save করুন"));
+    const row = mk("div", "lb-btns");
+    const mkb = (t, cls) => { const b = mk("button", "lb-b" + (cls ? " " + cls : ""), t); b.type = "button"; row.appendChild(b); return b; };
+    const hideB = mkb(st.hide ? "Show" : "Hide"), delB = mkb("Delete"), defB = mkb("Default"), canB = mkb("Cancel"), okB = mkb("Save", "lb-ok");
+    const close = () => ov.remove();
+    const go = async obj => {
+      try {
+        const o = {};
+        Object.keys(obj).forEach(k => { o["labels." + k] = obj[k]; });
+        await save(o);
+        Object.assign(user, obj);
+        applyIcon();
+        if (on) pencils();
+        close();
+      } catch (err) {
+        console.error(err);
+        alert("Save failed: " + err.message);
+      }
+    };
+    hideB.onclick = () => go({ ["iconHide_" + st.pg]: st.hide ? "" : "1" });
+    delB.onclick = () => { if (confirm("Delete icon?")) go({ ["icon_" + st.pg]: "__none__" }); };
+    defB.onclick = () => go({ ["icon_" + st.pg]: "", ["iconHide_" + st.pg]: "" });
+    canB.onclick = close;
+    okB.onclick = () => { const v = inp.value.trim(); if (!v) return alert("Enter icon"); go({ ["icon_" + st.pg]: v, ["iconHide_" + st.pg]: "" }); };
+    ov.onclick = e => { if (e.target === ov) close(); };
+    box.appendChild(row);
+    ov.appendChild(box); document.body.appendChild(ov);
+    inp.focus();
+  };
+
   const clearUI = () => {
     document.querySelectorAll(".lb-ed,.lb-msgs").forEach(e => e.remove());
   };
@@ -131,6 +185,12 @@ export function createLabels(data, save) {
   /* Edit Mode চালু থাকলে ✎ আইকন ও নিচের Messages সারি */
   const pencils = () => {
     clearUI();
+    document.querySelectorAll(".lb-sw").forEach(e => {
+      const p = mk("span", "lb-ed", "✎");
+      p.dataset.k = "__icon";
+      p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editIcon(); };
+      e.after(p);
+    });
     document.querySelectorAll("[data-l],[data-lp]").forEach(e => {
       if (e.offsetParent === null) return;
       const k = e.dataset.l || e.dataset.lp;
@@ -166,6 +226,7 @@ export function createLabels(data, save) {
     }
     root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
     root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
+    applyIcon();
     relabel();
     if (!obs && (preset.person || preset.dashboardTitle)) {
       obs = new MutationObserver(relabel);
@@ -286,12 +347,12 @@ export function mountEditModeToggles(containerId) {
 (function pageIcons() {
   const go = () => {
     const pg = detectEditPage();
-    const ICON = { appointment: "📅", billing: "🧾", dashboard: "📊" };
+    const ICON = PAGE_ICONS;
     document.querySelectorAll(".lb-sw").forEach(e => {
       e.removeAttribute("data-lbt");
       e.removeAttribute("onclick");
       e.onclick = null;
-      if (ICON[pg]) e.textContent = ICON[pg];
+      if (ICON[pg] && !e.dataset.ci) e.textContent = ICON[pg];
     });
   };
   document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
