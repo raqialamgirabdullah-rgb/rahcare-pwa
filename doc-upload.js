@@ -97,7 +97,7 @@ export function createDocUpload(user) {
       const j = await sendFile(f, user, p => setP(p, p < 100 ? "Uploading " + p + "%" : "Processing..."));
       if (j.ok && j.success) {
         setP(100, "Uploaded ✓");
-        st.textContent = "Uploaded: " + f.name + (isImage(f) ? " (ImgBB)" : " (Supabase)");
+        st.textContent = "Uploaded: " + f.name;
         inp.value = "";
         setTimeout(reset, 2000);
       } else {
