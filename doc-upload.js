@@ -1,8 +1,9 @@
 /* Upload Document বক্স — আগে Profile পেজে ছিল, এখন Symptom / Response / Prescription পেজের উপরে বসে
    ব্যবহার: card.appendChild(createDocUpload(user))  (user = Firebase auth user)
    রাউটিং: যেকোনো ইমেজ → ImgBB; PDF / ডকুমেন্ট / ZIP ইত্যাদি → Supabase (আগের Worker দিয়ে)
-   ImgBB চালু করতে নিচের IMGBB_API_KEY বসান; খালি থাকলে ইমেজও আপাতত Supabase-এ যাবে */
-const IMGBB_API_KEY = "";
+   ImgBB-তে সরাসরি API key নেই; Admin Panel-এর Logo আপলোডের মতোই Cloudflare proxy দিয়ে যায় */
+const IMGBB_PROXY_URL = "https://imgbb-proxy.raqialamgirabdullah.workers.dev";
+const MAX_IMG = 33554432; // 32MB (ImgBB সীমা)
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp|tiff?|heic|heif|avif|svg|ico|jfif)$/i;
 const isImage = f => (f.type || "").startsWith("image/") || IMAGE_EXT.test(f.name || "");
 const PROXY_WORKER_URL = "https://supabase-pdf-proxy.raqialamgirabdullah.workers.dev/";
@@ -29,7 +30,7 @@ const sendToSupabase = (f, u, onProgress) => new Promise((res, rej) => {
 
 const sendToImgbb = (f, onProgress) => new Promise((res, rej) => {
   const x = new XMLHttpRequest();
-  x.open("POST", "https://api.imgbb.com/1/upload?key=" + encodeURIComponent(IMGBB_API_KEY));
+  x.open("POST", IMGBB_PROXY_URL);
   x.upload.onprogress = e => {
     if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
   };
@@ -51,7 +52,7 @@ const sendToImgbb = (f, onProgress) => new Promise((res, rej) => {
 });
 
 const sendFile = (f, u, onProgress) =>
-  (isImage(f) && IMGBB_API_KEY) ? sendToImgbb(f, onProgress) : sendToSupabase(f, u, onProgress);
+  isImage(f) ? sendToImgbb(f, onProgress) : sendToSupabase(f, u, onProgress);
 
 export function createDocUpload(user) {
   const el = (tag, css, txt) => {
@@ -87,6 +88,7 @@ export function createDocUpload(user) {
     const f = inp.files[0];
     if (!f) return alert("Please choose a file first.");
     if (!user) return alert("Please log in again.");
+    if (isImage(f) && f.size > MAX_IMG) return alert("Max 32MB");
     btn.disabled = true;
     st.style.display = "block";
     st.textContent = "";
@@ -95,7 +97,7 @@ export function createDocUpload(user) {
       const j = await sendFile(f, user, p => setP(p, p < 100 ? "Uploading " + p + "%" : "Processing..."));
       if (j.ok && j.success) {
         setP(100, "Uploaded ✓");
-        st.textContent = "Uploaded: " + f.name + (isImage(f) && IMGBB_API_KEY ? " (ImgBB)" : " (Supabase)");
+        st.textContent = "Uploaded: " + f.name + (isImage(f) ? " (ImgBB)" : " (Supabase)");
         if (j.url) {
           const a = document.createElement("a");
           a.href = j.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = " View";
