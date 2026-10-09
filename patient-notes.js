@@ -1,6 +1,7 @@
 /* রোগীর নোট পেজ: Symptom Diagnosis / Response Diagnosis / Prescription
    ব্যবহার: Blogger পেজে mountNotePage("symptom" | "response" | "prescription") */
 import { db, requireAuth, loadUser, createLabels, UP, DO, GD } from "./common.js";
+import { mountSymptomChecklist } from "./symptom-checklist.js";
 
 const KINDS = {
   symptom: { field: "symptomDx", key: "symptomDx", icon: "🩺" },
@@ -38,6 +39,22 @@ export function mountNotePage(kind) {
       const ref = DO(db, "appointments", id), snap = await GD(ref);
       const a = snap.exists() ? snap.data() : null;
       if (!a || a.uid !== user.uid) return say("Not found");
+
+      // Symptom Diagnosis: এডমিন হলে টিক-চেকলিস্ট, না হলে নিচের সাধারণ নোট বক্স
+      if (kind === "symptom") {
+        let isAdmin = false;
+        try { isAdmin = (await GD(DO(db, "admins", user.uid))).exists(); } catch (e) { console.error(e); }
+        if (isAdmin) {
+          const meta0 = [a.idNumber ? "ID: " + a.idNumber : "", a.phone || ""].filter(Boolean).join("  •  ");
+          mountSymptomChecklist(card, {
+            checked: Array.isArray(a.symptomChecks) ? a.symptomChecks : [],
+            patient: { name: a.name || "Patient", meta: meta0 },
+            back: DASH,
+            onSave: ids => UP(ref, { symptomChecks: ids })
+          });
+          return;
+        }
+      }
 
       card.innerHTML = "";
       card.appendChild(el("h2", "margin:0 0 6px;font-size:20px;color:var(--primary-color,#4f46e5)", K.icon + " " + LB.L(K.key)));
