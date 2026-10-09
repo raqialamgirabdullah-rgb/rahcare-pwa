@@ -10,6 +10,7 @@
   var base = cs.src.replace(/[^\/]*$/, "");
   var beta = false;
   try {
+    if (localStorage.getItem("rcBetaReset") !== "1") { localStorage.removeItem("rcBeta"); localStorage.setItem("rcBetaReset", "1"); }
     var q = new URLSearchParams(location.search).get("rcbeta");
     if (q === "1") localStorage.setItem("rcBeta", "1");
     if (q === "0") localStorage.removeItem("rcBeta");
