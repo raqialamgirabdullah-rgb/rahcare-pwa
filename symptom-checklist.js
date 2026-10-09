@@ -253,9 +253,14 @@ const toBn = x => String(x).replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"
    mountSymptomChecklist(card, { checked: string[], onSave: async(ids)=>void, patient: {name, meta}, back: url }) */
 export function mountSymptomChecklist(card, opt) {
   const groups = parse(), all = groups.flatMap(g => g.sections);
-  const total = all.reduce((a, s) => a + s.items.length, 0);
+  // হুবহু একই আলামত (শেষের দাঁড়ি/স্পেস উপেক্ষা করে) একাধিক হেডিংয়ে থাকলে একসাথে টিক পড়বে
+  const norm = t => t.replace(/\s+/g, " ").replace(/[\s।৷.]+$/, "").trim();
+  const byKey = new Map();
+  all.forEach(s => s.items.forEach(i => { i.key = norm(i.text); i.sec = s.title; if (!byKey.has(i.key)) byKey.set(i.key, []); byKey.get(i.key).push(i); }));
+  const total = byKey.size; // একই আলামত একবারই গোনা
   const saved = new Set(opt.checked || []), sel = new Set();
   all.forEach(s => s.items.forEach(i => { if (saved.has(i.id) || (i.legacy && saved.has(i.legacy))) sel.add(i.id); }));
+  byKey.forEach(list => { if (list.some(i => sel.has(i.id))) list.forEach(i => sel.add(i.id)); });
   const el = (tag, css, txt) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
 
   card.innerHTML = "";
@@ -283,9 +288,16 @@ export function mountSymptomChecklist(card, opt) {
         const cb = el("input", "flex:none;width:18px;height:18px;margin-top:3px");
         cb.type = "checkbox";
         cb.checked = sel.has(it.id);
-        cb.onchange = () => { cb.checked ? sel.add(it.id) : sel.delete(it.id); update(); };
+        it.cb = cb;
+        cb.onchange = () => { const on = cb.checked; byKey.get(it.key).forEach(x => { on ? sel.add(x.id) : sel.delete(x.id); if (x.cb) x.cb.checked = on; }); update(); };
         lab.appendChild(cb);
         lab.appendChild(el("span", "", it.text));
+        const same = byKey.get(it.key);
+        if (same.length > 1) {
+          const mk = el("span", "flex:none;font-size:12px;opacity:.7", "🔗");
+          mk.title = "এই আলামত অন্য হেডিংয়েও আছে: " + same.filter(x => x !== it).map(x => x.sec).join(" • ");
+          lab.appendChild(mk);
+        }
         box.appendChild(lab);
       }
       card.appendChild(box);
@@ -304,15 +316,14 @@ export function mountSymptomChecklist(card, opt) {
 
   function update() {
     const rows = [];
-    let ticked = 0;
     for (const s of all) {
       const n = s.items.filter(i => sel.has(i.id)).length;
-      ticked += n;
       badges.get(s).textContent = toBn(n) + "/" + toBn(s.items.length);
       badges.get(s).style.cssText = "flex:none;font-size:12px;border-radius:99px;padding:2px 8px;" +
         (n ? "background:#dcfce7;color:#166534;font-weight:700" : "background:#f1f5f9;color:#475569");
       if (n) rows.push({ s, n, p: Math.round(n / s.items.length * 100), strong: s.items.filter(i => sel.has(i.id) && i.strong).map(i => i.strong) });
     }
+    const ticked = [...byKey.values()].filter(l => l.some(i => sel.has(i.id))).length; // একই আলামত একবারই
     rows.sort((a, b) => b.p - a.p || b.n - a.n);
     result.innerHTML = "";
     result.appendChild(el("div", "font-weight:700;margin-bottom:4px", "📊 ফলাফল — মোট টিক: " + toBn(ticked) + " / " + toBn(total)));
