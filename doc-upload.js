@@ -54,7 +54,8 @@ const sendToImgbb = (f, onProgress) => new Promise((res, rej) => {
 const sendFile = (f, u, onProgress) =>
   isImage(f) ? sendToImgbb(f, onProgress) : sendToSupabase(f, u, onProgress);
 
-export function createDocUpload(user) {
+export function createDocUpload(user, opts) {
+  opts = opts || {};
   const el = (tag, css, txt) => {
     const e = document.createElement(tag);
     if (css) e.style.cssText = css;
@@ -98,6 +99,10 @@ export function createDocUpload(user) {
       if (j.ok && j.success) {
         setP(100, "Uploaded ✓");
         st.textContent = "Uploaded: " + f.name;
+        if (isImage(f) && j.url && opts.onImage) {
+          try { await opts.onImage({ url: j.url, name: f.name }); }
+          catch (e) { console.error(e); st.textContent = "Uploaded, but could not be saved to record."; }
+        }
         inp.value = "";
         setTimeout(reset, 2000);
       } else {

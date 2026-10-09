@@ -40,6 +40,13 @@ export function mountNotePage(kind) {
       const ref = DO(db, "appointments", id), snap = await GD(ref);
       const a = snap.exists() ? snap.data() : null;
       if (!a || a.uid !== user.uid) return say("Not found");
+      // ImgBB ইমেজের লিংক এই অ্যাপয়েন্টমেন্টের রেকর্ডে সেভ হয়
+      const saveImg = async img => {
+        const list = Array.isArray(a.uploadedImages) ? a.uploadedImages.slice() : [];
+        list.push({ url: img.url, name: img.name, page: kind, at: Date.now() });
+        await UP(ref, { uploadedImages: list });
+        a.uploadedImages = list;
+      };
 
       // Symptom Diagnosis: এডমিন হলে টিক-চেকলিস্ট, না হলে নিচের সাধারণ নোট বক্স
       if (kind === "symptom") {
@@ -51,7 +58,7 @@ export function mountNotePage(kind) {
             checked: Array.isArray(a.symptomChecks) ? a.symptomChecks : [],
             patient: { name: a.name || "Patient", meta: meta0 },
             back: DASH,
-            extraTop: createDocUpload(user),
+            extraTop: createDocUpload(user, { onImage: saveImg }),
             onSave: ids => UP(ref, { symptomChecks: ids })
           });
           return;
@@ -63,7 +70,7 @@ export function mountNotePage(kind) {
       card.appendChild(el("div", "font-weight:700;font-size:15px", a.name || "Patient"));
       const meta = [a.idNumber ? "ID: " + a.idNumber : "", a.phone || ""].filter(Boolean).join("  •  ");
       if (meta) card.appendChild(el("div", "font-size:12px;color:#64748b;margin-bottom:12px", meta));
-      card.appendChild(createDocUpload(user));
+      card.appendChild(createDocUpload(user, { onImage: saveImg }));
 
       const ta = el("textarea", "width:100%;min-height:220px;box-sizing:border-box;margin:10px 0;font-family:inherit;font-size:14px;padding:10px;border:1px solid #cbd5e1;border-radius:8px");
       ta.className = "rc-input";
