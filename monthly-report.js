@@ -1,5 +1,5 @@
 import{collection as C,onSnapshot as S,query as Q,where as W}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-import{db,formatDateDMY as FD,formatTime12 as FT,requireAuth,toISOMonth,isPaid,monthLabel}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js";
+import{db,formatDateDMY as FD,formatTime12 as FT,requireAuth,toISOMonth,isPaid,monthLabel,docsOf}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=11";
 const v=i=>document.getElementById(i),
 EMPTY='<div class="empty-note">কোনো তথ্য নেই</div>',
 low=s=>((s||"")+"").trim().toLowerCase(),
@@ -35,5 +35,5 @@ rptToggleAll:()=>{all=!all;draw()},
 rptToggleRecent:id=>{const t=v("recent-"+id);if(!t)return;const open=t.style.display!=="block";closeAll(t);t.style.display=open?"block":"none"}});
 document.addEventListener("click",e=>{e.target.closest(".rc-badge,.p-head,.recent-list,.p-visits")||closeAll()});
 requireAuth(u=>{v("rptWrap").style.display="block";
-const listen=(n,set)=>S(Q(C(db,n),W("uid","==",u.uid)),s=>{set(s.docs.map(d=>({id:d.id,...d.data()})));render()});
+const listen=(n,set)=>S(Q(C(db,n),W("uid","==",u.uid)),s=>{set(docsOf(s));render()});
 listen("appointments",x=>A=x);listen("rescheduleLogs",x=>RS=x)});

@@ -1,6 +1,6 @@
 import{collection as C,onSnapshot as S,query as Q,where as W,getDocs as GD,updateDoc as UD,doc as D}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 import{getAuth,EmailAuthProvider as EP,reauthenticateWithCredential as RA}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
-import{db,formatDateDMY as FD,formatTime12 as FT,requireAuth,blockCacheAndBack,toISOMonth,isPaid,monthLabel}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js";
+import{db,formatDateDMY as FD,formatTime12 as FT,requireAuth,blockCacheAndBack,toISOMonth,isPaid,monthLabel,docsOf}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=11";
 blockCacheAndBack();
 const v=i=>document.getElementById(i),
 EMPTY='<div class="empty-note">কোনো তথ্য নেই</div>',
@@ -73,5 +73,5 @@ let dt=0;v("instName").oninput=()=>{clearTimeout(dt);busy(!0);dt=setTimeout(()=>
 v("instGo").onclick=()=>install(v("instName").value.trim()||DEF_NAME,logo());
 v("instCancel").onclick=()=>instBox.style.display="none";
 requireAuth(async u=>{document.documentElement.style.visibility="visible";v("authOverlay").style.display="none";await ask(u);v("myReportWrap").style.display="block";initImg(u.uid);
-const listen=(n,set)=>S(Q(C(db,n),W("uid","==",u.uid)),s=>{set(s.docs.map(d=>({id:d.id,...d.data()})));render()});
+const listen=(n,set)=>S(Q(C(db,n),W("uid","==",u.uid)),s=>{set(docsOf(s));render()});
 listen("appointments",x=>A=x);listen("rescheduleLogs",x=>RS=x)});
