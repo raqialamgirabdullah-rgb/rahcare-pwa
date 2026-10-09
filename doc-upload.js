@@ -1,8 +1,13 @@
 /* Upload Document বক্স — আগে Profile পেজে ছিল, এখন Symptom / Response / Prescription পেজের উপরে বসে
-   ব্যবহার: card.appendChild(createDocUpload(user))  (user = Firebase auth user) */
+   ব্যবহার: card.appendChild(createDocUpload(user))  (user = Firebase auth user)
+   রাউটিং: যেকোনো ইমেজ → ImgBB; PDF / ডকুমেন্ট / ZIP ইত্যাদি → Supabase (আগের Worker দিয়ে)
+   ImgBB চালু করতে নিচের IMGBB_API_KEY বসান; খালি থাকলে ইমেজও আপাতত Supabase-এ যাবে */
+const IMGBB_API_KEY = "";
+const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp|tiff?|heic|heif|avif|svg|ico|jfif)$/i;
+const isImage = f => (f.type || "").startsWith("image/") || IMAGE_EXT.test(f.name || "");
 const PROXY_WORKER_URL = "https://supabase-pdf-proxy.raqialamgirabdullah.workers.dev/";
 
-const sendFile = (f, u, onProgress) => new Promise((res, rej) => {
+const sendToSupabase = (f, u, onProgress) => new Promise((res, rej) => {
   const x = new XMLHttpRequest();
   x.open("POST", PROXY_WORKER_URL);
   x.setRequestHeader("X-User-UID", u.uid);
@@ -21,6 +26,32 @@ const sendFile = (f, u, onProgress) => new Promise((res, rej) => {
   x.onerror = () => rej(new Error("network"));
   x.send(f);
 });
+
+const sendToImgbb = (f, onProgress) => new Promise((res, rej) => {
+  const x = new XMLHttpRequest();
+  x.open("POST", "https://api.imgbb.com/1/upload?key=" + encodeURIComponent(IMGBB_API_KEY));
+  x.upload.onprogress = e => {
+    if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+  };
+  x.onload = () => {
+    let d = {};
+    try { d = JSON.parse(x.responseText) || {}; } catch (_) {}
+    res({
+      ok: x.status >= 200 && x.status < 300,
+      status: x.status,
+      success: !!d.success,
+      url: d.data && (d.data.url || d.data.display_url),
+      error: d.error && (d.error.message || d.error)
+    });
+  };
+  x.onerror = () => rej(new Error("network"));
+  const fd = new FormData();
+  fd.append("image", f);
+  x.send(fd);
+});
+
+const sendFile = (f, u, onProgress) =>
+  (isImage(f) && IMGBB_API_KEY) ? sendToImgbb(f, onProgress) : sendToSupabase(f, u, onProgress);
 
 export function createDocUpload(user) {
   const el = (tag, css, txt) => {
@@ -64,7 +95,12 @@ export function createDocUpload(user) {
       const j = await sendFile(f, user, p => setP(p, p < 100 ? "Uploading " + p + "%" : "Processing..."));
       if (j.ok && j.success) {
         setP(100, "Uploaded ✓");
-        st.textContent = "Uploaded: " + f.name;
+        st.textContent = "Uploaded: " + f.name + (isImage(f) && IMGBB_API_KEY ? " (ImgBB)" : " (Supabase)");
+        if (j.url) {
+          const a = document.createElement("a");
+          a.href = j.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = " View";
+          st.appendChild(a);
+        }
         inp.value = "";
         setTimeout(reset, 2000);
       } else {
