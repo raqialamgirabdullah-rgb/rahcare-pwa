@@ -98,11 +98,6 @@ export function createDocUpload(user) {
       if (j.ok && j.success) {
         setP(100, "Uploaded ✓");
         st.textContent = "Uploaded: " + f.name + (isImage(f) ? " (ImgBB)" : " (Supabase)");
-        if (j.url) {
-          const a = document.createElement("a");
-          a.href = j.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = " View";
-          st.appendChild(a);
-        }
         inp.value = "";
         setTimeout(reset, 2000);
       } else {
