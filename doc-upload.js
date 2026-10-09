@@ -1,18 +1,22 @@
 /* Upload Document বক্স — আগে Profile পেজে ছিল, এখন Symptom / Response / Prescription পেজের উপরে বসে
    ব্যবহার: card.appendChild(createDocUpload(user))  (user = Firebase auth user)
-   রাউটিং: যেকোনো ইমেজ → ImgBB; PDF / ডকুমেন্ট / ZIP ইত্যাদি → Supabase (আগের Worker দিয়ে)
+   রাউটিং: যেকোনো ইমেজ → ImgBB; অডিও / ভিডিও → Google Drive; PDF / ডকুমেন্ট / ZIP ইত্যাদি → Supabase (Worker দিয়ে)
    ImgBB-তে সরাসরি API key নেই; Admin Panel-এর Logo আপলোডের মতোই Cloudflare proxy দিয়ে যায় */
 const IMGBB_PROXY_URL = "https://imgbb-proxy.raqialamgirabdullah.workers.dev";
 const MAX_IMG = 33554432; // 32MB (ImgBB সীমা)
 const IMAGE_EXT = /\.(jpe?g|png|gif|webp|bmp|tiff?|heic|heif|avif|svg|ico|jfif)$/i;
 const isImage = f => (f.type || "").startsWith("image/") || IMAGE_EXT.test(f.name || "");
+const MEDIA_EXT = /\.(mp3|wav|ogg|oga|m4a|aac|flac|wma|opus|amr|mp4|m4v|mov|avi|mkv|webm|3gp|wmv|flv|mpe?g)$/i;
+const isMedia = f => /^(audio|video)\//.test(f.type || "") || MEDIA_EXT.test(f.name || "");
 const PROXY_WORKER_URL = "https://supabase-pdf-proxy.raqialamgirabdullah.workers.dev/";
+const DRIVE_PROXY_URL = "https://gdrive-media-proxy.raqialamgirabdullah.workers.dev/";
 
-const sendToSupabase = (f, u, onProgress) => new Promise((res, rej) => {
+const sendToWorker = (url, f, u, onProgress, encName) => new Promise((res, rej) => {
   const x = new XMLHttpRequest();
-  x.open("POST", PROXY_WORKER_URL);
+  x.open("POST", url);
   x.setRequestHeader("X-User-UID", u.uid);
-  x.setRequestHeader("X-File-Name", encodeURIComponent(f.name));
+  // Drive Worker নামটা যেমন আছে তেমনই নেয়; বাংলা/non-ASCII নাম হলে হেডারে পাঠানোর জন্য এনকোড করা হয়
+  x.setRequestHeader("X-File-Name", (encName || /[^\x20-\x7e]/.test(f.name)) ? encodeURIComponent(f.name) : f.name);
   x.setRequestHeader("Content-Type", f.type || "application/octet-stream");
   x.upload.onprogress = e => {
     if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
@@ -26,6 +30,14 @@ const sendToSupabase = (f, u, onProgress) => new Promise((res, rej) => {
   };
   x.onerror = () => rej(new Error("network"));
   x.send(f);
+});
+
+const sendToSupabase = (f, u, onProgress) => sendToWorker(PROXY_WORKER_URL, f, u, onProgress, true);
+const sendToDrive = (f, u, onProgress) => new Promise((res, rej) => {
+  sendToWorker(DRIVE_PROXY_URL, f, u, onProgress, false).then(d => {
+    d.url = d.fileUrl;
+    res(d);
+  }, rej);
 });
 
 const sendToImgbb = (f, onProgress) => new Promise((res, rej) => {
@@ -52,7 +64,7 @@ const sendToImgbb = (f, onProgress) => new Promise((res, rej) => {
 });
 
 const sendFile = (f, u, onProgress) =>
-  isImage(f) ? sendToImgbb(f, onProgress) : sendToSupabase(f, u, onProgress);
+  isImage(f) ? sendToImgbb(f, onProgress) : isMedia(f) ? sendToDrive(f, u, onProgress) : sendToSupabase(f, u, onProgress);
 
 export function createDocUpload(user, opts) {
   opts = opts || {};
