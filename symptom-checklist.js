@@ -278,6 +278,7 @@ export function mountSymptomChecklist(card, opt) {
   card.appendChild(el("h2", "margin:0 0 6px;font-size:20px;color:var(--primary-color,#4f46e5)", "🩺 Symptom Diagnosis"));
   card.appendChild(el("div", "font-weight:700;font-size:15px", opt.patient.name || "Patient"));
   if (opt.patient.meta) card.appendChild(el("div", "font-size:12px;color:#64748b;margin-bottom:10px", opt.patient.meta));
+  if (opt.extraTop) card.appendChild(opt.extraTop);
 
   const result = el("div", "position:sticky;top:0;z-index:5;background:#fff;border:1px solid #c7d2fe;border-radius:10px;padding:10px 12px;margin:8px 0 14px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.08)");
   card.appendChild(result);

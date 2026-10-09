@@ -1,0 +1,80 @@
+/* Upload Document বক্স — আগে Profile পেজে ছিল, এখন Symptom / Response / Prescription পেজের উপরে বসে
+   ব্যবহার: card.appendChild(createDocUpload(user))  (user = Firebase auth user) */
+const PROXY_WORKER_URL = "https://supabase-pdf-proxy.raqialamgirabdullah.workers.dev/";
+
+const sendFile = (f, u, onProgress) => new Promise((res, rej) => {
+  const x = new XMLHttpRequest();
+  x.open("POST", PROXY_WORKER_URL);
+  x.setRequestHeader("X-User-UID", u.uid);
+  x.setRequestHeader("X-File-Name", encodeURIComponent(f.name));
+  x.setRequestHeader("Content-Type", f.type || "application/octet-stream");
+  x.upload.onprogress = e => {
+    if (e.lengthComputable) onProgress(Math.round(e.loaded / e.total * 100));
+  };
+  x.onload = () => {
+    let d = {};
+    try { d = JSON.parse(x.responseText) || {}; } catch (_) {}
+    d.ok = x.status >= 200 && x.status < 300;
+    d.status = x.status;
+    res(d);
+  };
+  x.onerror = () => rej(new Error("network"));
+  x.send(f);
+});
+
+export function createDocUpload(user) {
+  const el = (tag, css, txt) => {
+    const e = document.createElement(tag);
+    if (css) e.style.cssText = css;
+    if (txt != null) e.textContent = txt;
+    return e;
+  };
+  const wrap = el("div", "margin:10px 0 14px;padding:10px 12px;border:1px solid #e2e8f0;border-radius:10px;background:#f8fafc");
+  wrap.appendChild(el("div", "font-size:13px;font-weight:700;margin-bottom:6px", "Upload Document"));
+  const inp = el("input", "width:100%;box-sizing:border-box;margin-bottom:8px;font-size:13px");
+  inp.type = "file";
+  inp.className = "rc-input";
+  const btn = el("button", "width:100%", "Upload");
+  btn.type = "button";
+  btn.className = "rc-btn rc-btn-primary";
+  const st = el("div", "display:none;font-size:12px;margin-top:6px;color:#475569;word-break:break-word");
+  wrap.appendChild(inp);
+  wrap.appendChild(btn);
+  wrap.appendChild(st);
+
+  const setP = (p, t) => {
+    btn.style.background = "linear-gradient(to right,#16a34a " + p + "%,#4f46e5 " + p + "%)";
+    btn.textContent = t;
+  };
+  const reset = () => {
+    btn.disabled = false;
+    btn.style.background = "";
+    btn.textContent = "Upload";
+  };
+
+  btn.onclick = async () => {
+    const f = inp.files[0];
+    if (!f) return alert("Please choose a file first.");
+    if (!user) return alert("Please log in again.");
+    btn.disabled = true;
+    st.style.display = "block";
+    st.textContent = "";
+    setP(0, "Uploading 0%");
+    try {
+      const j = await sendFile(f, user, p => setP(p, p < 100 ? "Uploading " + p + "%" : "Processing..."));
+      if (j.ok && j.success) {
+        setP(100, "Uploaded ✓");
+        st.textContent = "Uploaded: " + f.name;
+        inp.value = "";
+        setTimeout(reset, 2000);
+      } else {
+        st.textContent = "Upload failed: " + (j.error || j.status);
+        reset();
+      }
+    } catch (e) {
+      st.textContent = "Network error. Please try again.";
+      reset();
+    }
+  };
+  return wrap;
+}

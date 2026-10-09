@@ -2,6 +2,7 @@
    ব্যবহার: Blogger পেজে mountNotePage("symptom" | "response" | "prescription") */
 import { db, requireAuth, loadUser, createLabels, UP, DO, GD } from "./common.js?v=12";
 import { mountSymptomChecklist } from "./symptom-checklist.js";
+import { createDocUpload } from "./doc-upload.js";
 
 const KINDS = {
   symptom: { field: "symptomDx", key: "symptomDx", icon: "🩺" },
@@ -50,6 +51,7 @@ export function mountNotePage(kind) {
             checked: Array.isArray(a.symptomChecks) ? a.symptomChecks : [],
             patient: { name: a.name || "Patient", meta: meta0 },
             back: DASH,
+            extraTop: createDocUpload(user),
             onSave: ids => UP(ref, { symptomChecks: ids })
           });
           return;
@@ -61,6 +63,7 @@ export function mountNotePage(kind) {
       card.appendChild(el("div", "font-weight:700;font-size:15px", a.name || "Patient"));
       const meta = [a.idNumber ? "ID: " + a.idNumber : "", a.phone || ""].filter(Boolean).join("  •  ");
       if (meta) card.appendChild(el("div", "font-size:12px;color:#64748b;margin-bottom:12px", meta));
+      card.appendChild(createDocUpload(user));
 
       const ta = el("textarea", "width:100%;min-height:220px;box-sizing:border-box;margin:10px 0;font-family:inherit;font-size:14px;padding:10px;border:1px solid #cbd5e1;border-radius:8px");
       ta.className = "rc-input";
