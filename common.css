@@ -195,3 +195,7 @@ body.rc-side-open #rc-side-scrim{opacity:1;pointer-events:auto}
 #rc-side .rc-sd-i.on{background:#dcece3;color:var(--primary);font-weight:700}
 #rc-side .rc-sd-ic{display:flex;color:inherit;opacity:.9}
 #rc-side .rc-sd-tx{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ===== "যাচাই করা হচ্ছে" স্ক্রিন: দ্রুত লোডে একদম দেখা যায় না; ১.৪ সেকেন্ডের বেশি লাগলে তবেই ধীরে ফুটে ওঠে ===== */
+.rc-auth-overlay{background:transparent;color:transparent;pointer-events:none;animation:rcOv .35s ease 1.4s forwards}
+@keyframes rcOv{to{background:var(--bg);color:var(--text-muted)}}

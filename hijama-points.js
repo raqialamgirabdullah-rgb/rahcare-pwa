@@ -7,7 +7,7 @@
    (শেয়ার্ড) এবং অ্যাডমিনের নিজের users ডকুমেন্টের hijamaDiseases ফিল্ডে সেভ হয়। */
 /* দৃশ্যমানতা: প্রতিটি রোগ ডিফল্টে Private (ইউজারের নিজের users/{uid}.hijamaDiseases, শুধু সে দেখে)।
    অ্যাডমিন Public করলে রোগটি hijamaPublic কালেকশনে যায়: পেশেন্ট ম্যানেজ করা সব ইউজার দেখতে পায় (শুধু দেখা), বদলাতে পারে শুধু মালিক। */
-import { db, auth, DO, GD, UP, CO, AD, DL, ON, loadUser } from "./common.js?v=14";
+import { db, auth, DO, GD, UP, CO, AD, DL, ON, loadUser } from "./common.js?v=15";
 
 const IMAGES = [
   { key: "head", title: "Head", file: "hijama-points/head.gif" },

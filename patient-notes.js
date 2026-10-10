@@ -1,6 +1,6 @@
 /* রোগীর নোট পেজ: Symptom Diagnosis / Response Diagnosis / Prescription
    ব্যবহার: Blogger পেজে mountNotePage("symptom" | "response" | "prescription") */
-import { db, requireAuth, loadUser, createLabels, UP, DO, GD } from "./common.js?v=14";
+import { db, requireAuth, loadUser, createLabels, UP, DO, GD } from "./common.js?v=15";
 import { mountSymptomChecklist } from "./symptom-checklist.js";
 import { createDocUpload } from "./doc-upload.js";
 

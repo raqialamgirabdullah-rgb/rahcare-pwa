@@ -130,9 +130,30 @@
     } catch (e) { console.error("RahCare nav:", e); }
   }
 
+  /* স্পিড: পেজের HTML আসার অপেক্ষায় না থেকে Firebase ও common.js আগেই ডাউনলোড শুরু */
+  function hint(rel, href, crossorigin) {
+    try {
+      var l = document.createElement("link");
+      l.rel = rel; l.href = href;
+      if (crossorigin) l.crossOrigin = "";
+      document.head.appendChild(l);
+    } catch (e) {}
+  }
+  hint("preconnect", "https://www.gstatic.com", true);
+  hint("preconnect", "https://firestore.googleapis.com", true);
+  hint("preconnect", "https://securetoken.googleapis.com", true);
+  ["firebase-app", "firebase-auth", "firebase-firestore"].forEach(function (n) {
+    hint("modulepreload", "https://www.gstatic.com/firebasejs/12.15.0/" + n + ".js", true);
+  });
+  try {
+    var cj = localStorage.getItem("rcCJ");
+    if (cj && /^common\.js\?v=\d+$/.test(cj)) hint("modulepreload", base + cj, true);
+  } catch (e) {}
+
   fetch(base + (beta ? "beta/" : "pages/") + name + ".html", { cache: "no-cache" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
     .then(async function (html) {
+      try { var mj = /common\.js\?v=\d+/.exec(html); if (mj) localStorage.setItem("rcCJ", mj[0]); } catch (e) {}
       var d = new DOMParser().parseFromString(html, "text/html");
       var nodes = [].slice.call(d.head.children).concat([].slice.call(d.body.children));
       for (var i = 0; i < nodes.length; i++) {
