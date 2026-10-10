@@ -147,7 +147,7 @@ try { applyTheme(JSON.parse(localStorage.getItem("rcTheme") || "{}")); } catch (
 
 export function createLabels(data, save) {
   data = data || {};
-  if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); }
+  if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); rcNavSync(data); }
   const user = Object.assign({}, data.labels || {});
   const styles = Object.assign({}, data.labelStyle || {});
   let theme = cleanTheme(data.theme);
@@ -663,6 +663,7 @@ r(auth, async u => {
   try {
     const s = await GD(DO(db, "users", u.uid));
     if (s.exists()) { applyTheme(s.data().theme); cacheTheme(s.data().theme); }
+    if (s.exists()) rcNavSync(s.data());
     if (s.exists() && !MT_LOADED) mtSetType(s.data().managementType);
     mtSelectSync(s.exists() ? s.data().managementType : "");
   } catch (e) { console.error(e); }
@@ -1081,3 +1082,9 @@ rptToggleRecent:id=>{const t=v("recent-"+id);if(!t)return;const open=t.style.dis
 document.addEventListener("click",e=>{e.target.closest(".rc-badge,.p-head,.recent-list,.p-visits")||closeAll()});
 return u=>{const listen=(n,set)=>S(Q(C(db,n),W("uid","==",u.uid)),s=>{set(docsOf(s));render()});
 listen("appointments",x=>A=x);listen("rescheduleLogs",x=>RS=x)}}
+
+/* ===== নিচের বারের বাম/ডান অপশন: ইউজার অনুযায়ী Firebase-এ সেভ (users/{uid}.navPref) ===== */
+const rcNavSave=async p=>{const u=auth.currentUser;if(!u)return;let r=DO(db,"users",u.uid);try{const s=await GS(MY("users","uid",u.uid));s.empty||(r=s.docs[0].ref)}catch(e){}await UPD(r,{navPref:p});localStorage.removeItem("rcNavDirty")},rcNavLocal=()=>{try{return JSON.parse(localStorage.getItem("rcNav")||"{}")}catch(e){return{}}};
+function rcNavSync(d){try{localStorage.setItem("rcAdd","Add "+((LB_PRESETS[String(d.managementType||"").toLowerCase().trim()]||{}).person||"Patient"));"1"===localStorage.getItem("rcNavDirty")?rcNavSave(rcNavLocal()).catch(()=>{}):d.navPref&&localStorage.setItem("rcNav",JSON.stringify(d.navPref));dispatchEvent(new Event("rc-nav"))}catch(e){}}
+addEventListener("rc-nav-save",()=>rcNavSave(rcNavLocal()).catch(()=>{}));
+/* ===== নিচের বার শেষ ===== */

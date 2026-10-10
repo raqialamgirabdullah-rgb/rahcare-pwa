@@ -1,4 +1,4 @@
-import{requireAuth,blockCacheAndBack,mountMonthlyReport,mountAdminTools}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=15";
+import{requireAuth,blockCacheAndBack,mountMonthlyReport,mountAdminTools}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=16";
 blockCacheAndBack();
 const v=i=>document.getElementById(i),start=mountMonthlyReport();
 /* পুরোনো নামগুলোও চালু রাখা হলো (Blogger পেজের HTML থেকে ডাকা হলে) */

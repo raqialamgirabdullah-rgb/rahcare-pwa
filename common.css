@@ -199,3 +199,11 @@ body.rc-side-open #rc-side-scrim{opacity:1;pointer-events:auto}
 /* ===== "যাচাই করা হচ্ছে" স্ক্রিন: দ্রুত লোডে একদম দেখা যায় না; ১.৪ সেকেন্ডের বেশি লাগলে তবেই ধীরে ফুটে ওঠে ===== */
 .rc-auth-overlay{background:transparent;color:transparent;pointer-events:none;animation:rcOv .35s ease 1.4s forwards}
 @keyframes rcOv{to{background:var(--bg);color:var(--text-muted)}}
+/* ===== নিচের বার: Home মাঝখানে, বাম/ডান বদলানো যায় (Edit Mode-এ ✎) ===== */
+#rc-bnav .rc-bn-p{position:relative}
+#rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-p:after{content:"\270E";position:absolute;top:-6px;right:4px;font-size:11px;color:var(--primary)}
+#rc-np{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.35);display:flex;align-items:flex-end;justify-content:center}
+.rc-np-b{width:100%;max-width:480px;max-height:70vh;overflow:auto;background:#fff;border-radius:22px 22px 0 0;padding:14px 12px calc(14px + env(safe-area-inset-bottom));font-family:var(--font-main)}
+.rc-np-h{font-weight:700;color:var(--primary);padding:4px 8px 10px}
+.rc-np-b button{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;background:none;border-radius:14px;font:inherit;color:#1f2d27;text-align:left}
+.rc-np-b button.on{background:#dcece3;color:var(--primary);font-weight:700}
