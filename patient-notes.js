@@ -58,7 +58,7 @@ export function mountNotePage(kind) {
             checked: Array.isArray(a.symptomChecks) ? a.symptomChecks : [],
             patient: { name: a.name || "Patient", meta: meta0 },
             back: DASH,
-            extraTop: createDocUpload(user, { onImage: saveImg }),
+            extraTop: createDocUpload(user, { onImage: saveImg, images: () => a.uploadedImages }),
             onSave: ids => UP(ref, { symptomChecks: ids })
           });
           return;
@@ -70,7 +70,7 @@ export function mountNotePage(kind) {
       card.appendChild(el("div", "font-weight:700;font-size:15px", a.name || "Patient"));
       const meta = [a.idNumber ? "ID: " + a.idNumber : "", a.phone || ""].filter(Boolean).join("  •  ");
       if (meta) card.appendChild(el("div", "font-size:12px;color:#64748b;margin-bottom:12px", meta));
-      card.appendChild(createDocUpload(user, { onImage: saveImg }));
+      card.appendChild(createDocUpload(user, { onImage: saveImg, images: () => a.uploadedImages }));
 
       const ta = el("textarea", "width:100%;min-height:220px;box-sizing:border-box;margin:10px 0;font-family:inherit;font-size:14px;padding:10px;border:1px solid #cbd5e1;border-radius:8px");
       ta.className = "rc-input";
