@@ -5,7 +5,7 @@ import{signOut,EmailAuthProvider as EP,reauthenticateWithCredential as RA,update
 const m=i=>document.getElementById(i),
 REDIRECT_URL="https://rahcare.blogspot.com/p/login.html",
 SECS=["field-edit-section","email-edit-section","pass-section","delete-section"],
-FIELDS=[["centreName","Centre Name"],["centreType","Centre Type"],["managementType","Management Type"],["branchName","Branch Name"],["branchNumber","Branch Phone"],["branchAddress","Branch Address"],["siteHeading","Header Title"]],
+FIELDS=[["centreName","Centre Name"],["centreType","Centre Type"],["managementType","Management Type"],["branchName","Branch Name"],["branchNumber","Branch Phone"],["branchAddress","Branch Address"]],
 MG={patient:"Patient Management",worker:"Worker Management",student:"Student Management",client:"Client Management",staff:"Staff Management"},
 NAV={patient:"Add Patient",worker:"Add Worker",student:"Add Student",client:"Add Client",staff:"Add Staff"},
 applyNav=x=>{const t=NAV[x];if(!t)return;try{localStorage.setItem("mgmtType",x)}catch(e){}document.querySelectorAll('a[href*="/p/appointment.html"],option[value*="/p/appointment.html"]').forEach(n=>n.textContent=t)},
