@@ -374,7 +374,7 @@ export function mountEditModeToggles(containerId) {
       ".em-sw input{opacity:0;width:0;height:0;position:absolute}" +
       ".em-sl{position:absolute;inset:0;background:#ccc;transition:.2s;border-radius:20px}" +
       ".em-sl:before{position:absolute;content:'';height:14px;width:14px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:50%}" +
-      ".em-sw input:checked+.em-sl{background:#4f46e5}" +
+      ".em-sw input:checked+.em-sl{background:var(--primary-color)}" +
       ".em-sw input:checked+.em-sl:before{transform:translateX(18px)}";
     document.head.appendChild(st);
   }
