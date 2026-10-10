@@ -203,3 +203,13 @@ export function mountResponseChecklist(box, opt) {
     save.disabled = false;
   };
 }
+
+/* প্রেসক্রিপশনের জন্য: টিক করা রিঅ্যাকশন থেকে ফলাফলের তালিকা */
+export function responseSummary(checkedIds) {
+  const saved = new Set(checkedIds || []), out = [];
+  for (const g of parse()) for (const s of g.sections) for (const it of s.items) {
+    const on = it.reacts.filter(x => saved.has(x.id));
+    if (on.length) out.push({ group: g.title, section: s.title, action: it.action, result: it.result, reacts: on.map(x => x.text) });
+  }
+  return out;
+}
