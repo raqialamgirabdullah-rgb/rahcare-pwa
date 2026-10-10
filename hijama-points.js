@@ -13,7 +13,9 @@ const TYPES = {
   dry: { label: "Dry Cup", color: "#7a8fa6" },
   wet: { label: "Wet Cup", color: "#dc2626" }
 };
-const DOT = 14;
+const DOT = 16;
+/* বিন্দু স্বচ্ছ + multiply ব্লেন্ড: রং দেখা যায়, কিন্তু নিচের কালো নম্বর/দাগ পুরো স্পষ্ট থাকে */
+const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
 
 export async function openHijamaPoints(docId, patientName) {
   if (document.getElementById("rc-hp")) return;
@@ -146,7 +148,7 @@ export async function openHijamaPoints(docId, patientName) {
     const draw = () => {
       layer.innerHTML = "";
       marks[im.key].forEach((m, i) => {
-        const d = el("div", "position:absolute;width:" + DOT + "px;height:" + DOT + "px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #0000004d;box-sizing:border-box;transform:translate(-50%,-50%);background:" + TYPES[m.t].color + ";left:" + m.x * 100 + "%;top:" + m.y * 100 + "%");
+        const d = el("div", "position:absolute;width:" + DOT + "px;height:" + DOT + "px;border-radius:50%;border:2px solid " + TYPES[m.t].color + ";box-sizing:border-box;transform:translate(-50%,-50%);mix-blend-mode:multiply;background:" + rgba(TYPES[m.t].color, 0.4) + ";left:" + m.x * 100 + "%;top:" + m.y * 100 + "%");
         d.setAttribute("data-dot", i);
         d.style.pointerEvents = markOn ? "auto" : "none";
         layer.appendChild(d);
