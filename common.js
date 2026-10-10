@@ -953,7 +953,7 @@ function mtSelectSync(v) {
           ev.preventDefault();
           m.classList.remove("show");
           try {
-            const mod = await import("./hijama-points.js?v=2");
+            const mod = await import("./hijama-points.js?v=3");
             mod.openHijamaPoints(doc, name);
           } catch (er) { console.error(er); alert("Hijama Points খোলা যায়নি"); }
         };

@@ -1,7 +1,11 @@
 /* Hijama Points (শুধু অ্যাডমিন): হিজামা রোগীর নামে ক্লিক করলে ৪টি বডি-ডায়াগ্রাম একটার নিচে আরেকটা।
    উপরের Mark টগল চালু করলে ছবিতে ট্যাপ করে বিন্দু বসানো যায় (Dry = ধূসর-নীল, Wet = লাল)।
-   বিন্দু আবার ট্যাপ করলে মুছে যায়। মার্কগুলো appointment ডকুমেন্টের hijamaMarks ফিল্ডে সেভ হয়। */
-import { db, auth, DO, GD, UP } from "./common.js?v=14";
+   বিন্দু আবার ট্যাপ করলে মুছে যায়। মার্কগুলো appointment ডকুমেন্টের hijamaMarks ফিল্ডে সেভ হয়।
+
+   সবার উপরে "রোগ অনুযায়ী পয়েন্ট" সেকশন: + আইকনে রোগের নাম দিয়ে অসংখ্য এন্ট্রি যোগ করা যায়।
+   প্রতিটি রোগে চেক করলে ৪টি ছবি আসে, সেখানে মার্ক করে সেভ করা যায়। এগুলো সব পেশেন্টের ক্ষেত্রে একই
+   (শেয়ার্ড) এবং অ্যাডমিনের নিজের users ডকুমেন্টের hijamaDiseases ফিল্ডে সেভ হয়। */
+import { db, auth, DO, GD, UP, loadUser } from "./common.js?v=14";
 
 const IMAGES = [
   { key: "head", title: "Head", file: "hijama-points/head.gif" },
@@ -16,6 +20,23 @@ const TYPES = {
 const DOT = 16;
 /* বিন্দু স্বচ্ছ + multiply ব্লেন্ড: রং দেখা যায়, কিন্তু নিচের কালো নম্বর/দাগ পুরো স্পষ্ট থাকে */
 const rgba = (hex, a) => { const n = parseInt(hex.slice(1), 16); return "rgba(" + (n >> 16) + "," + ((n >> 8) & 255) + "," + (n & 255) + "," + a + ")"; };
+
+/* সেভ করা ডেটা থেকে শুধু বৈধ মার্কগুলো নিই */
+const cleanMarks = saved => {
+  const src = saved && typeof saved === "object" ? saved : {};
+  const marks = {};
+  IMAGES.forEach(im => {
+    marks[im.key] = (Array.isArray(src[im.key]) ? src[im.key] : [])
+      .filter(m => m && typeof m.x === "number" && typeof m.y === "number" && TYPES[m.t])
+      .map(m => ({ x: m.x, y: m.y, t: m.t }));
+  });
+  return marks;
+};
+const cleanDiseases = saved =>
+  (Array.isArray(saved) ? saved : [])
+    .filter(d => d && typeof d.id === "string" && typeof d.name === "string" && d.name.trim())
+    .map(d => ({ id: d.id, name: d.name.trim(), marks: cleanMarks(d.marks) }));
+const newId = () => "d" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
 export async function openHijamaPoints(docId, patientName) {
   if (document.getElementById("rc-hp")) return;
@@ -34,13 +55,17 @@ export async function openHijamaPoints(docId, patientName) {
     return;
   }
 
-  const marks = {};
-  const saved = appt.hijamaMarks && typeof appt.hijamaMarks === "object" ? appt.hijamaMarks : {};
-  IMAGES.forEach(im => {
-    marks[im.key] = (Array.isArray(saved[im.key]) ? saved[im.key] : [])
-      .filter(m => m && typeof m.x === "number" && typeof m.y === "number" && TYPES[m.t])
-      .map(m => ({ x: m.x, y: m.y, t: m.t }));
-  });
+  /* রোগ অনুযায়ী পয়েন্টের ডেটা অ্যাডমিনের নিজের users ডকুমেন্টে থাকে (সব পেশেন্টের জন্য একই) */
+  let userRef = null, diseases = [];
+  try {
+    const u = await loadUser(user);
+    if (u && u.ref) {
+      userRef = u.ref;
+      diseases = cleanDiseases(u.d && u.d.hijamaDiseases);
+    }
+  } catch (e) { console.error(e); }
+
+  const marks = cleanMarks(appt.hijamaMarks);
 
   const el = (tag, css, txt) => {
     const e = document.createElement(tag);
@@ -119,61 +144,157 @@ export async function openHijamaPoints(docId, patientName) {
   };
   tgl.onclick = () => { markOn = !markOn; paintTools(); };
 
-  /* সেভ (ক্রমানুসারে) */
+  /* সেভ (ক্রমানুসারে): পেশেন্টের মার্ক এবং রোগ অনুযায়ী মার্ক একই সারিতে, যাতে একটা আরেকটাকে ওভারলাপ না করে */
   let chain = Promise.resolve();
-  const save = () => {
+  const saveTo = (target, data) => {
     status.style.color = "#64748b";
     status.textContent = "Saving...";
     chain = chain
-      .then(() => UP(ref, { hijamaMarks: marks }))
+      .then(() => UP(target, data))
       .then(() => { status.style.color = "#16a34a"; status.textContent = "✅ Saved"; })
       .catch(e => { console.error(e); status.style.color = "#dc2626"; status.textContent = "Save failed"; });
   };
+  const save = () => saveTo(ref, { hijamaMarks: marks });
+  const saveDiseases = () => {
+    if (!userRef) { status.style.color = "#dc2626"; status.textContent = "Save failed"; return; }
+    saveTo(userRef, { hijamaDiseases: diseases });
+  };
 
-  /* ছবির সেকশন */
-  const list = el("div", "max-width:520px;margin:0 auto;padding:10px 10px 30px");
-  IMAGES.forEach(im => {
-    const card = el("div", "background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;margin-bottom:12px");
-    card.appendChild(el("div", "font-weight:700;font-size:13px;color:#334155;margin:0 0 6px", im.title));
-    const wrap = el("div", "position:relative;line-height:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent");
-    wrap.setAttribute("data-wrap", "1");
-    const img = el("img", "width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none");
-    img.src = base + im.file;
-    img.alt = im.title;
-    img.draggable = false;
-    wrap.appendChild(img);
-    const layer = el("div", "position:absolute;inset:0");
-    wrap.appendChild(layer);
+  /* ৪টি ছবির কার্ড: পেশেন্ট এবং রোগ — দুই জায়গাতেই একই কোড। onChange() মার্ক বদলালে ডাকা হয় */
+  const buildImages = (parent, m, onChange) => {
+    IMAGES.forEach(im => {
+      const card = el("div", "background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;margin-bottom:12px");
+      card.appendChild(el("div", "font-weight:700;font-size:13px;color:#334155;margin:0 0 6px", im.title));
+      const wrap = el("div", "position:relative;line-height:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent");
+      wrap.setAttribute("data-wrap", "1");
+      wrap.style.cursor = markOn ? "crosshair" : "default";
+      const img = el("img", "width:100%;height:auto;display:block;user-select:none;-webkit-user-drag:none");
+      img.src = base + im.file;
+      img.alt = im.title;
+      img.draggable = false;
+      wrap.appendChild(img);
+      const layer = el("div", "position:absolute;inset:0");
+      wrap.appendChild(layer);
 
-    const draw = () => {
-      layer.innerHTML = "";
-      marks[im.key].forEach((m, i) => {
-        const d = el("div", "position:absolute;width:" + DOT + "px;height:" + DOT + "px;border-radius:50%;border:2px solid " + TYPES[m.t].color + ";box-sizing:border-box;transform:translate(-50%,-50%);mix-blend-mode:multiply;background:" + rgba(TYPES[m.t].color, 0.4) + ";left:" + m.x * 100 + "%;top:" + m.y * 100 + "%");
-        d.setAttribute("data-dot", i);
-        d.style.pointerEvents = markOn ? "auto" : "none";
-        layer.appendChild(d);
+      const draw = () => {
+        layer.innerHTML = "";
+        m[im.key].forEach((mk, i) => {
+          const d = el("div", "position:absolute;width:" + DOT + "px;height:" + DOT + "px;border-radius:50%;border:2px solid " + TYPES[mk.t].color + ";box-sizing:border-box;transform:translate(-50%,-50%);mix-blend-mode:multiply;background:" + rgba(TYPES[mk.t].color, 0.4) + ";left:" + mk.x * 100 + "%;top:" + mk.y * 100 + "%");
+          d.setAttribute("data-dot", i);
+          d.style.pointerEvents = markOn ? "auto" : "none";
+          layer.appendChild(d);
+        });
+      };
+      wrap.addEventListener("click", e => {
+        if (!markOn) return;
+        const dot = e.target.closest && e.target.closest("[data-dot]");
+        if (dot) {
+          m[im.key].splice(+dot.getAttribute("data-dot"), 1);
+        } else {
+          const r = wrap.getBoundingClientRect();
+          if (!r.width || !r.height) return;
+          const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+          if (px < 0 || px > 1 || py < 0 || py > 1) return;
+          m[im.key].push({ x: Math.round(px * 10000) / 10000, y: Math.round(py * 10000) / 10000, t: cur });
+        }
+        draw();
+        onChange();
       });
-    };
-    wrap.addEventListener("click", e => {
-      if (!markOn) return;
-      const dot = e.target.closest && e.target.closest("[data-dot]");
-      if (dot) {
-        marks[im.key].splice(+dot.getAttribute("data-dot"), 1);
-      } else {
-        const r = wrap.getBoundingClientRect();
-        if (!r.width || !r.height) return;
-        const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
-        if (px < 0 || px > 1 || py < 0 || py > 1) return;
-        marks[im.key].push({ x: Math.round(px * 10000) / 10000, y: Math.round(py * 10000) / 10000, t: cur });
-      }
       draw();
-      paintCounts();
-      save();
+      card.appendChild(wrap);
+      parent.appendChild(card);
     });
-    draw();
-    card.appendChild(wrap);
-    list.appendChild(card);
-  });
+  };
+
+  const list = el("div", "max-width:520px;margin:0 auto;padding:10px 10px 30px");
+
+  /* ===== রোগ অনুযায়ী পয়েন্ট (সব পেশেন্টের জন্য একই) ===== */
+  const sec = el("div", "background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:8px;margin-bottom:12px");
+  const secHead = el("div", "display:flex;align-items:center;gap:8px");
+  secHead.appendChild(el("div", "flex:1;font-weight:700;font-size:14px;color:#334155", "রোগ অনুযায়ী পয়েন্ট"));
+  const plus = el("button", "width:30px;height:30px;border:0;border-radius:50%;background:#16a34a;color:#fff;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0", "+");
+  plus.type = "button";
+  plus.title = "নতুন রোগ যোগ করুন";
+  plus.setAttribute("aria-label", "নতুন রোগ যোগ করুন");
+  secHead.appendChild(plus);
+  sec.appendChild(secHead);
+  const dList = el("div", "margin-top:8px");
+  sec.appendChild(dList);
+  list.appendChild(sec);
+
+  const openIds = new Set();
+  const iconBtn = (txt, label, fn) => {
+    const b = el("button", "border:0;background:0 0;cursor:pointer;font-size:15px;padding:2px 6px;color:#64748b", txt);
+    b.type = "button";
+    b.title = label;
+    b.setAttribute("aria-label", label);
+    b.onclick = fn;
+    return b;
+  };
+  const renderDiseases = () => {
+    dList.innerHTML = "";
+    if (!diseases.length) {
+      dList.appendChild(el("div", "font-size:12px;color:#94a3b8;padding:4px 2px", "কোনো রোগ যোগ করা হয়নি। উপরের + চেপে রোগের নাম দিয়ে যোগ করুন।"));
+      return;
+    }
+    diseases.forEach(d => {
+      const item = el("div", "border-top:1px solid #f1f5f9;padding:6px 0");
+      const row = el("label", "display:flex;align-items:center;gap:8px;cursor:pointer");
+      const cb = el("input", "width:18px;height:18px;flex:none;cursor:pointer");
+      cb.type = "checkbox";
+      cb.checked = openIds.has(d.id);
+      row.appendChild(cb);
+      row.appendChild(el("span", "flex:1;min-width:0;font-size:14px;font-weight:600;color:#1e293b;word-break:break-word", d.name));
+      const rn = iconBtn("✎", "নাম বদলান", ev => {
+        ev.preventDefault();
+        const nm = prompt("রোগের নাম", d.name);
+        if (nm == null || !nm.trim()) return;
+        d.name = nm.trim();
+        saveDiseases();
+        renderDiseases();
+      });
+      const del = iconBtn("🗑", "মুছুন", ev => {
+        ev.preventDefault();
+        if (!confirm("«" + d.name + "» মুছে ফেলবেন? এর সব মার্ক মুছে যাবে।")) return;
+        diseases = diseases.filter(z => z !== d);
+        openIds.delete(d.id);
+        saveDiseases();
+        renderDiseases();
+      });
+      row.appendChild(rn);
+      row.appendChild(del);
+      item.appendChild(row);
+
+      const body = el("div", "margin-top:8px;display:" + (cb.checked ? "block" : "none"));
+      let built = false;
+      const ensure = () => {
+        if (built) return;
+        built = true;
+        buildImages(body, d.marks, saveDiseases);
+      };
+      if (cb.checked) ensure();
+      cb.onchange = () => {
+        if (cb.checked) { openIds.add(d.id); ensure(); body.style.display = "block"; }
+        else { openIds.delete(d.id); body.style.display = "none"; }
+      };
+      item.appendChild(body);
+      dList.appendChild(item);
+    });
+  };
+  plus.onclick = () => {
+    if (!userRef) { alert("রোগ যোগ করা যাচ্ছে না, পেজ রিলোড করে আবার চেষ্টা করুন"); return; }
+    const nm = prompt("রোগের নাম");
+    if (nm == null || !nm.trim()) return;
+    const d = { id: newId(), name: nm.trim(), marks: cleanMarks(null) };
+    diseases.push(d);
+    openIds.add(d.id);
+    saveDiseases();
+    renderDiseases();
+  };
+  renderDiseases();
+
+  /* ===== এই পেশেন্টের নিজের মার্কিং (আগের মতোই) ===== */
+  buildImages(list, marks, () => { paintCounts(); save(); });
   ov.appendChild(list);
 
   paintTools();
