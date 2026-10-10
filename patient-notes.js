@@ -75,6 +75,21 @@ export function mountNotePage(kind) {
       const ta = el("textarea", "width:100%;min-height:220px;box-sizing:border-box;margin:10px 0;font-family:inherit;font-size:14px;padding:10px;border:1px solid #cbd5e1;border-radius:8px");
       ta.className = "rc-input";
       ta.value = a[K.field] || "";
+      // Response Diagnosis: এডমিন হলে নোট বক্সের উপরে টিক-চেকলিস্ট (নোট বক্স আগের মতোই থাকে)
+      if (kind === "response") {
+        try {
+          const isAdminR = (await GD(DO(db, "admins", user.uid))).exists();
+          if (isAdminR) {
+            const { mountResponseChecklist } = await import("./response-checklist.js?v=1");
+            const chk = el("div", "margin:10px 0");
+            card.appendChild(chk);
+            mountResponseChecklist(chk, {
+              checked: Array.isArray(a.responseChecks) ? a.responseChecks : [],
+              onSave: ids => UP(ref, { responseChecks: ids })
+            });
+          }
+        } catch (e) { console.error(e); }
+      }
       card.appendChild(ta);
 
       const row = el("div", "display:flex;gap:8px;align-items:center");
