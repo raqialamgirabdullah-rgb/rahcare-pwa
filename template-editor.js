@@ -43,6 +43,24 @@ export function applyLayout(kind, root, data) {
   root.innerHTML = L.html;
   keep.forEach(n => root.appendChild(n));
   if (kind === "slip" && L.pad) root.style.padding = L.pad;
+  if (L.size) {
+    root.style.width = L.size.w + "px";
+    if (kind === "slip") { if (L.size.minH) root.style.minHeight = L.size.minH + "px"; }
+    else { root.style.height = L.size.h + "px"; if (L.size.sc) root.dataset.rcScale = L.size.sc; }
+  }
+  if (L.css) {
+    let st = document.getElementById("rc-lay-" + kind);
+    if (!st) { st = document.createElement("style"); st.id = "rc-lay-" + kind; document.head.appendChild(st); }
+    st.textContent = L.css;
+  }
+  const url = data.logoUrl || data.logo || data.centerLogo || "", waits = [];
+  root.querySelectorAll("img[data-rc-logo]").forEach(i => {
+    const u = url || i.getAttribute("data-fallback") || "";
+    if (!u) { i.style.display = "none"; return; }
+    i.style.display = ""; i.crossOrigin = "anonymous";
+    waits.push(new Promise(res => { i.onload = i.onerror = res; i.src = u; }));
+  });
+  root.__rcWait = Promise.all(waits);
   const tb = kind === "invoice" && root.querySelector("#inv-items");
   if (tb && L.rows && Object.keys(L.rows).length) {
     new MutationObserver(() => styleRows(tb, L.rows)).observe(tb, { childList: true, subtree: true });
@@ -86,6 +104,7 @@ const SLIP_CSS = scope(`
 const CSS = `
 #rceBack{position:fixed;inset:0;z-index:99998;background:#e9eeeb;display:flex;flex-direction:column;font-family:Roboto,'Noto Sans Bengali',system-ui,sans-serif;color:#1f2a24;-webkit-tap-highlight-color:transparent}
 #rceBack *{box-sizing:border-box}
+#rceBack [hidden]{display:none!important}
 #rceBar{display:flex;gap:6px;align-items:center;padding:8px 10px;background:#fff;border-bottom:1px solid #d3dcd6;flex-wrap:wrap}
 #rceBar b{flex:1;font-size:14px;min-width:120px}
 .rce-b{border:1px solid #c3cfc8;background:#fff;border-radius:8px;padding:7px 10px;font-size:13px;line-height:1.1;cursor:pointer;color:#1f2a24;font-family:inherit}
@@ -115,6 +134,7 @@ const CSS = `
 .rce-pvbox{position:relative;overflow:hidden;width:100%;background:#fff;border-radius:4px;pointer-events:none}
 .rce-tile .cap{margin-top:5px}
 #tMoreW{padding:8px 10px 14px;text-align:center}
+[data-rc-nologo]{display:none!important}
 .rce-sel{outline:2px solid #2563eb!important;outline-offset:1px}
 .rce-hid{opacity:.3;outline:1px dashed #64748b}
 #rcePanel{background:#fff;border-top:1px solid #d3dcd6;max-height:46vh;overflow:auto;padding:8px 10px 12px;font-size:12.5px}
@@ -142,7 +162,8 @@ const today = () => {
 const CELLS = /^(TD|TH|TR|TBODY|THEAD|TFOOT)$/;
 
 /* ---------- টেমপ্লেট জেনারেটর: seed নম্বর থেকে প্রতিবার আলাদা ডিজাইন (অসীম সংখ্যক) ---------- */
-const mulberry = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const mulberry0 = a => () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const mulberry = a => { const f = mulberry0(Math.imul(a ^ 0x9e3779b9, 0x85ebca6b) ^ (a >>> 7)); for (let i = 0; i < 6; i++) f(); return f; };
 const pick = (r, a) => a[Math.floor(r() * a.length)];
 const hsl = (h, s, l) => {
   s /= 100; l /= 100;
@@ -156,8 +177,25 @@ function palette(r) {
 }
 const hideEl = n => { n.setAttribute("data-rc-h", ""); n.style.display = "none"; };
 
-function genSlip(def, seed) {
-  const r = mulberry((seed * 2654435761) >>> 0), P = palette(r);
+/* ---------- সাইজ ও আকার ---------- */
+const SLIP_SIZES = [
+  { id: "s", w: 340, minH: 0, o: "p", wt: 2 }, { id: "m", w: 424, minH: 0, o: "p", wt: 3 }, { id: "l", w: 520, minH: 0, o: "p", wt: 2 },
+  { id: "t", w: 360, minH: 560, o: "p", wt: 2 }, { id: "ls", w: 640, minH: 300, o: "l", wt: 3 }, { id: "w", w: 760, minH: 230, o: "l", wt: 2 }
+];
+const INV_SIZES = [
+  { id: "a6", w: 340, h: 480, mm: [105, 148], sc: 2, o: "p", wt: 2 }, { id: "a5", w: 340, h: 480, mm: [148, 210], sc: 2, o: "p", wt: 3 },
+  { id: "a4", w: 340, h: 480, mm: [210, 297], sc: 3, o: "p", wt: 2 }, { id: "long", w: 340, h: 640, mm: [80, 150], sc: 2.5, o: "p", wt: 2 },
+  { id: "a5l", w: 640, h: 450, mm: [210, 148], sc: 2, o: "l", wt: 2 }, { id: "a4l", w: 640, h: 450, mm: [297, 210], sc: 3, o: "l", wt: 2 }
+];
+const wpick = (r, a) => { let v = r() * a.reduce((m, x) => m + x.wt, 0); for (const x of a) { if ((v -= x.wt) < 0) return x; } return a[0]; };
+const wmSize = (kind, z) => Math.round(kind === "slip" ? Math.min(240, z.w * 0.55, (z.minH || 400) * 0.8) : Math.min(220, z.w * 0.55, z.h * 0.55));
+const wmCss = (kind, z, imp) => { const s = wmSize(kind, z), i = imp ? "!important" : ""; return `left:50%${i};top:50%${i};width:${s}px${i};height:${s}px${i};margin:-${s / 2}px 0 0 -${s / 2}px${i}`; };
+const layoutCss = (kind, z) => kind === "slip"
+  ? `#slipLogo{display:none!important}#slipWM{${wmCss("slip", z, 1)}}`
+  : `#invLogo{display:none!important}#invWM{${wmCss("invoice", z, 1)}}@media print{body:has(#pImg) #pImg{width:${z.mm[0]}mm!important;height:${z.mm[1]}mm!important}@page{size:${z.mm[0]}mm ${z.mm[1]}mm;margin:0}}`;
+
+/* ---------- স্লিপ: ক্লাসিক (আগের কাঠামো) ---------- */
+function genSlipClassic(def, r, P, size) {
   const box = document.createElement("div"); box.innerHTML = def;
   const $ = s => box.querySelector(s), $$ = s => [...box.querySelectorAll(s)];
   const root = $(".slip-main-box");
@@ -166,7 +204,6 @@ function genSlip(def, seed) {
   if (rad) { root.style.borderRadius = rad + "px"; root.style.overflow = "hidden"; }
   const ff = pick(r, [null, null, "Georgia,'Noto Serif Bengali',serif", "'Trebuchet MS','Noto Sans Bengali',sans-serif"]);
   if (ff) root.style.fontFamily = ff;
-  /* header */
   const hd = $(".slip-header"), h2 = $(".slip-header h2"), ico = $(".calendar-icon"), hv = Math.floor(r() * 4);
   hd.style.height = pick(r, [34, 38, 42, 46]) + "px";
   if (hv === 0) { hd.style.background = P.p; hd.style.borderBottom = "none"; h2.style.color = "#fff"; }
@@ -175,10 +212,11 @@ function genSlip(def, seed) {
   else { hd.style.justifyContent = "flex-start"; hd.style.paddingLeft = "16px"; hd.style.borderBottom = `2px solid ${P.p}`; h2.style.color = P.p; }
   h2.style.letterSpacing = pick(r, ["0", "0.5px", "1px", "2px"]); h2.style.fontSize = pick(r, [15, 17, 19, 21]) + "px";
   if (r() < 0.25 && ico) hideEl(ico);
-  /* centre info */
-  if (r() < 0.4) { $(".center-info").style.textAlign = "center"; const d = $(".slip-date"); d.style.position = "static"; d.style.textAlign = "right"; d.style.marginBottom = "2px"; }
+  const ci = $(".center-info");
+  if (r() < 0.4) { ci.style.textAlign = "center"; const d = $(".slip-date"); d.style.position = "static"; d.style.textAlign = "right"; d.style.marginBottom = "2px"; }
   const h3 = $(".center-info h3"); if (h3) h3.style.color = P.p;
-  /* info table */
+  const lg = document.createElement("img"); lg.setAttribute("data-rc-logo", ""); lg.setAttribute("alt", "");
+  lg.setAttribute("style", "position:absolute;right:20px;top:26px;width:54px;height:44px;object-fit:contain"); ci.appendChild(lg);
   const tv = Math.floor(r() * 4), py = pick(r, [3, 4, 5, 6]) + "px", fs = pick(r, [12, 12.5, 13, 13.5]) + "px", lw = pick(r, [30, 35, 40]);
   $$(".info-table tr").forEach((tr, i) => {
     const [a, b] = tr.cells;
@@ -190,7 +228,6 @@ function genSlip(def, seed) {
     else { [a, b].forEach(td => td.style.border = `1px solid ${P.p}`); a.style.background = P.p; a.style.color = "#fff"; }
   });
   const tb = $(".info-table"); tb.style.borderTop = tb.style.borderBottom = (tv === 1 || tv === 2) ? "none" : `1px solid ${P.mid}`;
-  /* footer / patient id */
   const ft = $(".slip-footer"), pid = $(".patient-id"), fv = Math.floor(r() * 3);
   pid.style.fontSize = pick(r, [14, 16, 18, 20]) + "px";
   if (fv === 0) pid.style.color = P.acc;
@@ -198,33 +235,201 @@ function genSlip(def, seed) {
   else { Object.assign(pid.style, { display: "inline-block", background: P.p, color: "#fff", borderRadius: pick(r, ["4px", "20px"]), padding: "3px 16px" }); }
   if (r() < 0.2) { tb.before(ft); ft.style.marginTop = "0"; ft.style.padding = "6px 15px"; }
   if (r() < 0.2) { const st = document.createElement("div"); st.setAttribute("data-rc-custom", "1"); st.style.cssText = `height:${pick(r, [4, 6, 8])}px;background:${P.p};width:100%`; root.insertBefore(st, root.firstChild); }
-  return { html: box.innerHTML, pad: pick(r, [6, 8, 10, 12, 14]) + "px" };
+  const pad = pick(r, [6, 8, 10, 12, 14]);
+  if (size.minH) root.style.minHeight = Math.max(0, size.minH - 2 * pad) + "px";
+  return { html: box.innerHTML, pad: pad + "px" };
 }
 
-function genInvoice(def, seed) {
-  const r = mulberry((seed * 2654435761) >>> 0), P = palette(r);
+/* ---------- স্লিপ: ব্লক ভিত্তিক আলাদা কাঠামো ---------- */
+function genSlipBlocks(def, a, size, r, P) {
   const box = document.createElement("div"); box.innerHTML = def;
-  const $ = s => box.querySelector(s), $$ = s => [...box.querySelectorAll(s)];
-  const card = $(".invoice-card");
-  card.style.boxSizing = "border-box";
+  const T = id => box.querySelector("#" + id).innerHTML;
+  const u = Math.max(0.85, Math.min(1.25, size.w / 424)) * (size.o === "l" ? 0.95 : 1), narrow = size.w <= 360;
+  const F = n => (Math.round(n * u * 10) / 10) + "px";
+  const ff = pick(r, ["", "", "font-family:Georgia,'Noto Serif Bengali',serif;", "font-family:'Trebuchet MS','Noto Sans Bengali',sans-serif;"]);
+  const bw = pick(r, [1, 2, 2, 3]), bs = pick(r, ["solid", "solid", "double"]), rad = pick(r, [0, 0, 6, 12, 18]);
+  const outer = `border:${bs === "double" ? Math.max(bw, 3) : bw}px ${bs} ${P.p};${rad ? `border-radius:${rad}px;overflow:hidden;` : ""}`;
+  const pad = pick(r, [6, 8, 10, 12]), flip = r() < 0.5, cr = pick(r, [0, 4, 8]);
+  const H = (tag, id, st, txt) => `<${tag}${id ? ` id="${id}"` : ""} style="margin:0;${st}">${txt}</${tag}>`;
+  const lg = (w, h, ex = "") => `<img data-rc-logo alt="" style="width:${w}px;height:${h}px;object-fit:contain;display:block;flex:none;${ex}">`;
+  const showIcon = r() < 0.75, ls = pick(r, ["0", "0.5px", "1px", "2px"]);
+  const title = (c, sz, al = "") => `<div style="display:flex;align-items:center;gap:8px;${al}">${showIcon ? `<span style="font-size:${F(15)};line-height:1">📅</span>` : ""}${H("h2", "", `font-size:${sz};letter-spacing:${ls};color:${c};font-weight:700`, "Appointment Slip")}</div>`;
+  const centre = (al, c1, c2, c3) => `<div style="text-align:${al};line-height:1.4">` +
+    H("h3", "slipCentreName", `font-size:${F(14)};font-weight:700;color:${c1}`, T("slipCentreName")) +
+    H("h3", "slipCentreType", `font-size:${F(12)};font-weight:600;color:${c2}`, T("slipCentreType")) +
+    H("p", "slipBranchName", `font-size:${F(12)};font-weight:700;color:${c3}`, T("slipBranchName")) +
+    H("p", "slipBranchAddress", `font-size:${F(11.5)};color:${c3}`, T("slipBranchAddress")) +
+    H("p", "slipBranchNumber", `font-size:${F(11.5)};color:${c3}`, T("slipBranchNumber")) + `</div>`;
+  const date = (st = "") => H("div", "slipDateVal", `font-size:${F(12)};font-weight:700;${st}`, T("slipDateVal"));
+  const pv = Math.floor(r() * 3), pfs = pick(r, [15, 17, 19]), pr = pick(r, ["4px", "20px"]);
+  const pid = (light = false) => {
+    let ps = `font-size:${F(pfs)};letter-spacing:.5px;font-weight:700;display:inline-block;`;
+    if (light) ps += pv === 2 ? `background:#fff;color:${P.p};border-radius:20px;padding:3px 16px;` : `border:1.5px solid #fff;color:#fff;border-radius:20px;padding:2px 16px;`;
+    else ps += pv === 0 ? `color:${P.acc};` : pv === 1 ? `border:1.5px solid ${P.p};color:${P.p};border-radius:20px;padding:2px 16px;` : `background:${P.p};color:#fff;border-radius:${pr};padding:3px 16px;`;
+    return `<div style="text-align:center"><p style="margin:0 0 2px;font-size:${F(10)};color:${light ? "#fff" : "#555"}">Patient ID</p>${H("div", "slipPid", ps, T("slipPid"))}</div>`;
+  };
+  const FL = [["Name", "slipName"], ["Phone", "slipPhone"], ["Age", "slipAge"], ["Gender", "slipGender"], ["Address", "slipAddr"], ["Schedule", "slipSchedule"]];
+  const fv = Math.floor(r() * 4), py = pick(r, [3, 4, 5, 6]), lw = pick(r, [30, 35, 40]);
+  const fields = (cols = 1) => {
+    if (fv === 2) {
+      const gc = cols > 1 ? cols : 2;
+      return `<div style="display:grid;grid-template-columns:repeat(${gc},1fr);gap:6px;width:100%">` + FL.map(([l, id]) =>
+        `<div style="border:1px solid ${P.mid};background:${P.soft};border-radius:${cr}px;padding:4px 8px;min-width:0;${id === "slipAddr" ? "grid-column:1/-1;" : ""}"><div style="font-size:${F(9.5)};color:${P.p};font-weight:700">${l}</div><div id="${id}" style="font-size:${F(12.5)};font-weight:600;min-height:1.3em"></div></div>`).join("") + `</div>`;
+    }
+    if (fv === 3 && cols > 1) {
+      const c = (l, id, sp) => `<td style="padding:${py}px 8px;font-size:${F(12)};font-weight:700;color:${P.p};background:${P.soft};border:1px solid ${P.mid};width:14%">${l}</td><td${sp ? ` colspan="${sp}"` : ""} id="${id}" style="padding:${py}px 8px;font-size:${F(12.5)};border:1px solid ${P.mid}"></td>`;
+      return `<table style="border-collapse:collapse;width:100%"><tr>${c("Name", "slipName")}${c("Phone", "slipPhone")}</tr><tr>${c("Age", "slipAge")}${c("Gender", "slipGender")}</tr><tr>${c("Address", "slipAddr", 3)}</tr><tr>${c("Schedule", "slipSchedule", 3)}</tr></table>`;
+    }
+    const g = fv === 0, b = g ? `1px solid ${P.mid}` : "none", bb = `1px solid ${P.mid}`;
+    return `<table style="border-collapse:collapse;width:100%">` + FL.map(([l, id]) =>
+      `<tr><td style="padding:${py}px 10px;width:${lw}%;font-size:${F(12.5)};font-weight:700;color:${P.p};${g ? `background:${P.soft};` : ""}border:${b};${g ? "" : `border-bottom:${bb};`}">${l}</td><td id="${id}" style="padding:${py}px 10px;font-size:${F(12.5)};border:${b};${g ? "" : `border-bottom:${bb};`}"></td></tr>`).join("") + `</table>`;
+  };
+  const dir = row => row ? `flex-direction:${flip ? "row-reverse" : "row"};` : "";
+  const minH = size.minH ? `min-height:${Math.max(0, size.minH - 2 * pad)}px;` : "";
+  let body = "", rowRoot = false;
+  const bar = (j) => `<div style="background:${P.p};padding:${F(8)} 14px;display:flex;justify-content:${j};">${title("#fff", F(17))}</div>`;
+  if (a === "split") {
+    body = bar(pick(r, ["center", "flex-start"])) +
+      `<div style="display:flex;${narrow ? "flex-direction:column;" : dir(1)}justify-content:space-between;align-items:${narrow ? "stretch" : "flex-start"};gap:10px;padding:12px 14px;">` +
+      `<div style="display:flex;gap:10px;align-items:center;flex:1;min-width:0">${lg(52, 52)}<div style="min-width:0">${centre("left", P.p, "#333", "#333")}</div></div>` +
+      `<div style="display:flex;${narrow ? "flex-direction:row;justify-content:space-between;align-items:center;" : "flex-direction:column;align-items:flex-end;"}gap:8px;flex:none">${date()}${pid()}</div></div>` +
+      `<div style="padding:0 14px 14px">${fields(2)}</div>`;
+  } else if (a === "side") {
+    rowRoot = true;
+    body = `<div style="width:${narrow ? "34%" : "30%"};flex:none;background:${P.p};color:#fff;padding:14px 8px;display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center;">${lg(56, 56, "background:#fff;border-radius:50%;padding:3px")}${title("#fff", F(13), "flex-direction:column;gap:2px")}${date("color:#fff")}${pid(true)}</div>` +
+      `<div style="flex:1;min-width:0;padding:14px;display:flex;flex-direction:column;gap:10px;">${centre("left", P.p, "#333", "#333")}<div style="border-top:2px solid ${P.p}"></div>${fields(size.o === "l" ? 2 : 1)}</div>`;
+  } else if (a === "center") {
+    body = `<div style="height:${pick(r, [5, 6, 8])}px;background:${P.p}"></div>` +
+      `<div style="padding:14px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;flex:1">${lg(60, 60)}${title(P.p, F(18))}${centre("center", P.p, "#333", "#333")}<div style="border-top:1px dashed ${P.p};width:100%"></div>${date()}<div style="width:100%">${fields(2)}</div><div style="margin-top:auto">${pid()}</div></div>`;
+  } else if (a === "minimal") {
+    body = `<div style="padding:16px 16px 6px;display:flex;justify-content:space-between;align-items:flex-start;gap:10px;"><div>${title(P.p, F(20))}<div style="height:3px;width:60px;background:${P.acc};margin-top:6px"></div></div>${lg(48, 48)}</div>` +
+      `<div style="padding:4px 16px 8px;display:flex;justify-content:space-between;gap:10px"><div style="flex:1;min-width:0">${centre("left", "#111", "#333", "#555")}</div>${date("white-space:nowrap")}</div>` +
+      `<div style="padding:4px 16px">${fields(1)}</div><div style="padding:10px 16px 14px;display:flex;justify-content:flex-end;margin-top:auto">${pid()}</div>`;
+  } else if (a === "ticket") {
+    rowRoot = true;
+    body = `<div style="width:36%;flex:none;background:${P.p};color:#fff;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">${lg(64, 64, "background:#fff;border-radius:50%;padding:3px")}${title("#fff", F(16), "flex-direction:column;gap:2px")}${centre("center", "#fff", "#eee", "#eee")}</div>` +
+      `<div style="flex:1;min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center">${date()}${pid()}</div>${fields(2)}</div>`;
+  } else { /* strip */
+    rowRoot = true;
+    body = `<div style="width:30%;flex:none;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;border-right:1px solid ${P.mid}">${lg(48, 48)}${centre("center", P.p, "#333", "#333")}</div>` +
+      `<div style="flex:1;min-width:0;padding:12px;display:flex;flex-direction:column;gap:8px">${title(P.p, F(15))}${fields(3)}</div>` +
+      `<div style="width:22%;flex:none;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:${P.soft};border-left:1px solid ${P.mid}">${date()}${pid()}</div>`;
+  }
+  const html = `<div class="slip-main-box" style="${outer}${ff}${minH}${rowRoot ? dir(1) : ""}">${body}</div>`;
+  return { html, pad: pad + "px" };
+}
+
+const SLIP_ARCH = { p: ["classic", "classic", "split", "side", "center", "minimal"], l: ["ticket", "strip", "side", "ticket"] };
+function genSlip(def, seed) {
+  const r = mulberry((seed * 2654435761) >>> 0), P = palette(r), size = wpick(r, SLIP_SIZES), a = pick(r, SLIP_ARCH[size.o]);
+  const out = a === "classic" ? genSlipClassic(def, r, P, size) : genSlipBlocks(def, a, size, r, P);
+  out.size = { w: size.w, minH: size.minH }; out.css = layoutCss("slip", size); out.v = 3; out.name = size.id + "-" + a;
+  return out;
+}
+
+/* ---------- ইনভয়েস: আকার + কাঠামো ---------- */
+function genInvoice(def, seed) {
+  const r = mulberry((seed * 2654435761) >>> 0), P = palette(r), size = wpick(r, INV_SIZES), land = size.o === "l";
+  const box = document.createElement("div"); box.innerHTML = def;
+  const q = s => box.querySelector(s), $$ = s => [...box.querySelectorAll(s)];
+  const card = q(".invoice-card"), inner = q(".invoice-inner-content");
+  const title = q(".invoice-title"), comp = q(".company-details"), logoBox = q(".logo-container"), meta = q(".invoice-meta");
+  const dash = q(".dashed-line"), bill = q(".billing-info"), table = q(".invoice-table");
+  const words = table.nextElementSibling, terms = words.nextElementSibling;
+  const old = logoBox.querySelector("img"), fb = old.getAttribute("src");
+  const lg = document.createElement("img");
+  lg.setAttribute("data-rc-logo", ""); lg.setAttribute("data-fallback", fb); lg.setAttribute("src", fb); lg.setAttribute("alt", "Logo");
+  lg.setAttribute("crossorigin", "anonymous"); lg.className = "rc-logo"; lg.setAttribute("style", "max-width:85px;height:auto;display:block");
+  logoBox.replaceChild(lg, old);
+  [comp, logoBox, meta].forEach(n => { n.style.order = "0"; });
+  const D = (st, ...kids) => { const d = document.createElement("div"); d.setAttribute("style", st); kids.forEach(k => k && d.appendChild(k)); return d; };
+  inner.innerHTML = "";
+  const flip = r() < 0.5;
+  let titleMB = null, noPad = false, skipTitle = false, arche;
+  card.style.width = size.w + "px"; card.style.height = size.h + "px";
+  const longP = size.id === "long";
+  if (!land) {
+    arche = pick(r, longP ? ["perm", "titlerow", "center", "dual", "boxbill"] : ["perm", "titlerow", "dual", "dual", "boxbill"]);
+    bill.style.gridTemplateColumns = longP ? pick(r, ["1.4fr 1.1fr .5fr", "1fr 1fr", "1fr"]) : "1.4fr 1.1fr .5fr";
+    if (arche === "perm" || arche === "boxbill") {
+      const pm = pick(r, [["c", "l", "m"], ["l", "c", "m"], ["m", "l", "c"], ["c", "m", "l"], ["l", "m", "c"], ["m", "c", "l"]]), map = { c: comp, l: logoBox, m: meta };
+      const h = D("display:flex;justify-content:space-between;align-items:flex-start;width:100%;margin-bottom:8px");
+      pm.forEach((k, i) => { const n = map[k]; n.style.width = k === "l" ? "30%" : "35%"; n.style.textAlign = k === "m" ? (i === 0 ? "left" : "right") : (k === "c" && i === 2 ? "right" : (k === "l" ? "center" : "left")); h.appendChild(n); });
+      if (arche === "boxbill") Object.assign(bill.style, { background: P.soft, borderLeft: `3px solid ${P.p}`, padding: "6px 8px", boxSizing: "border-box", marginBottom: "10px" });
+      inner.append(title, h, dash, bill, table, words, terms);
+    } else if (arche === "dual") {
+      const left = D("width:46%;display:flex;flex-direction:column;gap:6px;align-items:flex-start"), right = D(`flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;text-align:${flip ? "left" : "right"}`);
+      comp.style.width = "100%"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0";
+      meta.style.width = "100%"; meta.style.textAlign = flip ? "left" : "right"; bill.style.gridTemplateColumns = "1fr"; bill.style.marginBottom = "0";
+      left.append(logoBox, comp); right.append(meta, bill);
+      inner.append(title, D(`display:flex;gap:14px;width:100%;margin-bottom:8px;${flip ? "flex-direction:row-reverse;" : ""}`, left, right), dash, table, words, terms);
+    } else if (arche === "titlerow") {
+      const tr = D("display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:10px;gap:8px");
+      title.style.margin = "0"; title.style.textAlign = "left"; meta.style.width = "auto"; meta.style.textAlign = flip ? "left" : "right";
+      flip ? tr.append(meta, title) : tr.append(title, meta);
+      const h = D("display:flex;align-items:center;gap:10px;width:100%;margin-bottom:8px");
+      comp.style.width = "auto"; comp.style.flex = "1"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0";
+      flip ? h.append(comp, logoBox) : h.append(logoBox, comp);
+      inner.append(tr, h, dash, bill, table, words, terms); titleMB = "0";
+    } else {
+      logoBox.style.width = "100%"; logoBox.style.marginTop = "0"; logoBox.style.marginBottom = "4px";
+      comp.style.width = "100%"; comp.style.textAlign = "center"; comp.style.marginBottom = "6px";
+      Object.assign(meta.style, { width: "100%", display: "flex", justifyContent: "space-between", marginBottom: "4px", textAlign: "left" });
+      inner.append(title, logoBox, comp, meta, dash, bill, table, words, terms);
+    }
+    card.style.padding = `25px ${pick(r, [18, 20, 22])}px`;
+  } else {
+    arche = pick(r, ["split", "head", "side"]);
+    table.style.marginBottom = "10px"; words.style.marginBottom = "10px";
+    if (arche === "split") {
+      const wrap = D(`display:flex;gap:22px;width:100%;align-items:stretch;${flip ? "flex-direction:row-reverse;" : ""}`);
+      const left = D("width:36%;flex:none;display:flex;flex-direction:column;gap:8px"), right = D("flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center");
+      title.style.margin = "0 0 2px"; comp.style.width = "auto"; comp.style.flex = "1"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0";
+      meta.style.width = "100%"; meta.style.textAlign = "left"; bill.style.gridTemplateColumns = "1fr"; bill.style.marginBottom = "0"; dash.style.margin = "4px 0";
+      left.append(title, D("display:flex;gap:10px;align-items:center", logoBox, comp), meta, dash, bill);
+      right.append(table, words, terms); wrap.append(left, right); inner.append(wrap); titleMB = "0";
+    } else if (arche === "head") {
+      comp.style.width = "auto"; comp.style.flex = "1"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0"; meta.style.width = "auto";
+      title.style.margin = "0"; title.style.flex = "none";
+      const top = D(`display:flex;justify-content:space-between;align-items:center;gap:14px;width:100%;${flip ? "flex-direction:row-reverse;" : ""}`, D("display:flex;align-items:center;gap:10px;flex:1", logoBox, comp), title, meta);
+      bill.style.gridTemplateColumns = "1fr"; bill.style.marginBottom = "0"; dash.style.margin = "10px 0";
+      const cols = D(`display:flex;gap:20px;width:100%;${flip ? "flex-direction:row-reverse;" : ""}`, D("width:30%;flex:none;display:flex;flex-direction:column;gap:12px", bill, words, terms), D("flex:1;min-width:0", table));
+      inner.append(top, dash, cols); titleMB = "0";
+    } else {
+      noPad = true; skipTitle = true;
+      card.style.flexDirection = flip ? "row-reverse" : "row"; card.style.padding = "0"; card.style.alignItems = "stretch";
+      const side = D(`width:150px;flex:none;background:${P.p};color:#fff;padding:20px 12px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center`);
+      logoBox.style.width = "auto"; logoBox.style.marginTop = "0"; logoBox.style.background = "#fff"; logoBox.style.padding = "6px"; logoBox.style.borderRadius = "6px";
+      title.style.cssText = "margin:0;color:#fff;font-size:14px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:1px";
+      Object.assign(meta.style, { width: "100%", textAlign: "center", color: "#fff" });
+      side.append(logoBox, title, meta);
+      inner.style.cssText = "flex:1;min-width:0;width:auto;padding:20px 22px;display:flex;flex-direction:column;justify-content:center";
+      comp.style.width = "100%"; comp.style.marginBottom = "4px";
+      bill.style.gridTemplateColumns = "1.4fr 1.1fr .5fr"; bill.style.marginBottom = "10px"; dash.style.margin = "8px 0";
+      inner.append(comp, dash, bill, table, words, terms);
+      card.insertBefore(side, inner);
+    }
+    if (!noPad) card.style.padding = "22px 26px";
+  }
+  /* ---- রং/স্টাইল ---- */
   const cv = Math.floor(r() * 4);
+  card.style.boxSizing = "border-box";
   if (cv === 1) card.style.border = `1px solid ${P.p}`; else if (cv === 2) card.style.border = `2px solid ${P.p}`; else if (cv === 3) card.style.border = `3px double ${P.p}`;
-  if (cv > 0 && r() < 0.5) card.style.borderRadius = pick(r, [6, 10]) + "px";
-  if (r() < 0.25) card.style.background = P.soft;
-  card.style.padding = `25px ${pick(r, [18, 20, 22])}px`;
+  if (cv > 0 && r() < 0.5) { card.style.borderRadius = pick(r, [6, 10]) + "px"; if (noPad) card.style.overflow = "hidden"; }
+  if (r() < 0.25 && !noPad) card.style.background = P.soft;
   if (r() < 0.3) card.style.fontFamily = "Arial,'Noto Sans Bengali',sans-serif";
-  /* title */
-  const ti = $(".invoice-title"), tv = Math.floor(r() * 4);
-  ti.style.letterSpacing = pick(r, ["0", "1px", "2px"]);
-  if (tv === 0) { Object.assign(ti.style, { background: P.p, color: "#fff", padding: "3px 0", marginBottom: "15px" }); }
-  else if (tv === 1) { Object.assign(ti.style, { color: P.p, borderBottom: `2px solid ${P.p}`, paddingBottom: "3px", marginBottom: "17px" }); }
-  else if (tv === 2) { ti.style.color = P.p; }
-  else { Object.assign(ti.style, { border: `1.5px solid ${P.p}`, color: P.p, padding: "2px 0", marginBottom: "17px", borderRadius: pick(r, ["0px", "6px"]) }); }
-  /* header + info colours */
-  const cn = $("#inv-centre-name"); if (cn) cn.style.color = P.p;
+  if (!skipTitle) {
+    const tv = Math.floor(r() * 4);
+    title.style.letterSpacing = pick(r, ["0", "1px", "2px"]);
+    if (tv === 0) Object.assign(title.style, { background: P.p, color: "#fff", padding: "3px 8px", marginBottom: titleMB ?? "15px" });
+    else if (tv === 1) Object.assign(title.style, { color: P.p, borderBottom: `2px solid ${P.p}`, paddingBottom: "3px", marginBottom: titleMB ?? "17px" });
+    else if (tv === 2) { title.style.color = P.p; if (titleMB != null) title.style.marginBottom = titleMB; }
+    else Object.assign(title.style, { border: `1.5px solid ${P.p}`, color: P.p, padding: "2px 8px", marginBottom: titleMB ?? "17px", borderRadius: pick(r, ["0px", "6px"]) });
+  }
+  const cn = q("#inv-centre-name"); if (cn) cn.style.color = P.p;
   $$(".billing-info strong").forEach(x => { x.style.color = P.p; });
-  const ln = $(".dashed-line"); ln.style.borderTop = `${pick(r, [1, 1, 2])}px ${pick(r, ["solid", "dashed", "dotted"])} ${P.p}`; ln.style.margin = pick(r, ["18px 0", "14px 0", "16px 0"]);
-  /* table header */
+  dash.style.borderTop = `${pick(r, [1, 1, 2])}px ${pick(r, ["solid", "dashed", "dotted"])} ${P.p}`;
+  if (!land && arche !== "center") dash.style.margin = arche === "boxbill" ? "10px 0" : arche === "dual" ? "0 0 12px" : pick(r, ["18px 0", "14px 0", "16px 0"]);
   const bc = pick(r, [P.mid, P.p, "#000"]), thv = Math.floor(r() * 3);
   $$(".invoice-table th").forEach(th => {
     th.style.borderColor = bc;
@@ -232,7 +437,6 @@ function genInvoice(def, seed) {
     else if (thv === 1) { th.style.background = P.soft; th.style.color = P.p; }
     else { th.style.background = "transparent"; th.style.color = P.p; th.style.borderBottom = `2px solid ${P.p}`; }
   });
-  /* table rows (code-generated → keyed styles) */
   const rows = {}, B = `border-color:${bc};`, set = (k, i, st) => { rows[k + "|" + i] = { s: st, h: 0 }; };
   for (let i = 0; i < 7; i++) set("item", i, B);
   ["Sub Total", "Online Service Charge", "Total Amount", "Discount"].forEach(k => { set(k, 0, B); set(k, 1, B); });
@@ -240,8 +444,8 @@ function genInvoice(def, seed) {
   set("Payable Amount", 0, B + hv); set("Payable Amount", 1, B + hv);
   set("Paid Amount", 0, "vertical-align:middle;padding-right:10px;" + B); set("Paid Amount", 1, "padding:0;vertical-align:middle;" + B); set("Paid Amount", 2, "vertical-align:middle;" + B);
   set("Due Amount", 0, "color:red;" + B); set("Due Amount", 1, "color:red;" + B);
-  const words = $$(".invoice-inner-content strong").find(x => /Payable In Word/.test(x.textContent)); if (words) words.style.color = P.p;
-  return { html: box.innerHTML, rows };
+  const ws = [...words.querySelectorAll("strong")].find(x => /Payable In Word/.test(x.textContent)); if (ws) ws.style.color = P.p;
+  return { html: box.innerHTML, rows, size: { w: size.w, h: size.h, mm: size.mm, sc: size.sc }, css: layoutCss("invoice", size), v: 3, name: size.id + "-" + arche };
 }
 const generate = (kind, def, seed) => kind === "slip" ? genSlip(def, seed) : genInvoice(def, seed);
 
@@ -310,6 +514,12 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   stage.querySelectorAll("[data-rc-h]").forEach(n => { n.style.removeProperty("display"); n.classList.add("rce-hid"); });
   stage.firstElementChild?.removeAttribute(MARK);
   if (kind === "slip" && saved && saved.pad) stage.style.padding = saved.pad;
+  let curSize = (saved && saved.size) || null, curCss = (saved && saved.css) || "";
+  const applySize = () => {
+    stage.style.width = curSize ? curSize.w + "px" : "";
+    if (kind === "invoice") stage.style.height = curSize ? curSize.h + "px" : ""; else stage.style.minHeight = curSize && curSize.minH ? curSize.minH + "px" : "";
+  };
+  applySize();
 
   const D = data;
   const fillSample = root => {
@@ -335,15 +545,25 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
       R("Due Amount", "250", ' style="color:red"');
   }
   };
-  const addLogoImgs = root => {
-    if (!(D.logoUrl && D.logoActive !== false)) return;
+  const logoUrl = D.logoUrl || D.logo || D.centerLogo || "";
+  const fillLogos = root => {
+    root.querySelectorAll("img[data-rc-logo]").forEach(i => {
+      const u = logoUrl || i.getAttribute("data-fallback") || "";
+      if (u) { i.removeAttribute("data-rc-nologo"); i.crossOrigin = "anonymous"; i.src = u; } else i.setAttribute("data-rc-nologo", "1");
+    });
+  };
+  const addLogoImgs = (root, z) => {
+    if (!logoUrl) return;
+    const v3 = !!root.querySelector("[data-rc-logo]");
     root.classList.add("hasLogo");
     [["rceWM", "wm rcewm"], ["rceLogo", "lg rcelg"]].forEach(([id, c]) => {
-      const i = new Image(); if (root === stage) i.id = id; i.className = c; i.crossOrigin = "anonymous"; i.src = D.logoUrl;
+      if (v3 && id === "rceLogo") return;
+      const i = new Image(); if (root === stage) i.id = id; i.className = c; i.crossOrigin = "anonymous"; i.src = logoUrl;
+      if (v3 && z) i.style.cssText = wmCss(kind, z, false);
       i.onload = () => { i.style.display = "block"; }; root.appendChild(i);
     });
   };
-  fillSample(stage); addLogoImgs(stage);
+  fillSample(stage); fillLogos(stage); addLogoImgs(stage, curSize);
 
   /* --- fit to screen --- */
   const fit = () => {
@@ -577,6 +797,10 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
       }
     }
     c.querySelectorAll(".rce-sel").forEach(n => n.classList.remove("rce-sel"));
+    c.querySelectorAll("img[data-rc-logo]").forEach(i => {
+      i.removeAttribute("data-rc-nologo"); i.removeAttribute("crossorigin");
+      const fb = i.getAttribute("data-fallback"); fb ? i.setAttribute("src", fb) : i.removeAttribute("src");
+    });
     c.querySelectorAll("[data-rc-h]").forEach(n => { n.classList.remove("rce-hid"); n.style.display = "none"; });
     c.querySelectorAll("[class='']").forEach(n => n.removeAttribute("class"));
     c.querySelectorAll("[id]").forEach(n => { const d = defBox.querySelector("#" + CSS_ESC(n.id)); if (d) n.innerHTML = d.innerHTML; });
@@ -597,7 +821,9 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     const b = $("rceSave"); b.disabled = true; b.textContent = "Saving...";
     try {
       if (!save) throw new Error("save() missing");
-      await save({ [kind + "Layout"]: JSON.stringify((() => { const html = serialize(); return kind === "invoice" ? { v: 2, html, rows: rowsOut } : { v: 1, html, pad: stage.style.padding || "" }; })()), [kind + "LayoutActive"]: true });
+      await save({ [kind + "Layout"]: JSON.stringify((() => { const html = serialize(); const o = kind === "invoice" ? { v: 2, html, rows: rowsOut } : { v: 1, html, pad: stage.style.padding || "" };
+      if (curSize) { o.v = 3; o.size = curSize; o.css = curCss; }
+      return o; })()), [kind + "LayoutActive"]: true });
       dirty = false; toast("✔ Saved");
     } catch (e) { alert("Save failed: " + (e.message || e)); }
     b.disabled = false; b.textContent = "Save";
@@ -624,18 +850,19 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   const buildTile = seed => {
     const g = generate(kind, defHtml, seed);
     const tile = document.createElement("button"); tile.className = "rce-tile";
-    tile.innerHTML = '<div class="rce-pvbox"><div class="rce-pv" data-k="' + kind + '"></div></div><div class="cap">Template ' + seed + "</div>";
+    tile.innerHTML = '<div class="rce-pvbox"><div class="rce-pv" data-k="' + kind + '"></div></div><div class="cap">Template ' + seed + (g.name ? " · " + g.name : "") + "</div>";
     const pv = tile.querySelector(".rce-pv"), pb = tile.querySelector(".rce-pvbox");
     const fill = root => {
       root.innerHTML = g.html;
       root.querySelectorAll("img[onerror]").forEach(n => n.remove());
       root.querySelectorAll("[data-rc-h]").forEach(n => { n.style.display = "none"; });
-      fillSample(root);
+      fillSample(root); fillLogos(root);
       if (kind === "invoice") { const tb = root.querySelector("#inv-items"); if (tb) styleRows(tb, g.rows); }
     };
     fill(pv);
     if (kind === "slip" && g.pad) pv.style.padding = g.pad;
-    addLogoImgs(pv);
+    if (g.size) { pv.style.width = g.size.w + "px"; if (kind === "invoice") pv.style.height = g.size.h + "px"; else if (g.size.minH) pv.style.minHeight = g.size.minH + "px"; }
+    addLogoImgs(pv, g.size);
     tile.onclick = () => applyTemplate(g);
     grid.appendChild(tile);
     requestAnimationFrame(() => {
@@ -650,7 +877,8 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     stage.innerHTML = g.html;
     stage.style.padding = kind === "slip" ? (g.pad || "") : "";
     stage.classList.remove("hasLogo");
-    fillSample(stage); addLogoImgs(stage);
+    curSize = g.size || null; curCss = g.css || ""; applySize();
+    fillSample(stage); fillLogos(stage); addLogoImgs(stage, curSize);
     if (kind === "invoice") { const tb = stage.querySelector("#inv-items"); if (tb) styleRows(tb, g.rows); }
     refreshMargins(); hidCount(); renderHidden(); fit();
     tpl.hidden = true;
