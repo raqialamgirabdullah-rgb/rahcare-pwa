@@ -63,12 +63,49 @@ const LB_PAGES = {
 
 const PAGE_ICONS = { appointment: "📅", billing: "🧾", dashboard: "📊" };
 const LB_SHOW_MSGS = false; /* true করলে Edit Mode-এ নিচে "Messages & hidden texts" সারি আবার দেখাবে */
+/* ===== NAV MENU NAMES: Blogger টেমপ্লেটের মেনু লিংক (/p/xxx.html) এর লেখা ইউজার বদলাতে পারবে (labels.nav_xxx) ===== */
+const NAV_REX = /\/p\/([\w-]+)\.html/, NAV_SKIP = new Set(["login", "sign-up"]), NAVDEF = {};
+const navEls = () => [...document.querySelectorAll("a[href],option[value]")].filter(e => {
+  if (e.closest("#rc-app")) return false;
+  const m = NAV_REX.exec(e.getAttribute("href") || e.value || "");
+  if (!m || NAV_SKIP.has(m[1])) return false;
+  e.dataset.rcNav = m[1];
+  return true;
+});
+const navTexts = e => {
+  if (e.tagName === "OPTION") return [e];
+  const w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT), out = [];
+  for (let n = w.nextNode(); n; n = w.nextNode()) {
+    if (n.nodeValue.trim() && !(n.parentElement && n.parentElement.closest(".lb-ed"))) out.push(n);
+  }
+  return out;
+};
+const navGet = e => e.tagName === "OPTION" ? e.textContent.trim() : navTexts(e).map(n => n.nodeValue.trim()).join(" ").trim();
+const navSet = (e, txt) => {
+  if (e.tagName === "OPTION") { e.textContent = txt; return; }
+  const t = navTexts(e);
+  if (!t.length) return;
+  t[0].nodeValue = txt;
+  t.slice(1).forEach(n => { n.nodeValue = ""; });
+};
+export function applyNavLabels(labels) {
+  labels = labels || {};
+  navEls().forEach(e => {
+    const k = "nav_" + e.dataset.rcNav;
+    if (e.dataset.rcNav0 === undefined) { e.dataset.rcNav0 = navGet(e); if (NAVDEF[k] === undefined) NAVDEF[k] = e.dataset.rcNav0; }
+    const v = typeof labels[k] === "string" ? labels[k].trim() : "";
+    if (v) { navSet(e, v); e.dataset.rcNavC = "1"; }
+    else if (e.dataset.rcNavC) { navSet(e, e.dataset.rcNav0); delete e.dataset.rcNavC; }
+  });
+}
+/* ===== NAV MENU NAMES শেষ ===== */
+
 export function createLabels(data, save) {
   data = data || {};
   if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); }
   const user = Object.assign({}, data.labels || {});
   const preset = LB_PRESETS[String(data.managementType || "").toLowerCase().trim()] || {};
-  const dflt = k => (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : k));
+  const dflt = k => (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : (NAVDEF[k] !== undefined ? NAVDEF[k] : k)));
   const raw = k => {
     const u = user[k];
     return typeof u === "string" && u.trim() ? u : dflt(k);
@@ -89,7 +126,7 @@ export function createLabels(data, save) {
   /* একটি লেখা এডিট করার ছোট পপআপ */
   const editOne = k => {
     const ov = mk("div", "lb-ov"), box = mk("div", "lb-box");
-    box.appendChild(mk("div", "lb-h", "✎ " + k));
+    box.appendChild(mk("div", "lb-h", k.indexOf("nav_") === 0 ? "✎ Menu: " + (NAVDEF[k] || k.slice(4)) : "✎ " + k));
     const d0 = String(dflt(k));
     const inp = mk(d0.length > 40 ? "textarea" : "input", "lb-in");
     if (inp.tagName === "TEXTAREA") inp.rows = 4;
@@ -201,6 +238,14 @@ export function createLabels(data, save) {
       else if (e.tagName === "BUTTON" && e.closest(".footer-form,.bill-foot")) { if (e.classList.contains("rc-btn-secondary")) e.before(p); else e.after(p); }
       else e.appendChild(p);
     });
+    navEls().forEach(e => {
+      if (e.tagName === "OPTION" || e.offsetParent === null || !navGet(e)) return;
+      const k = "nav_" + e.dataset.rcNav;
+      const p = mk("span", "lb-ed", "✎");
+      p.dataset.k = k;
+      p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editOne(k); };
+      e.appendChild(p);
+    });
     const shown = new Set([...document.querySelectorAll(".lb-ed")].map(e => e.dataset.k));
     const keys = (LB_PAGES[curPage] || []).filter(k => !shown.has(k));
     if (!LB_SHOW_MSGS || !keys.length) return;
@@ -227,6 +272,7 @@ export function createLabels(data, save) {
     root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
     root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
     applyIcon();
+    applyNavLabels(user);
     relabel();
     if (!obs && (preset.person || preset.dashboardTitle)) {
       obs = new MutationObserver(relabel);
@@ -398,6 +444,7 @@ document.addEventListener("click", e => {
 export async function loadUser(t, e) {
   const res = await loadUserBase(t, e);
   if (res && res.d) {
+    try { applyNavLabels(res.d.labels); } catch (err) { console.error(err); }
     FORM_DEFAULT = res.d.formDefault || {};
     const h = Array.isArray(res.d.tblHeads) ? res.d.tblHeads.slice() : [], c = Array.isArray(res.d.tblCols) ? res.d.tblCols.slice() : [];
     DASH_ORIG = { h: h.slice(), c: c.slice() };
