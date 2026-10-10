@@ -3,7 +3,7 @@
    বিন্দু আবার ট্যাপ করলে মুছে যায়। মার্কগুলো appointment ডকুমেন্টের hijamaMarks ফিল্ডে সেভ হয়।
 
    সবার উপরে "রোগ অনুযায়ী পয়েন্ট" সেকশন: + আইকনে রোগের নাম দিয়ে অসংখ্য এন্ট্রি যোগ করা যায়।
-   প্রতিটি রোগে চেক করলে ৪টি ছবি আসে, সেখানে মার্ক করে সেভ করা যায়। এগুলো সব পেশেন্টের ক্ষেত্রে একই
+   প্রতিটি রোগে ক্লিক করলে আলাদা ভিউতে শুধু ওই রোগের ৪টি ছবি আসে, সেখানে মার্ক করে সেভ করা যায়। এগুলো সব পেশেন্টের ক্ষেত্রে একই
    (শেয়ার্ড) এবং অ্যাডমিনের নিজের users ডকুমেন্টের hijamaDiseases ফিল্ডে সেভ হয়। */
 import { db, auth, DO, GD, UP, loadUser } from "./common.js?v=14";
 
@@ -66,6 +66,7 @@ export async function openHijamaPoints(docId, patientName) {
   } catch (e) { console.error(e); }
 
   const marks = cleanMarks(appt.hijamaMarks);
+  let viewMarks = marks;
 
   const el = (tag, css, txt) => {
     const e = document.createElement(tag);
@@ -139,7 +140,7 @@ export async function openHijamaPoints(docId, patientName) {
   };
   const paintCounts = () => {
     let d = 0, w = 0;
-    IMAGES.forEach(im => marks[im.key].forEach(m => (m.t === "dry" ? d++ : w++)));
+    IMAGES.forEach(im => viewMarks[im.key].forEach(m => (m.t === "dry" ? d++ : w++)));
     counts.textContent = "Dry " + d + " • Wet " + w;
   };
   tgl.onclick = () => { markOn = !markOn; paintTools(); };
@@ -222,7 +223,33 @@ export async function openHijamaPoints(docId, patientName) {
   sec.appendChild(dList);
   list.appendChild(sec);
 
-  const openIds = new Set();
+  /* রোগে ক্লিক করলে আলাদা ভিউ: শুধু ওই রোগের ৪টি ছবি (পেশেন্টের ছবি লুকানো থাকে) */
+  const dview = el("div", "max-width:520px;margin:0 auto;padding:10px 10px 30px;display:none");
+  const showMain = () => {
+    dview.style.display = "none";
+    dview.innerHTML = "";
+    list.style.display = "block";
+    viewMarks = marks;
+    paintCounts();
+    ov.scrollTop = 0;
+  };
+  const showDisease = d => {
+    dview.innerHTML = "";
+    const hd = el("div", "display:flex;align-items:center;gap:8px;margin-bottom:10px");
+    const back = el("button", "border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:700;color:#334155;cursor:pointer", "← Back");
+    back.type = "button";
+    back.onclick = showMain;
+    hd.appendChild(back);
+    hd.appendChild(el("div", "flex:1;min-width:0;font-weight:700;font-size:15px;color:#1e293b;word-break:break-word", d.name));
+    dview.appendChild(hd);
+    buildImages(dview, d.marks, () => { paintCounts(); saveDiseases(); });
+    list.style.display = "none";
+    dview.style.display = "block";
+    viewMarks = d.marks;
+    paintCounts();
+    ov.scrollTop = 0;
+  };
+
   const iconBtn = (txt, label, fn) => {
     const b = el("button", "border:0;background:0 0;cursor:pointer;font-size:15px;padding:2px 6px;color:#64748b", txt);
     b.type = "button";
@@ -238,47 +265,25 @@ export async function openHijamaPoints(docId, patientName) {
       return;
     }
     diseases.forEach(d => {
-      const item = el("div", "border-top:1px solid #f1f5f9;padding:6px 0");
-      const row = el("label", "display:flex;align-items:center;gap:8px;cursor:pointer");
-      const cb = el("input", "width:18px;height:18px;flex:none;cursor:pointer");
-      cb.type = "checkbox";
-      cb.checked = openIds.has(d.id);
-      row.appendChild(cb);
-      row.appendChild(el("span", "flex:1;min-width:0;font-size:14px;font-weight:600;color:#1e293b;word-break:break-word", d.name));
-      const rn = iconBtn("✎", "নাম বদলান", ev => {
-        ev.preventDefault();
+      const row = el("div", "display:flex;align-items:center;gap:4px;border-top:1px solid #f1f5f9");
+      const open = el("button", "flex:1;min-width:0;text-align:left;border:0;background:0 0;cursor:pointer;font-size:14px;font-weight:600;color:#1e293b;padding:10px 2px;word-break:break-word", d.name);
+      open.type = "button";
+      open.onclick = () => showDisease(d);
+      row.appendChild(open);
+      row.appendChild(iconBtn("✎", "নাম বদলান", () => {
         const nm = prompt("রোগের নাম", d.name);
         if (nm == null || !nm.trim()) return;
         d.name = nm.trim();
         saveDiseases();
         renderDiseases();
-      });
-      const del = iconBtn("🗑", "মুছুন", ev => {
-        ev.preventDefault();
+      }));
+      row.appendChild(iconBtn("🗑", "মুছুন", () => {
         if (!confirm("«" + d.name + "» মুছে ফেলবেন? এর সব মার্ক মুছে যাবে।")) return;
         diseases = diseases.filter(z => z !== d);
-        openIds.delete(d.id);
         saveDiseases();
         renderDiseases();
-      });
-      row.appendChild(rn);
-      row.appendChild(del);
-      item.appendChild(row);
-
-      const body = el("div", "margin-top:8px;display:" + (cb.checked ? "block" : "none"));
-      let built = false;
-      const ensure = () => {
-        if (built) return;
-        built = true;
-        buildImages(body, d.marks, saveDiseases);
-      };
-      if (cb.checked) ensure();
-      cb.onchange = () => {
-        if (cb.checked) { openIds.add(d.id); ensure(); body.style.display = "block"; }
-        else { openIds.delete(d.id); body.style.display = "none"; }
-      };
-      item.appendChild(body);
-      dList.appendChild(item);
+      }));
+      dList.appendChild(row);
     });
   };
   plus.onclick = () => {
@@ -287,15 +292,16 @@ export async function openHijamaPoints(docId, patientName) {
     if (nm == null || !nm.trim()) return;
     const d = { id: newId(), name: nm.trim(), marks: cleanMarks(null) };
     diseases.push(d);
-    openIds.add(d.id);
     saveDiseases();
     renderDiseases();
+    showDisease(d);
   };
   renderDiseases();
 
   /* ===== এই পেশেন্টের নিজের মার্কিং (আগের মতোই) ===== */
   buildImages(list, marks, () => { paintCounts(); save(); });
   ov.appendChild(list);
+  ov.appendChild(dview);
 
   paintTools();
   paintCounts();
