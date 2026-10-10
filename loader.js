@@ -43,6 +43,41 @@
     });
   }
 
+  /* নিচের নেভিগেশন বার (মোবাইল অ্যাপের মতো): মেনু-লিংকগুলো ব্লগারের নিজের নেভ থেকে নেওয়া হয়, তাই URL আলাদা করে লিখতে হয় না */
+  var NAV_PAGES = { dashboard: 1, appointment: 1, billing: 1, accounts: 1, profile: 1 };
+  var NAV_ITEMS = [
+    ["dashboard", "Home", '<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>'],
+    ["appointment", "Add Patient", '<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>'],
+    ["billing", "Billing", '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>'],
+    ["accounts", "Accounts", '<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>'],
+    ["profile", "Profile", '<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>']
+  ];
+  function buildNav(page) {
+    try {
+      if (!NAV_PAGES[page] || document.getElementById("rc-bnav")) return;
+      var found = {};
+      [].slice.call(document.querySelectorAll('a[href*="/p/"]')).forEach(function (a) {
+        if (a.closest("#rc-app") || a.closest("#rc-bnav")) return;
+        var m = /\/p\/([\w-]+)\.html/.exec(a.getAttribute("href") || "");
+        if (m && !found[m[1]]) found[m[1]] = { href: a.href, text: (a.textContent || "").replace(/\s+/g, " ").trim() };
+      });
+      var html = "";
+      NAV_ITEMS.forEach(function (it) {
+        var f = found[it[0]];
+        if (!f && it[0] !== "dashboard" && it[0] !== "appointment" && it[0] !== "billing") return;
+        var href = f ? f.href : "https://rahcare.blogspot.com/p/" + it[0] + ".html";
+        var label = it[0] === "dashboard" ? it[1] : (f && f.text && f.text.length < 18 ? f.text : it[1]);
+        html += '<a class="rc-bn-i' + (it[0] === page ? " on" : "") + '" href="' + href + '"><span class="rc-bn-p"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + it[2] + '</svg></span><span class="rc-bn-l">' + label + "</span></a>";
+      });
+      if (!html) return;
+      var nav = document.createElement("nav");
+      nav.id = "rc-bnav";
+      nav.innerHTML = html;
+      document.body.appendChild(nav);
+      document.body.classList.add("rc-has-nav");
+    } catch (e) { console.error("RahCare nav:", e); }
+  }
+
   fetch(base + (beta ? "beta/" : "pages/") + name + ".html", { cache: "no-cache" })
     .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
     .then(async function (html) {
@@ -54,6 +89,7 @@
         else if (t === "LINK" || t === "STYLE") document.head.appendChild(document.importNode(el, true));
         else host.appendChild(document.importNode(el, true));
       }
+      buildNav(name);
       if (beta) {
         var b = document.createElement("div");
         b.textContent = "BETA";
