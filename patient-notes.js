@@ -90,6 +90,29 @@ export function mountNotePage(kind) {
           }
         } catch (e) { console.error(e); }
       }
+      // Prescription: এডমিন হলে নোট বক্সের উপরে স্বয়ংক্রিয় প্রেসক্রিপশন খসড়া (সিম্পটম + রেসপন্স থেকে)
+      if (kind === "prescription") {
+        try {
+          const isAdminP = (await GD(DO(db, "admins", user.uid))).exists();
+          if (isAdminP) {
+            const { mountPrescriptionPlan } = await import("./prescription-plan.js?v=1");
+            const pbox = el("div", "margin:10px 0");
+            card.appendChild(pbox);
+            mountPrescriptionPlan(pbox, {
+              symptomChecks: Array.isArray(a.symptomChecks) ? a.symptomChecks : [],
+              responseChecks: Array.isArray(a.responseChecks) ? a.responseChecks : [],
+              saved: a.prescriptionPlan || {},
+              patientName: a.name || "",
+              onSavePlan: obj => UP(ref, { prescriptionPlan: obj }),
+              onFill: text => {
+                if (ta.value.trim() && !confirm("নোট বক্সে আগের লেখা আছে। বদলে দেবেন?")) return false;
+                ta.value = text;
+                return true;
+              }
+            });
+          }
+        } catch (e) { console.error(e); }
+      }
       card.appendChild(ta);
 
       const row = el("div", "display:flex;gap:8px;align-items:center");
