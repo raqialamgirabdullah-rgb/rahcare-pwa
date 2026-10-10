@@ -6,6 +6,7 @@
 <script type="module">
 
 import{getAuth}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-auth.js";
+import{openTemplateEditor}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/template-editor.js?v=1";
 import{requireAuth,blockCacheAndBack,mountAdminTools}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=14";
 blockCacheAndBack();
 const v=i=>document.getElementById(i);
@@ -23,5 +24,6 @@ v("hdSave").onclick=async()=>{const t=v("hdTitle").value.trim(),b=v("hdSave"),m=
 setInterval(()=>{unl&&!fresh()&&relock()},3e4);
 requireAuth(async u=>{v("authOverlay").style.display="none";
 if(ls("getItem",OKK)==="1"&&fresh())unl=!0;else{asking=!0;await ask(u);unlock()}
-v("myReportWrap").style.display="block";initImg(u.uid).then(()=>{v("hdTitle").value=T.uData?.siteHeading||""})});
+v("myReportWrap").style.display="block";initImg(u.uid).then(()=>{v("hdTitle").value=T.uData?.siteHeading||"";
+[["invoice","row-invoice","Invoice Edit"],["slip","row-appointment","Appointment Slip Edit"]].forEach(([k,r,t])=>{const row=v(r);if(!row||v("ed-"+k))return;const x=document.createElement("button");x.id="ed-"+k;x.className="opt-btn";x.style.cssText="width:100%;margin:6px 0 14px;padding:10px";x.textContent="✏️ "+t;x.onclick=()=>{if(!T.uDoc)return alert(UNF);openTemplateEditor(k,{data:T.uData||{},save:T.updU})};row.after(x)})})});
 </script>
