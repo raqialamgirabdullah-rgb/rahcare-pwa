@@ -42,6 +42,7 @@ export function applyLayout(kind, root, data) {
   const keep = [...root.children].filter(n => n.tagName === "IMG" && /(WM|Logo)$/.test(n.id));
   root.innerHTML = L.html;
   keep.forEach(n => root.appendChild(n));
+  if (kind === "slip" && L.pad) root.style.padding = L.pad;
   const tb = kind === "invoice" && root.querySelector("#inv-items");
   if (tb && L.rows && Object.keys(L.rows).length) {
     new MutationObserver(() => styleRows(tb, L.rows)).observe(tb, { childList: true, subtree: true });
@@ -111,6 +112,7 @@ const CSS = `
 #rcePanel input[type=color]{width:36px;height:30px;padding:0;border:1px solid #c3cfc8;border-radius:6px;background:#fff}
 #rcePanel input[type=text]{flex:1;min-width:140px;padding:7px 8px;border:1px solid #c3cfc8;border-radius:8px;font-size:13px;font-family:inherit}
 #rcePanel select{padding:6px;border:1px solid #c3cfc8;border-radius:8px;font-size:12.5px;background:#fff}
+#rcePanel .v{min-width:26px;text-align:center}
 #rceInfo{color:#3b4b42;margin-bottom:2px}
 #rceHidList .row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #eef2ef}
 #rceToast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1f2a24;color:#fff;padding:9px 14px;border-radius:10px;font-size:13px;z-index:99999}
@@ -152,11 +154,16 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     <div id="rceView"><div id="rceBox"><div id="rceStage" data-k="${kind}"></div></div></div>
     <div id="rcePanel">
       <div id="rceInfo">Tap any part of the preview to select it, then change it below.</div>
+      <div class="r" id="rceMar"><span class="t">Page margin</span>
+        <span class="t">Top</span><button class="rce-b" data-m="t" data-d="-1">−</button><span id="mt" class="v"></span><button class="rce-b" data-m="t" data-d="1">+</button>
+        <span class="t">Bottom</span><button class="rce-b" data-m="b" data-d="-1">−</button><span id="mb" class="v"></span><button class="rce-b" data-m="b" data-d="1">+</button>
+        <span class="t">Left</span><button class="rce-b" data-m="l" data-d="-1">−</button><span id="ml" class="v"></span><button class="rce-b" data-m="l" data-d="1">+</button>
+        <span class="t">Right</span><button class="rce-b" data-m="r" data-d="-1">−</button><span id="mr" class="v"></span><button class="rce-b" data-m="r" data-d="1">+</button></div>
       <div id="rceHidList" hidden></div>
       <div id="rceCtl" hidden>
         <div class="r"><button class="rce-b" id="cUp">↑ Parent</button>
           <button class="rce-b" id="cPrev">▲ Move up</button><button class="rce-b" id="cNext">▼ Move down</button>
-          <button class="rce-b" id="cHide">Hide</button><button class="rce-b d" id="cDel">Delete</button></div>
+          <button class="rce-b" id="cHide">Hide</button><button class="rce-b" id="cHideRow">Hide row</button><button class="rce-b d" id="cDel">Delete</button></div>
         <div class="r" id="cTexts"></div>
         <div class="r" id="cImg" hidden><span class="t">Image link</span><input type="text" id="cSrc" placeholder="https://..."></div>
         <div class="r"><span class="t">Text</span><input type="color" id="cColor"><button class="rce-b" data-clr="color">✕</button>
@@ -169,6 +176,8 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
         <div class="r"><span class="t" id="cSzT">Size</span><button class="rce-b" id="cSm">A−</button><span id="cSz" style="min-width:34px;text-align:center"></span><button class="rce-b" id="cLg">A+</button>
           <button class="rce-b" id="cB"><b>B</b></button><button class="rce-b" id="cI"><i>I</i></button>
           <button class="rce-b" data-al="left">⇤</button><button class="rce-b" data-al="center">↔</button><button class="rce-b" data-al="right">⇥</button></div>
+        <div class="r"><span class="t" id="cSpT">Space above</span><button class="rce-b" data-s="Top" data-d="-1">−</button><span id="sT" class="v"></span><button class="rce-b" data-s="Top" data-d="1">+</button>
+          <span class="t" id="cSpB">Space below</span><button class="rce-b" data-s="Bottom" data-d="-1">−</button><span id="sB" class="v"></span><button class="rce-b" data-s="Bottom" data-d="1">+</button></div>
         <div class="r"><span class="t">Add below</span><button class="rce-b" id="aTxt">+ Text</button><button class="rce-b" id="aRow">+ Row</button>
           <button class="rce-b" id="aLine">+ Line</button><button class="rce-b" id="aSp">+ Space</button></div>
       </div>
@@ -184,6 +193,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   stage.innerHTML = saved ? saved.html : defHtml;
   stage.querySelectorAll("[data-rc-h]").forEach(n => { n.style.removeProperty("display"); n.classList.add("rce-hid"); });
   stage.firstElementChild?.removeAttribute(MARK);
+  if (kind === "slip" && saved && saved.pad) stage.style.padding = saved.pad;
 
   const setT = (id, v) => { const n = stage.querySelector("#" + id); if (n) n.textContent = v; };
   const D = data;
@@ -225,7 +235,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   /* --- state --- */
   let sel = null, dirty = false;
   const hist = [];
-  const push = () => { hist.push(stage.innerHTML); if (hist.length > 40) hist.shift(); dirty = true; $("rceUndo").disabled = false; };
+  const push = () => { hist.push([stage.innerHTML, stage.style.padding]); if (hist.length > 40) hist.shift(); dirty = true; $("rceUndo").disabled = false; };
   const toast = m => { document.getElementById("rceToast")?.remove(); const t = document.createElement("div"); t.id = "rceToast"; t.textContent = m; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); };
   const hidden = () => [...stage.querySelectorAll("[data-rc-h]")];
   const hidCount = () => { $("rceHidBtn").textContent = "Hidden (" + hidden().length + ")"; };
@@ -263,11 +273,18 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     $("cBg").value = hex(cs.backgroundColor) || "#ffffff";
     $("cBc").value = hex(cs.borderTopColor) || "#000000";
     $("cBw").value = ""; $("cRad").value = "";
+    const cell = /^(TD|TH)$/.test(sel.tagName);
+    $("cSpT").textContent = cell ? "Padding top" : "Space above"; $("cSpB").textContent = cell ? "Padding bottom" : "Space below";
+    $("sT").textContent = Math.round(parseFloat(cs[cell ? "paddingTop" : "marginTop"]) || 0);
+    $("sB").textContent = Math.round(parseFloat(cs[cell ? "paddingBottom" : "marginBottom"]) || 0);
+    const tr = sel.closest("tr");
+    $("cHideRow").hidden = !tr || sel === tr;
+    if (tr) $("cHideRow").textContent = tr.hasAttribute("data-rc-h") ? "Show row" : "Hide row";
     const isImg = tag === "img";
     $("cSzT").textContent = isImg ? "Width" : "Size";
     $("cSz").textContent = isImg ? Math.round(sel.offsetWidth) : Math.round(parseFloat(cs.fontSize)) + "px";
     $("cImg").hidden = !isImg; if (isImg) $("cSrc").value = sel.getAttribute("src") || "";
-    $("cHide").textContent = (/^(TD|TH)$/.test(sel.tagName) && sel.closest("tr") || sel).hasAttribute("data-rc-h") ? "Show" : "Hide";
+    $("cHide").textContent = sel.hasAttribute("data-rc-h") ? "Show" : "Hide";
     $("cDel").disabled = !sel.closest("[data-rc-custom]");
     $("cPrev").disabled = $("cNext").disabled = CELLS.test(sel.tagName) && sel.tagName !== "TR" || sel.parentElement === stage || !!sel.closest("#inv-items");
     $("cUp").disabled = !sel.parentElement || sel.parentElement === stage;
@@ -328,6 +345,31 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   back.querySelectorAll("[data-al]").forEach(b => b.onclick = () => css("textAlign", b.dataset.al));
   $("cSrc").onchange = e => { if (sel && sel.tagName === "IMG") { push(); sel.setAttribute("src", e.target.value.trim()); } };
 
+  /* --- space above / below --- */
+  back.querySelectorAll("[data-s]").forEach(b => b.onclick = () => {
+    if (!sel) return; push();
+    const cell = /^(TD|TH)$/.test(sel.tagName), prop = (cell ? "padding" : "margin") + b.dataset.s;
+    const cur = parseFloat(getComputedStyle(sel)[prop]) || 0;
+    sel.style[prop] = Math.min(80, Math.max(cell ? 0 : -20, cur + (+b.dataset.d) * 2)) + "px";
+    refreshPanel();
+  });
+
+  /* --- page margin (invoice: card padding, slip: space around the box) --- */
+  const marTarget = () => kind === "slip" ? stage : stage.firstElementChild;
+  const SIDE = { t: "Top", b: "Bottom", l: "Left", r: "Right" };
+  function refreshMargins() {
+    const t = marTarget(); if (!t) return; const cs = getComputedStyle(t);
+    Object.keys(SIDE).forEach(k => { $("m" + k).textContent = Math.round(parseFloat(cs["padding" + SIDE[k]]) || 0); });
+  }
+  back.querySelectorAll("[data-m]").forEach(b => b.onclick = () => {
+    const t = marTarget(); if (!t) return; push();
+    const cs = getComputedStyle(t), v = {};
+    Object.keys(SIDE).forEach(k => { v[k] = Math.round(parseFloat(cs["padding" + SIDE[k]]) || 0); });
+    v[b.dataset.m] = Math.min(80, Math.max(0, v[b.dataset.m] + (+b.dataset.d) * 2));
+    t.style.padding = `${v.t}px ${v.r}px ${v.b}px ${v.l}px`;
+    refreshMargins();
+  });
+
   /* --- structure: parent / move / hide / delete --- */
   $("cUp").onclick = () => { if (sel && sel.parentElement && sel.parentElement !== stage) select(sel.parentElement); };
   const move = dir => {
@@ -341,14 +383,14 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     refreshPanel();
   };
   $("cPrev").onclick = () => move(-1); $("cNext").onclick = () => move(1);
-  const hideTarget = () => (/^(TD|TH)$/.test(sel.tagName) && sel.closest("tr")) || sel;
-  $("cHide").onclick = () => {
-    if (!sel) return; push();
-    const h = hideTarget(), on = h.toggleAttribute("data-rc-h"); h.classList.toggle("rce-hid", on);
-    if (h !== sel && tbHas(h)) { const keep = sel; sel = h; syncRows(); sel = keep; }
+  const toggleHide = h => {
+    push();
+    const on = h.toggleAttribute("data-rc-h"); h.classList.toggle("rce-hid", on);
+    if (h !== sel && h.closest("#inv-items")) { const keep = sel; sel = h; syncRows(); sel = keep; }
     hidCount(); refreshPanel(); renderHidden();
   };
-  const tbHas = h => !!h.closest("#inv-items");
+  $("cHide").onclick = () => { if (sel) toggleHide(sel); };
+  $("cHideRow").onclick = () => { const r = sel && sel.closest("tr"); if (r) toggleHide(r); };
   $("cDel").onclick = () => {
     const c = sel && sel.closest("[data-rc-custom]"); if (!c) return;
     push(); select(null); c.remove(); hidCount();
@@ -396,7 +438,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   /* --- undo --- */
   $("rceUndo").onclick = () => {
     const s = hist.pop(); if (s == null) return;
-    sel = null; stage.innerHTML = s; stage.querySelectorAll(".rce-sel").forEach(n => n.classList.remove("rce-sel"));
+    sel = null; stage.innerHTML = s[0]; stage.style.padding = s[1]; refreshMargins(); stage.querySelectorAll(".rce-sel").forEach(n => n.classList.remove("rce-sel"));
     $("rceUndo").disabled = !hist.length; hidCount(); renderHidden(); refreshPanel();
   };
 
@@ -435,7 +477,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     const b = $("rceSave"); b.disabled = true; b.textContent = "Saving...";
     try {
       if (!save) throw new Error("save() missing");
-      await save({ [kind + "Layout"]: JSON.stringify((() => { const html = serialize(); return kind === "invoice" ? { v: 2, html, rows: rowsOut } : { v: 1, html }; })()), [kind + "LayoutActive"]: true });
+      await save({ [kind + "Layout"]: JSON.stringify((() => { const html = serialize(); return kind === "invoice" ? { v: 2, html, rows: rowsOut } : { v: 1, html, pad: stage.style.padding || "" }; })()), [kind + "LayoutActive"]: true });
       dirty = false; toast("✔ Saved");
     } catch (e) { alert("Save failed: " + (e.message || e)); }
     b.disabled = false; b.textContent = "Save";
@@ -450,5 +492,5 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     } catch (e) { alert("Reset failed: " + (e.message || e)); }
   };
 
-  hidCount();
+  hidCount(); refreshMargins();
 }
