@@ -67,7 +67,7 @@ const LB_SHOW_MSGS = false; /* true করলে Edit Mode-এ নিচে "Mes
 /* ===== NAV MENU NAMES: Blogger টেমপ্লেটের মেনু লিংক (/p/xxx.html) এর লেখা ইউজার বদলাতে পারবে (labels.nav_xxx) ===== */
 const NAV_REX = /\/p\/([\w-]+)\.html/, NAV_SKIP = new Set(["login", "sign-up"]), NAVDEF = {};
 const navEls = () => [...document.querySelectorAll("a[href],option[value]")].filter(e => {
-  if (e.closest("#rc-app")) return false;
+  if (e.closest("#rc-app,#rc-bnav")) return false;
   if (e.id === "menuToggleBtn") { e.dataset.rcNav = "menu"; return true; }
   const m = NAV_REX.exec(e.getAttribute("href") || e.value || "");
   if (!m || NAV_SKIP.has(m[1])) return false;
@@ -92,6 +92,7 @@ const navSet = (e, txt) => {
 };
 let NAVLAB = {}, navObs = null;
 const navSync = () => {
+  const NL = {};
   navEls().forEach(e => {
     const k = "nav_" + e.dataset.rcNav, cur = navGet(e);
     const v = typeof NAVLAB[k] === "string" ? NAVLAB[k].trim() : "";
@@ -105,7 +106,9 @@ const navSync = () => {
     } else if (cur && cur !== e.dataset.rcNav0) { /* টেমপ্লেট নিজে লেখা বদলালে (যেমন Add Patient) সেটাই ডিফল্ট */
       e.dataset.rcNav0 = cur; NAVDEF[k] = cur;
     }
+    NL[e.dataset.rcNav] = navGet(e);
   });
+  try { const j = JSON.stringify(NL); if (localStorage.getItem("rcNL") !== j) { localStorage.setItem("rcNL", j); dispatchEvent(new Event("rc-nav")); } } catch (x) {}
 };
 export function applyNavLabels(labels) {
   NAVLAB = labels || {};
