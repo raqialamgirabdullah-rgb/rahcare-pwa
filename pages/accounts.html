@@ -14,7 +14,7 @@
 <div id="monthModal" class="month-modal-overlay" style="display:none"><div class="month-modal"><div class="month-modal-header"><button onclick="window.shiftMonth(-1)">◀</button><span id="monthModalTitle">Month YYYY</span><button onclick="window.shiftMonth(1)">▶</button><button class="month-modal-close" onclick="window.closeMonthView()">✕</button></div><div class="month-modal-body" id="monthModalBody"></div><div class="month-modal-footer" id="monthModalFooter"></div></div></div>
 <script type="module">
 import{collection,doc,setDoc,onSnapshot,query,where}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-import{db,requireAuth,blockCacheAndBack,MONTH_NAMES,formatDateDMY,isHijama,isPaid,toISODate,monthLabel,toggleDropdown,initDropdowns,docsOf,ymd}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=12";
+import{db,requireAuth,blockCacheAndBack,MONTH_NAMES,formatDateDMY,isHijama,isPaid,toISODate,monthLabel,toggleDropdown,initDropdowns,docsOf,ymd}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=13";
 const $=e=>document.getElementById(e);
 const MONTH_SHORT=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const L={ruqyah:"রুকইয়াহ",hijama:"হিজামা",totalIncome:"মোট আয়",totalExpense:"মোট ব্যয়",remaining:"অবশিষ্ট",cash:"ক্যাশ",prevCash:"পূর্বের ক্যাশ",monthlyIncome:"মাসিক আয়",monthlyExpense:"মাসিক ব্যয়",month:"মাস",noDataMonth:"এই মাসে কোনো তথ্য নেই",noData:"কোনো তথ্য নেই"};

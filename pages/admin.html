@@ -3,7 +3,7 @@
 <div id="adminWrap" style="display:none"><div class="wrap"><div class="hdr"><h2>🛡️ এডমিন</h2></div><div class="sec" id="pendingSec" style="display:none"><h3>⏳ যাচাইয়ের অপেক্ষায় থাকা পেমেন্ট</h3><div id="pendingList"></div></div><div class="sec"><h3>📣 নোটিশ পাঠান</h3><textarea id="noticeMsg" placeholder="নোটিশের লেখা এখানে লিখুন..."></textarea><select id="noticeScope"><option value="global">🌐 সব সাইটের জন্য (Global)</option></select><button class="btn-primary" onclick="window.postNotice()">পোস্ট করুন</button><div id="noticeList"></div></div><div class="sec"><h3>🏥 সব সেন্টার</h3><div id="centerList"><div class="empty-note">লোড হচ্ছে...</div></div></div></div></div>
 <script type="module">
 import{collection as i,doc as a,getDoc as o,addDoc as r,updateDoc as s,deleteDoc as c,onSnapshot as d}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
-import{db as b,requireAuth as p,isPaid as S,toISOMonth as M,ES as X,docsOf}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=12";
+import{db as b,requireAuth as p,isPaid as S,toISOMonth as M,ES as X,docsOf}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=13";
 const v=e=>document.getElementById(e);
 let w=[],f=[],y=[],$=[],h="";
 const runSafe=async(fn,errMsg)=>{try{await fn()}catch(e){console.error(e);errMsg&&alert(errMsg)}};
