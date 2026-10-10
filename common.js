@@ -935,6 +935,31 @@ function mtSelectSync(v) {
       b.appendChild(a);
     });
     m.classList.add("show");
+
+    /* Hijama রোগী + অ্যাডমিন হলে ৪র্থ অপশন: Hijama Points (বডি-ডায়াগ্রামে ড্রাই/ওয়েট কাপ মার্ক) */
+    const tk = (openMenu._t = (openMenu._t || 0) + 1);
+    (async () => {
+      try {
+        const u = auth.currentUser;
+        if (!u) return;
+        const [ad, ap] = await Promise.all([GD(DO(db, "admins", u.uid)), GD(DO(db, "appointments", doc))]);
+        if (tk !== openMenu._t || !ad.exists() || !ap.exists() || !isHijama(ap.data())) return;
+        const h = document.createElement("a");
+        h.className = "c-no c-no-full";
+        h.href = "#";
+        h.textContent = "🩸 Hijama Points";
+        h.style.cssText = "display:block;text-align:center;text-decoration:none;margin-bottom:8px;box-sizing:border-box";
+        h.onclick = async ev => {
+          ev.preventDefault();
+          m.classList.remove("show");
+          try {
+            const mod = await import("./hijama-points.js?v=1");
+            mod.openHijamaPoints(doc, name);
+          } catch (er) { console.error(er); alert("Hijama Points খোলা যায়নি"); }
+        };
+        b.appendChild(h);
+      } catch (er) { console.error(er); }
+    })();
   };
 
   const start = () => {
