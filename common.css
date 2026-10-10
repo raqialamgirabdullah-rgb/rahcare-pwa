@@ -62,3 +62,66 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 
 /* নেভিগেশন মেনুর ড্রপডাউন যেন অনলাইন চার্জ/নোটিশ ব্যানারের (z-index 9997-9998) পেছনে চাপা না পড়ে */
 .nav-wrapper{z-index:9999}
+
+/* ===== Shared: অ্যাডমিন/রিপোর্ট পেজের স্টাইল (আগে admin, admin-panel, myreport.css ও profile-এ আলাদা আলাদা ছিল) ===== */
+:root{--primary-color:#4f46e5;--text-color:#1f2937;--bg-color:#f3f4f6;--line:#e2e8f0;--bg-soft:#f8fafc;--muted-2:#94a3b8;--line-soft:#cbd5e1;--text-slate:#334155;--text-dark:#1e293b;--text-mid:#475569;--green-dark:#166534}
+#imgBox{display:flex;flex-wrap:wrap;gap:10px}
+#instCancel{background:var(--text-muted)}
+#instCustom{display:none;border-top:1px solid var(--border-light);margin-top:12px;padding-top:12px}
+#instCustom .opt-btn{width:100%;margin-top:5px;padding:10px}
+#instCustom input{width:100%;box-sizing:border-box;border:1px solid var(--line-soft);border-radius:4px;padding:10px;margin:8px 0}
+#pwErr{color:#dc2626;font-size:12px;margin-top:8px;min-height:14px}
+#pwGate{display:none;position:fixed;inset:0;background:var(--bg-color);z-index:9999;align-items:center;justify-content:center;padding:16px}
+#pwGate .box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px #0000001a;width:100%;max-width:320px;text-align:center}
+#pwGate button{width:100%;padding:10px;border:0;border-radius:8px;background:var(--primary-color);color:#fff;font-weight:700;cursor:pointer}
+#pwGate button:disabled{opacity:.6}
+#pwGate h3{margin:0 0 12px;color:var(--primary-color);font-size:16px}
+#pwGate input{width:100%;box-sizing:border-box;padding:10px;margin-bottom:8px;border:1px solid var(--line-soft);border-radius:8px;font-size:14px}
+.card-actions{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.center-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.center-card .name{font-size:13px;font-weight:700;color:var(--text-dark)}
+.delete-link{color:var(--danger)}
+.edit-link{color:var(--info);cursor:pointer;font-size:12px;font-weight:600;text-decoration:underline;white-space:nowrap}
+.empty-note{font-size:12px;color:var(--muted-2);padding:10px 0}
+.img-actions{display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-left:10px}
+.img-preview{display:none;width:56px;height:56px;object-fit:cover;border-radius:6px;margin-top:6px;border:1px solid var(--border-light)}
+.img-row{flex:1 1 calc(50% - 5px);min-width:0;box-sizing:border-box;display:flex;justify-content:space-between;align-items:flex-start;border:1px solid var(--border-light);border-radius:8px;padding:10px}
+.img-row.has .img-preview{display:block}
+.img-row.has .val{display:none}
+.img-row:not(.has) :is(.toggle-wrap,.delete-link,.map-link){display:none}
+.img-row:nth-child(-n+2){display:grid;grid-template-columns:1fr auto;column-gap:8px;row-gap:6px}
+.img-row:nth-child(-n+2) .img-actions{grid-column:2;grid-row:2;align-items:flex-end;margin-left:0;gap:3px}
+.img-row:nth-child(-n+2) .lbl-row{grid-column:1/-1}
+.img-row:nth-child(-n+2) .toggle-wrap{flex-direction:column;align-items:flex-end;gap:2px}
+.img-row:nth-child(-n+2) :is(.val,.img-preview){grid-column:1;margin-top:0}
+.img-row:nth-child(-n+2)>div:first-child{display:contents}
+.img-row:nth-child(3){flex-basis:100%}
+.img-row:nth-child(3)>div:first-child{flex:1;min-width:0}
+.lbl{color:var(--text-muted);text-transform:uppercase;font-size:11px;font-weight:700}
+.lbl-row{display:flex;align-items:center;gap:10px}
+.opt-btn{background:var(--primary-color);color:#fff;border:0;border-radius:4px;padding:5px 15px;font-weight:600;cursor:pointer}
+.opt-btn:disabled{opacity:.6;cursor:wait}
+.opt-grp{display:flex;align-items:center;gap:6px}
+.opt-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.opt-row .opt-btn{padding:5px 10px}
+.opt-row .sec-title{margin:0;font-size:12px;white-space:nowrap;text-align:center}
+.opt-row .val{margin:0;font-size:13px}
+.recent-list{display:none;margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.sec-title{font-size:14px;font-weight:700;color:var(--primary-color);margin-bottom:8px}
+.toggle-slider{position:absolute;inset:0;background:#ccc;transition:.2s;border-radius:20px}
+.toggle-slider:before{position:absolute;content:"";height:14px;width:14px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:50%}
+.toggle-status-text{font-size:10px;font-weight:700;color:var(--text-muted);white-space:nowrap}
+.toggle-switch{position:relative;display:inline-block;width:38px;height:20px;cursor:pointer;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-switch input:checked+.toggle-slider{background:var(--primary-color)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(18px)}
+.toggle-wrap{display:flex;align-items:center;gap:6px}
+.val{color:var(--text-main);margin-top:2px;font-size:14px}
+.wrap{width:100%;box-sizing:border-box;background:var(--card-bg);padding:12px;border-radius:8px;box-shadow:0 2px 4px #0000000d}
+.wrap+.wrap{margin-top:10px}
+
+/* ===== Shared: Blogger-এর মেনু/হেডার লুকানো (login, signup, worker-management, worker-portal) =====
+   ব্যবহার: পেজের HTML-এর একদম শুরুতে <i data-rc-hide-chrome="1" hidden></i> (২ দিলে হেডারও লুকায় ও পেজ মাঝখানে বসে) */
+body:has([data-rc-hide-chrome]) :is(#PageList1,.main-navigation,.menu,.nav-bar,.nav-menu,.tabs-inner,.tabs-outer){display:none!important}
+body:has([data-rc-hide-chrome="2"]) .header-wrapper{display:none!important}
+body:has([data-rc-hide-chrome="2"]){min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
