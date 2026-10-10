@@ -208,8 +208,8 @@ body.rc-side-open #rc-side-scrim{opacity:1;pointer-events:auto}
 .rc-np-b button{display:flex;align-items:center;gap:12px;width:100%;padding:12px;border:0;background:none;border-radius:14px;font:inherit;color:#1f2d27;text-align:left}
 .rc-np-b button.on{background:#dcece3;color:var(--primary);font-weight:700}
 #rc-bnav .rc-bn-l{line-height:1.2;text-align:center}
-/* ===== হেডার কার্ড: উঁচু, বড় গ্রেডিয়েন্ট টাইটেল, নিচের সোনালী রেখা নেই ===== */
-.rc-hc{min-height:124px!important;display:flex!important;align-items:center;justify-content:center;box-sizing:border-box;border:0!important;box-shadow:0 6px 24px rgba(15,81,50,.07)!important;position:relative}
-.rc-hc::before,.rc-hc::after{display:none!important}
-.rc-nb{border-bottom:0!important}
-body .rc-ht{font-size:36px!important;font-weight:800!important;letter-spacing:.6px;line-height:1.15!important;margin:0!important;text-decoration:none;background:linear-gradient(135deg,#0a3a24,#0f5132 55%,#1b7a56);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent!important}
+/* ===== হেডার কার্ড (থিম: .topbar-wrapper > .header-wrapper > #header-section .Header h1): উঁচু, বড় গ্রেডিয়েন্ট টাইটেল, নিচের সোনালী রেখা নেই ===== */
+.header-wrapper,.topbar-wrapper{border-bottom:0!important}
+.header-wrapper{min-height:124px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(15,81,50,.07)}
+body #header-section{padding:0 25px!important;text-align:center!important}
+body .Header h1 a,body .Header h1:not(:has(a)){font-size:36px;font-weight:800;letter-spacing:.6px;line-height:1.15;background:linear-gradient(135deg,#0a3a24,#0f5132 55%,#1b7a56);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
