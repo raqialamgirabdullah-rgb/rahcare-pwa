@@ -116,10 +116,41 @@ export function applyNavLabels(labels) {
 }
 /* ===== NAV MENU NAMES শেষ ===== */
 
+/* ===== THEME: সাইটজুড়ে রং (users.theme) — Edit Mode-এর 🎨 Colors থেকে বদলানো যায় ===== */
+const HEX = /^#[0-9a-f]{6}$/i;
+const THEME_VARS = { text: ["--text-main", "--text-color"], bg: ["--bg", "--bg-color"], card: ["--card-bg"], primary: ["--primary", "--primary-color", "--acc"] };
+const THEME_CARDS = ".rc-card,.rc-fcard,.cs,.dc,.profile-box,.category-section,.top-nav-bar,.rc-modal-box,.c-box,.dashboard-container,#rptWrap,.rc-dd-btn,.rc-dd-menu,select.rc-input";
+const cleanTheme = t => {
+  const o = {};
+  if (t && typeof t === "object") ["text", "bg", "card", "primary", "navBg", "navText"].forEach(k => { if (HEX.test(t[k] || "")) o[k] = t[k]; });
+  return o;
+};
+export function applyTheme(t) {
+  t = cleanTheme(t);
+  let root = "", extra = "";
+  Object.keys(THEME_VARS).forEach(k => { if (t[k]) THEME_VARS[k].forEach(v => { root += v + ":" + t[k] + ";"; }); });
+  if (t.primary) root += "--primary-dark:color-mix(in srgb," + t.primary + " 70%,#000);--primary-light:color-mix(in srgb," + t.primary + " 12%,#fff);";
+  if (t.text) extra += "body{color:var(--text-main)}";
+  if (t.bg) extra += "html,body{background-color:var(--bg)!important}";
+  if (t.card) extra += THEME_CARDS + "{background-color:var(--card-bg)!important}";
+  if (t.navBg) extra += ".nav-wrapper{background:" + t.navBg + "!important}";
+  if (t.navText) extra += ".nav-wrapper a,.nav-wrapper button,.nav-wrapper select,#menuToggleBtn{color:" + t.navText + "!important}";
+  let st = document.getElementById("rc-theme");
+  if (!root && !extra) { if (st) st.remove(); return; }
+  if (!st) { st = document.createElement("style"); st.id = "rc-theme"; document.head.appendChild(st); }
+  st.textContent = ":root{" + root + "}" + extra;
+}
+const cacheTheme = t => { try { localStorage.setItem("rcTheme", JSON.stringify(cleanTheme(t))); } catch (e) {} };
+try { applyTheme(JSON.parse(localStorage.getItem("rcTheme") || "{}")); } catch (e) {}
+/* ===== THEME শেষ ===== */
+
 export function createLabels(data, save) {
   data = data || {};
   if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); }
   const user = Object.assign({}, data.labels || {});
+  const styles = Object.assign({}, data.labelStyle || {});
+  let theme = cleanTheme(data.theme);
+  if (Object.keys(data).length) { applyTheme(theme); cacheTheme(theme); }
   const preset = LB_PRESETS[String(data.managementType || "").toLowerCase().trim()] || {};
   const dflt = k => (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : (NAVDEF[k] !== undefined ? NAVDEF[k] : k)));
   const raw = k => {
@@ -151,15 +182,33 @@ export function createLabels(data, save) {
     box.appendChild(inp);
     const vars = d0.match(/\{\w+\}/g);
     if (vars) box.appendChild(mk("div", "lb-hint", "ব্যবহারযোগ্য: " + vars.join(" ")));
+    let cs = Object.assign({}, styles[k] || {});
+    const cclean = o => { const r = {}; if (HEX.test(o.c || "")) r.c = o.c; if (HEX.test(o.b || "")) r.b = o.b; return r; };
+    [["c", "Text color", "#000000"], ["b", "Background", "#ffffff"]].forEach(([f, label, d]) => {
+      const r = mk("div");
+      r.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:#334155";
+      const sp = mk("span", "", label); sp.style.flex = "1";
+      const ci = document.createElement("input"); ci.type = "color"; ci.value = HEX.test(cs[f] || "") ? cs[f] : d;
+      ci.style.cssText = "width:42px;height:28px;padding:0;border:1px solid #cbd5e1;border-radius:6px;background:none;opacity:" + (cs[f] ? "1" : ".4");
+      const x = mk("button", "lb-b", "×"); x.type = "button"; x.title = "Default"; x.style.cssText = "flex:none;padding:3px 9px";
+      ci.oninput = () => { cs[f] = ci.value; ci.style.opacity = "1"; };
+      x.onclick = () => { delete cs[f]; ci.value = d; ci.style.opacity = ".4"; };
+      r.appendChild(sp); r.appendChild(ci); r.appendChild(x); box.appendChild(r);
+    });
     const row = mk("div", "lb-btns");
     const reset = mk("button", "lb-b", "Default"), cancel = mk("button", "lb-b", "Cancel"), ok = mk("button", "lb-b lb-ok", "Save");
     reset.type = cancel.type = ok.type = "button";
     const close = () => ov.remove();
     const go = async val => {
-      if (val === (user[k] || "")) return close();
+      const ns = cclean(cs), styleChanged = JSON.stringify(ns) !== JSON.stringify(cclean(styles[k] || {}));
+      if (val === (user[k] || "") && !styleChanged) return close();
       try {
-        await save({ ["labels." + k]: val });
+        const o = {};
+        if (val !== (user[k] || "")) o["labels." + k] = val;
+        if (styleChanged) o["labelStyle." + k] = ns;
+        await save(o);
         user[k] = val;
+        styles[k] = ns;
         apply();
         if (cbk) cbk();
         close();
@@ -168,7 +217,7 @@ export function createLabels(data, save) {
         alert("Save failed: " + err.message);
       }
     };
-    reset.onclick = () => go("");
+    reset.onclick = () => { cs = {}; go(""); };
     cancel.onclick = close;
     ok.onclick = () => go(inp.value.trim());
     ov.onclick = e => { if (e.target === ov) close(); };
@@ -231,8 +280,79 @@ export function createLabels(data, save) {
     inp.focus();
   };
 
+  /* প্রতিটি লেখার আলাদা টেক্সট/ব্যাকগ্রাউন্ড রং (users.labelStyle) */
+  const applyLStyles = () => {
+    let css = "";
+    Object.keys(styles).forEach(k => {
+      const s = styles[k] || {}, a = [];
+      if (HEX.test(s.c || "")) a.push("color:" + s.c + "!important");
+      if (HEX.test(s.b || "")) a.push("background:" + s.b + "!important", "border-radius:4px");
+      if (!a.length) return;
+      const nav = k.indexOf("nav_") === 0, sel = nav ? '[data-rc-nav="' + k.slice(4).replace(/"/g, "") + '"]' : '[data-l="' + k.replace(/"/g, "") + '"]';
+      css += sel + "{" + a.join(";") + "}";
+      if (HEX.test(s.b || "") && !nav) css += sel + ":not(button):not(input){padding:0 4px}";
+    });
+    let el = document.getElementById("rc-lstyle");
+    if (!css) { if (el) el.remove(); return; }
+    if (!el) { el = document.createElement("style"); el.id = "rc-lstyle"; document.head.appendChild(el); }
+    el.textContent = css;
+  };
+
+  /* সাইট-থিম এডিটর: 🎨 Colors */
+  const toHex = v => /^#[0-9a-f]{6}$/i.test(v) ? v : (/^#[0-9a-f]{3}$/i.test(v) ? "#" + v.slice(1).split("").map(c => c + c).join("") : "");
+  const themeEditor = () => {
+    const ov = mk("div", "lb-ov"), box = mk("div", "lb-box");
+    ov.style.cssText = "align-items:flex-end;background:rgba(0,0,0,.12)";
+    box.style.maxHeight = "62vh";
+    box.appendChild(mk("div", "lb-h", "🎨 Colors"));
+    const draft = Object.assign({}, theme);
+    const rows = [
+      ["text", "Text", "--text-main", "#1a1a1a"],
+      ["bg", "Page background", "--bg", "#f0f5f1"],
+      ["card", "Card background", "--card-bg", "#ffffff"],
+      ["primary", "Main color (headings, buttons)", "--primary-color", "#4f46e5"],
+      ["navBg", "Navigation background", "", "#0f5132"],
+      ["navText", "Navigation text", "", "#ffffff"]
+    ];
+    const cur = (k, v, d) => HEX.test(draft[k] || "") ? draft[k] : ((v && toHex(getComputedStyle(document.documentElement).getPropertyValue(v).trim())) || d);
+    rows.forEach(([k, label, v, d]) => {
+      const r = mk("div");
+      r.style.cssText = "display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;color:#334155";
+      const sp = mk("span", "", label); sp.style.flex = "1";
+      const ci = document.createElement("input"); ci.type = "color"; ci.value = cur(k, v, d);
+      ci.style.cssText = "width:42px;height:30px;padding:0;border:1px solid #cbd5e1;border-radius:6px;background:none";
+      const dim = () => { ci.style.opacity = draft[k] ? "1" : ".4"; };
+      const x = mk("button", "lb-b", "Default"); x.type = "button"; x.style.cssText = "flex:none;padding:5px 8px;font-size:11px";
+      ci.oninput = () => { draft[k] = ci.value; dim(); applyTheme(draft); };
+      x.onclick = () => { delete draft[k]; applyTheme(draft); ci.value = cur(k, v, d); dim(); };
+      dim();
+      r.appendChild(sp); r.appendChild(ci); r.appendChild(x); box.appendChild(r);
+    });
+    const row = mk("div", "lb-btns");
+    const resetB = mk("button", "lb-b", "Reset all"), cancelB = mk("button", "lb-b", "Cancel"), okB = mk("button", "lb-b lb-ok", "Save");
+    resetB.type = cancelB.type = okB.type = "button";
+    const close = () => ov.remove();
+    const go = async obj => {
+      try {
+        await save({ theme: obj });
+        theme = obj; applyTheme(theme); cacheTheme(theme);
+        close();
+      } catch (err) {
+        console.error(err);
+        alert("Save failed: " + err.message);
+      }
+    };
+    resetB.onclick = () => go({});
+    cancelB.onclick = () => { applyTheme(theme); close(); };
+    okB.onclick = () => go(cleanTheme(draft));
+    ov.onclick = e => { if (e.target === ov) { applyTheme(theme); close(); } };
+    row.appendChild(resetB); row.appendChild(cancelB); row.appendChild(okB);
+    box.appendChild(row);
+    ov.appendChild(box); document.body.appendChild(ov);
+  };
+
   const clearUI = () => {
-    document.querySelectorAll(".lb-ed,.lb-msgs").forEach(e => e.remove());
+    document.querySelectorAll(".lb-ed,.lb-msgs,.lb-theme").forEach(e => e.remove());
   };
 
   /* Edit Mode চালু থাকলে ✎ আইকন ও নিচের Messages সারি */
@@ -262,6 +382,11 @@ export function createLabels(data, save) {
       p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editOne(k); };
       e.appendChild(p);
     });
+    const tb = mk("button", "lb-theme", "🎨 Colors");
+    tb.type = "button";
+    tb.style.cssText = "position:fixed;right:12px;bottom:12px;z-index:9990;padding:9px 14px;border:none;border-radius:20px;background:var(--primary-color);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)";
+    tb.onclick = themeEditor;
+    document.body.appendChild(tb);
     const shown = new Set([...document.querySelectorAll(".lb-ed")].map(e => e.dataset.k));
     const keys = (LB_PAGES[curPage] || []).filter(k => !shown.has(k));
     if (!LB_SHOW_MSGS || !keys.length) return;
@@ -288,6 +413,7 @@ export function createLabels(data, save) {
     root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
     root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
     applyIcon();
+    applyLStyles();
     applyNavLabels(user);
     relabel();
     if (!obs && (preset.person || preset.dashboardTitle)) {
@@ -535,6 +661,7 @@ r(auth, async u => {
   if (!u || detectEditPage()) return;
   try {
     const s = await GD(DO(db, "users", u.uid));
+    if (s.exists()) { applyTheme(s.data().theme); cacheTheme(s.data().theme); }
     if (s.exists() && !MT_LOADED) mtSetType(s.data().managementType);
     mtSelectSync(s.exists() ? s.data().managementType : "");
   } catch (e) { console.error(e); }
