@@ -209,7 +209,7 @@ body.rc-side-open #rc-side-scrim{opacity:1;pointer-events:auto}
 .rc-np-b button.on{background:#dcece3;color:var(--primary);font-weight:700}
 #rc-bnav .rc-bn-l{line-height:1.2;text-align:center}
 /* ===== হেডার কার্ড (থিম: .topbar-wrapper > .header-wrapper > #header-section .Header h1): উঁচু, বড় গ্রেডিয়েন্ট টাইটেল, নিচের সোনালী রেখা নেই ===== */
-.header-wrapper,.topbar-wrapper{border-bottom:0!important}
+.header-wrapper,.topbar-wrapper{border-bottom:0!important}.topbar-wrapper{position:-webkit-sticky;position:sticky;top:0;z-index:8400;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}
 .header-wrapper{position:relative;min-height:124px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(15,81,50,.07)}.header-wrapper #rc-burger{position:absolute;top:auto;right:auto;left:12px;bottom:12px;width:40px;height:40px;background:var(--primary-light);box-shadow:none}
 body #header-section{padding:0 25px!important;text-align:center!important}
 body .Header h1 a,body .Header h1:not(:has(a)){font-family:'Playfair Display','Noto Serif Bengali',Georgia,serif;font-size:34px;font-weight:700;letter-spacing:1px;line-height:1.2;background:linear-gradient(135deg,#0a3a24 0%,#0f5132 48%,#b8923a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
