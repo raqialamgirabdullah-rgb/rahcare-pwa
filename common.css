@@ -218,3 +218,5 @@ body .Header h1 a,body .Header h1:not(:has(a)){font-size:36px;font-weight:800;le
 @media (max-width:767.98px){.site-wrapper{padding-left:var(--side)!important;padding-right:var(--side)!important}}
 #rc-app{max-width:100%;overflow-wrap:break-word}
 #rc-app :is(img,video,canvas){max-width:100%}
+#rc-bnav a,#rc-side a{cursor:pointer}
+@media (max-width:767.98px){.profile-box,.rc-card,.billing-card,.wp-portal-wrap{max-width:100%!important}}
