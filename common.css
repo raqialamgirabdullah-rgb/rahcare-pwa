@@ -213,3 +213,8 @@ body.rc-side-open #rc-side-scrim{opacity:1;pointer-events:auto}
 .header-wrapper{min-height:124px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(15,81,50,.07)}
 body #header-section{padding:0 25px!important;text-align:center!important}
 body .Header h1 a,body .Header h1:not(:has(a)){font-size:36px;font-weight:800;letter-spacing:.6px;line-height:1.15;background:linear-gradient(135deg,#0a3a24,#0f5132 55%,#1b7a56);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+/* ===== দুই পাশের ফাঁকা: ফোনে স্ক্রিনের প্রস্থ অনুযায়ী ৪–৮px (থিমের ১৬px বদলে); ৭৬৮px+ স্ক্রিনে আগের মতোই ===== */
+:root{--side:clamp(4px,1.6vw,8px)}
+@media (max-width:767.98px){.site-wrapper{padding-left:var(--side)!important;padding-right:var(--side)!important}}
+#rc-app{max-width:100%;overflow-wrap:break-word}
+#rc-app :is(img,video,canvas){max-width:100%}
