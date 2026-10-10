@@ -67,6 +67,7 @@ const LB_SHOW_MSGS = false; /* true করলে Edit Mode-এ নিচে "Mes
 const NAV_REX = /\/p\/([\w-]+)\.html/, NAV_SKIP = new Set(["login", "sign-up"]), NAVDEF = {};
 const navEls = () => [...document.querySelectorAll("a[href],option[value]")].filter(e => {
   if (e.closest("#rc-app")) return false;
+  if (e.id === "menuToggleBtn") { e.dataset.rcNav = "menu"; return true; }
   const m = NAV_REX.exec(e.getAttribute("href") || e.value || "");
   if (!m || NAV_SKIP.has(m[1])) return false;
   e.dataset.rcNav = m[1];
@@ -88,15 +89,30 @@ const navSet = (e, txt) => {
   t[0].nodeValue = txt;
   t.slice(1).forEach(n => { n.nodeValue = ""; });
 };
-export function applyNavLabels(labels) {
-  labels = labels || {};
+let NAVLAB = {}, navObs = null;
+const navSync = () => {
   navEls().forEach(e => {
-    const k = "nav_" + e.dataset.rcNav;
-    if (e.dataset.rcNav0 === undefined) { e.dataset.rcNav0 = navGet(e); if (NAVDEF[k] === undefined) NAVDEF[k] = e.dataset.rcNav0; }
-    const v = typeof labels[k] === "string" ? labels[k].trim() : "";
-    if (v) { navSet(e, v); e.dataset.rcNavC = "1"; }
-    else if (e.dataset.rcNavC) { navSet(e, e.dataset.rcNav0); delete e.dataset.rcNavC; }
+    const k = "nav_" + e.dataset.rcNav, cur = navGet(e);
+    const v = typeof NAVLAB[k] === "string" ? NAVLAB[k].trim() : "";
+    if (e.dataset.rcNav0 === undefined) { e.dataset.rcNav0 = cur; if (NAVDEF[k] === undefined) NAVDEF[k] = cur; }
+    if (v) {
+      if (cur !== v) navSet(e, v);
+      e.dataset.rcNavC = "1";
+    } else if (e.dataset.rcNavC) {
+      navSet(e, e.dataset.rcNav0);
+      delete e.dataset.rcNavC;
+    } else if (cur && cur !== e.dataset.rcNav0) { /* টেমপ্লেট নিজে লেখা বদলালে (যেমন Add Patient) সেটাই ডিফল্ট */
+      e.dataset.rcNav0 = cur; NAVDEF[k] = cur;
+    }
   });
+};
+export function applyNavLabels(labels) {
+  NAVLAB = labels || {};
+  navSync();
+  if (!navObs) {
+    navObs = new MutationObserver(navSync);
+    navObs.observe(document.querySelector(".nav-wrapper") || document.body, { childList: true, subtree: true, characterData: true });
+  }
 }
 /* ===== NAV MENU NAMES শেষ ===== */
 
@@ -239,7 +255,7 @@ export function createLabels(data, save) {
       else e.appendChild(p);
     });
     navEls().forEach(e => {
-      if (e.tagName === "OPTION" || e.offsetParent === null || !navGet(e)) return;
+      if (e.tagName === "OPTION" || !navGet(e)) return;
       const k = "nav_" + e.dataset.rcNav;
       const p = mk("span", "lb-ed", "✎");
       p.dataset.k = k;
