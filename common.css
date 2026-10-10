@@ -125,3 +125,37 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 body:has([data-rc-hide-chrome]) :is(#PageList1,.main-navigation,.menu,.nav-bar,.nav-menu,.tabs-inner,.tabs-outer){display:none!important}
 body:has([data-rc-hide-chrome="2"]) .header-wrapper{display:none!important}
 body:has([data-rc-hide-chrome="2"]){min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+
+/* ===== PREMIUM LOOK — ফর্ম-কার্ড (.rc-fcard) পেজে প্রযোজ্য ===== */
+.rc-fcard{border:1px solid rgba(201,168,76,.28);border-radius:22px;box-shadow:0 1px 2px rgba(15,81,50,.06),0 12px 32px rgba(15,81,50,.10);animation:rcRise .45s ease both}
+@keyframes rcRise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.rc-fcard .rc-top-bar{height:6px;background:linear-gradient(90deg,#0a3a24,#c9a84c 50%,#0a3a24)}
+.rc-fcard .header-form{border-bottom:0;padding:30px 16px 18px;background:linear-gradient(180deg,#fbfaf4,#fff)}
+.rc-fcard .header-form h1{font-size:27px;letter-spacing:.2px;background:linear-gradient(135deg,#0a3a24,#0f5132 55%,#1b7a56);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rc-fcard .header-form p{display:inline-block;margin:8px 0 0;font-size:12.5px;font-weight:500;letter-spacing:.4px;color:#9a7a22}
+.rc-fcard .header-form p::before,.rc-fcard .header-form p::after{content:"";display:inline-block;width:26px;height:1px;vertical-align:middle;margin:0 10px;background:linear-gradient(90deg,transparent,#c9a84c)}
+.rc-fcard .header-form p::after{background:linear-gradient(270deg,transparent,#c9a84c)}
+.rc-fcard #pnb{margin:0 16px;padding:11px 14px;background:linear-gradient(135deg,#eef5f0,#f8f3e3);border:1px solid rgba(201,168,76,.35);border-radius:14px;letter-spacing:.3px}
+.rc-fcard #pnb .pib{width:34px;height:34px;display:flex;align-items:center;justify-content:center;background:#fff;border-radius:50%;box-shadow:0 2px 6px rgba(15,81,50,.14);transition:transform .2s}
+.rc-fcard #pnb .pib:active{transform:scale(.92)}
+.rc-fcard .body-form{padding:22px 16px 28px}
+.rc-fcard #ff{gap:20px 12px}
+.rc-fcard .body-form label{font-style:normal;font-weight:600;font-size:12px;letter-spacing:.5px;color:var(--primary);margin-bottom:7px}
+.rc-fcard .rc-input,.rc-fcard .rc-dd-btn,.rc-fcard .rc-date-display,.rc-fcard select.rc-input{height:50px;padding:0 16px;font-size:15px;color:#1b2a22;background:#fcfbf8;border:1px solid #ddd8c6;border-radius:14px;transition:border-color .2s,box-shadow .2s,background .2s}
+.rc-fcard .rc-input::placeholder{color:#a8aba5;font-size:14px;font-weight:400}
+.rc-fcard .rc-dd-btn,.rc-fcard .rc-date-display{color:#a8aba5;font-size:14px}
+.rc-fcard .rc-dd-btn.selected,.rc-fcard .rc-date-display.selected{color:#1b2a22;font-size:15px}
+.rc-fcard .rc-input:focus,.rc-fcard .rc-dd:focus-within .rc-dd-btn{border:1px solid #c9a84c;background:#fff;box-shadow:0 0 0 4px rgba(201,168,76,.20)}
+.rc-fcard .rc-dd-menu{border-radius:14px;border:1px solid rgba(201,168,76,.28);box-shadow:0 10px 30px rgba(15,81,50,.18);overflow:hidden}
+.rc-fcard .rc-dd-menu span{padding:12px 16px;font-size:14px}
+.rc-fcard .rc-chip{font-size:11.5px;font-weight:600;color:#7b857f;padding:5px 13px;border-radius:999px;background:#fff;border:1px solid #ddd8c6;transition:all .2s}
+.rc-fcard .rc-chip.selected{color:#fff;border-color:transparent;background:linear-gradient(135deg,#0f5132,#1b7a56);box-shadow:0 4px 10px rgba(15,81,50,.28)}
+.rc-fcard .name-sug .sg-b{border-radius:999px;padding:6px 14px;box-shadow:0 1px 3px rgba(15,81,50,.10)}
+.rc-fcard .footer-form{margin-top:18px;gap:12px}
+.rc-fcard .rc-btn{height:52px;border-radius:14px;font-size:15px;letter-spacing:.4px;transition:transform .2s,box-shadow .2s,background .2s}
+.rc-fcard .rc-btn-primary,.rc-fcard .rc-btn-primary:hover{background:linear-gradient(135deg,#0a3a24,#0f5132 50%,#1b7a56);box-shadow:0 8px 20px rgba(15,81,50,.30),inset 0 1px 0 rgba(255,255,255,.18)}
+.rc-fcard .rc-btn-primary:hover{transform:translateY(-2px)}
+.rc-fcard .rc-btn:active{transform:scale(.98)}
+.rc-fcard .rc-btn-secondary{background:#fff;border:1.5px solid rgba(15,81,50,.35)}
+.rc-fcard .rc-btn-secondary:hover{background:#f6f1df;border-color:#c9a84c}
+@media (prefers-reduced-motion:reduce){.rc-fcard{animation:none}}
