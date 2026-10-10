@@ -365,3 +365,13 @@ export function mountSymptomChecklist(card, opt) {
     save.disabled = false;
   };
 }
+
+/* প্রেসক্রিপশনের জন্য: টিক করা আইডি থেকে সেকশনভিত্তিক সারাংশ (একই আইডি/legacy নিয়ম) */
+export function symptomSummary(checkedIds) {
+  const saved = new Set(checkedIds || []);
+  return parse().flatMap(g => g.sections.map(s => {
+    const on = s.items.filter(i => saved.has(i.id) || (i.legacy && saved.has(i.legacy)));
+    return { group: g.title, title: s.title, need: s.need, n: on.length, total: s.items.length,
+      strong: Math.max(0, ...on.map(i => i.strong || 0)), texts: on.map(i => i.text) };
+  }));
+}
