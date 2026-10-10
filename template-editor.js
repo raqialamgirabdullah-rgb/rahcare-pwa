@@ -16,6 +16,23 @@ const parseLayout = raw => {
   } catch { return null; }
 };
 
+/* ---------- ইনভয়েসের টেবিল সারি (কোড থেকে তৈরি হয়) — সারির নাম + পজিশন ধরে স্টাইল মনে রাখা ---------- */
+const rowKey = tr => { const t = (tr.cells[0]?.textContent || "").trim(); return /^\d+$/.test(t) ? "item" : t.replace(/:$/, ""); };
+const pathOf = (el, tr) => { const p = []; for (let n = el; n !== tr; n = n.parentElement) p.unshift([...n.parentElement.children].indexOf(n)); return p.join("."); };
+const byPath = (tr, p) => p ? p.split(".").reduce((n, i) => n && n.children[i], tr) : tr;
+const rowEls = tr => [tr, ...tr.querySelectorAll("*")];
+function styleRows(tb, rows) {
+  for (const tr of [...tb.children]) {
+    const k = rowKey(tr);
+    for (const el of rowEls(tr)) {
+      const r = rows[k + "|" + pathOf(el, tr)];
+      if (!r) continue;
+      if (r.s) el.setAttribute("style", r.s);
+      if (r.h) el.style.display = "none";
+    }
+  }
+}
+
 /* ---------- live pages: সেভ করা লেআউট বসানো ---------- */
 export function applyLayout(kind, root, data) {
   if (!root || !data || data[kind + "LayoutActive"] === false) return false;
@@ -25,6 +42,11 @@ export function applyLayout(kind, root, data) {
   const keep = [...root.children].filter(n => n.tagName === "IMG" && /(WM|Logo)$/.test(n.id));
   root.innerHTML = L.html;
   keep.forEach(n => root.appendChild(n));
+  const tb = kind === "invoice" && root.querySelector("#inv-items");
+  if (tb && L.rows && Object.keys(L.rows).length) {
+    new MutationObserver(() => styleRows(tb, L.rows)).observe(tb, { childList: true, subtree: true });
+    styleRows(tb, L.rows);
+  }
   return true;
 }
 
@@ -178,10 +200,12 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     setT("inv-name", "Mohammad Rahim"); setT("inv-addr", "Jessore Sadar, Jessore"); setT("inv-age", "32 years");
     setT("inv-phone", "01712345678"); setT("inv-gender", "Male");
     const tb = stage.querySelector("#inv-items");
+    const R = (l, v, x = "") => `<tr><td colspan="6" align="right"${x}>${l}:</td><td align="right"${x}>${v}</td></tr>`;
     if (tb) tb.innerHTML =
       '<tr><td align="center">1</td><td>Consultation</td><td align="center">Service</td><td align="center">1</td><td align="right">500</td><td align="right">0</td><td align="right">500</td></tr>' +
-      '<tr><td colspan="6" align="right">Sub Total:</td><td align="right">500</td></tr>' +
-      '<tr><td colspan="6" align="right">Payable Amount:</td><td align="right">500</td></tr>';
+      R("Sub Total", "500") + R("Online Service Charge", "50") + R("Total Amount", "550") + R("Discount", "0") + R("Payable Amount", "550") +
+      '<tr><td colspan="4" align="right" style="vertical-align:middle;padding-right:10px">Paid Amount:</td><td colspan="2" style="padding:0;vertical-align:middle"><table class="trans-container"><tr><td colspan="2">Transactions</td></tr><tr><td width="55%">' + today() + '</td><td width="45%">Cash</td></tr></table></td><td align="right" style="vertical-align:middle">300</td></tr>' +
+      R("Due Amount", "250", ' style="color:red"');
   }
   if (D.logoUrl && D.logoActive !== false) {
     stage.classList.add("hasLogo");
@@ -213,7 +237,22 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     refreshPanel();
   };
 
+  /* ইনভয়েসের একই ধরনের সারি (যেমন একাধিক আইটেম) একসাথে এক স্টাইল পাবে */
+  function syncRows() {
+    const tb = stage.querySelector("#inv-items");
+    if (!tb || !sel || !tb.contains(sel) || sel === tb) return;
+    const tr = [...tb.children].find(r => r.contains(sel)); if (!tr) return;
+    const k = rowKey(tr), p = pathOf(sel, tr);
+    for (const o of tb.children) {
+      if (o === tr || rowKey(o) !== k) continue;
+      const el = byPath(o, p); if (!el) continue;
+      const a = sel.getAttribute("style"); a ? el.setAttribute("style", a) : el.removeAttribute("style");
+      const h = sel.hasAttribute("data-rc-h"); el.toggleAttribute("data-rc-h", h); el.classList.toggle("rce-hid", h);
+    }
+  }
+
   function refreshPanel() {
+    syncRows();
     const ctl = $("rceCtl"), info = $("rceInfo");
     ctl.hidden = !sel;
     if (!sel) { info.textContent = "Tap any part of the preview to select it, then change it below."; return; }
@@ -228,9 +267,9 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     $("cSzT").textContent = isImg ? "Width" : "Size";
     $("cSz").textContent = isImg ? Math.round(sel.offsetWidth) : Math.round(parseFloat(cs.fontSize)) + "px";
     $("cImg").hidden = !isImg; if (isImg) $("cSrc").value = sel.getAttribute("src") || "";
-    $("cHide").textContent = sel.hasAttribute("data-rc-h") ? "Show" : "Hide";
+    $("cHide").textContent = (/^(TD|TH)$/.test(sel.tagName) && sel.closest("tr") || sel).hasAttribute("data-rc-h") ? "Show" : "Hide";
     $("cDel").disabled = !sel.closest("[data-rc-custom]");
-    $("cPrev").disabled = $("cNext").disabled = CELLS.test(sel.tagName) && sel.tagName !== "TR" || sel.parentElement === stage;
+    $("cPrev").disabled = $("cNext").disabled = CELLS.test(sel.tagName) && sel.tagName !== "TR" || sel.parentElement === stage || !!sel.closest("#inv-items");
     $("cUp").disabled = !sel.parentElement || sel.parentElement === stage;
     $("cB").classList.toggle("on", parseInt(cs.fontWeight) >= 600);
     $("cI").classList.toggle("on", cs.fontStyle === "italic");
@@ -302,11 +341,14 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     refreshPanel();
   };
   $("cPrev").onclick = () => move(-1); $("cNext").onclick = () => move(1);
+  const hideTarget = () => (/^(TD|TH)$/.test(sel.tagName) && sel.closest("tr")) || sel;
   $("cHide").onclick = () => {
     if (!sel) return; push();
-    const on = sel.toggleAttribute("data-rc-h"); sel.classList.toggle("rce-hid", on);
+    const h = hideTarget(), on = h.toggleAttribute("data-rc-h"); h.classList.toggle("rce-hid", on);
+    if (h !== sel && tbHas(h)) { const keep = sel; sel = h; syncRows(); sel = keep; }
     hidCount(); refreshPanel(); renderHidden();
   };
+  const tbHas = h => !!h.closest("#inv-items");
   $("cDel").onclick = () => {
     const c = sel && sel.closest("[data-rc-custom]"); if (!c) return;
     push(); select(null); c.remove(); hidCount();
@@ -317,7 +359,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     let a = sel || stage.firstElementChild;
     if (a.classList?.contains("invoice-card")) a = a.firstElementChild || a;
     if (a.parentElement === stage) return { into: a };
-    const t = a.closest("table"); if (t && !a.closest("[data-rc-custom]")) a = t;
+    let t = a.closest("table"); while (t && t.parentElement && t.parentElement.closest("table")) t = t.parentElement.closest("table"); if (t && !a.closest("[data-rc-custom]")) a = t;
     return { after: a };
   };
   const place = n => {
@@ -359,9 +401,19 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   };
 
   /* --- serialize / save / reset / close --- */
+  let rowsOut = {};
   const serialize = () => {
     const c = stage.cloneNode(true);
     c.querySelectorAll("#rceWM,#rceLogo").forEach(n => n.remove());
+    rowsOut = {};
+    const tb = c.querySelector("#inv-items");
+    if (tb) for (const tr of [...tb.children]) {
+      const k = rowKey(tr);
+      for (const el of rowEls(tr)) {
+        const sty = el.getAttribute("style") || "", h = el.hasAttribute("data-rc-h");
+        if (sty || h) rowsOut[k + "|" + pathOf(el, tr)] = { s: sty, h: h ? 1 : 0 };
+      }
+    }
     c.querySelectorAll(".rce-sel").forEach(n => n.classList.remove("rce-sel"));
     c.querySelectorAll("[data-rc-h]").forEach(n => { n.classList.remove("rce-hid"); n.style.display = "none"; });
     c.querySelectorAll("[class='']").forEach(n => n.removeAttribute("class"));
@@ -383,7 +435,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     const b = $("rceSave"); b.disabled = true; b.textContent = "Saving...";
     try {
       if (!save) throw new Error("save() missing");
-      await save({ [kind + "Layout"]: JSON.stringify({ v: 1, html: serialize() }), [kind + "LayoutActive"]: true });
+      await save({ [kind + "Layout"]: JSON.stringify((() => { const html = serialize(); return kind === "invoice" ? { v: 2, html, rows: rowsOut } : { v: 1, html }; })()), [kind + "LayoutActive"]: true });
       dirty = false; toast("✔ Saved");
     } catch (e) { alert("Save failed: " + (e.message || e)); }
     b.disabled = false; b.textContent = "Save";
