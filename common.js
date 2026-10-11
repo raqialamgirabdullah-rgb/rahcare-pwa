@@ -29,7 +29,7 @@ const LB_BASE = {
   msgOk: "Appointment Submitted Successfully!",
   msgWa: "আসসালামু আলাইকুম {name}, আপনার অ্যাপয়েন্টমেন্ট {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।",
   msgTime: " {time} সময়ে",
-  searchPh: "🔍 Name/ID/Phone", addCard: "Add Card",
+  searchPh: "Name/ID/Phone", addCard: "Add Card",
   emptyToday: "No {persons} today", results: "Results", noMatch: "No match",
   reminders: "Reminders", rToday: "Today", rTomorrow: "Tomorrow", rMissed: "Missed Yesterday",
   rmsgToday: "Session today. Please come on time.",
@@ -415,7 +415,7 @@ export function createLabels(data, save) {
       if (pg && getEditMode(pg) && !on) toggle(pg);
     }
     root.querySelectorAll("[data-l]").forEach(e => { e.textContent = L(e.dataset.l); });
-    root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp); });
+    root.querySelectorAll("[data-lp]").forEach(e => { e.placeholder = L(e.dataset.lp).replace(/^\s*🔍\s*/u, ""); });
     applyIcon();
     applyLStyles();
     applyNavLabels(user);
