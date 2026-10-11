@@ -234,3 +234,10 @@ input::placeholder,textarea::placeholder{font-size:14px;font-weight:400}
 .rc-combo .rc-dd-btn.rc-dd-input input:not([readonly]){cursor:text}
 .rc-combo .rc-dd-btn.rc-dd-input input::placeholder{color:#a8aba5;font-size:14px;font-weight:400}
 .rc-combo .rc-dd-menu{top:calc(100% + 4px)}
+
+/* ===== ফিল্ডের হেডিং ড্রপডাউন (হেডিং ট্যাপ করে অপশন বাছাই) ===== */
+.hd-blk{position:relative}
+label.hd-dd{display:flex;width:fit-content;max-width:100%;align-items:center;gap:5px;cursor:pointer}
+label.hd-dd::after{content:"▾";font-size:11px;opacity:.7}
+.hd-menu{top:24px;right:auto;min-width:150px;max-width:100%}
+.hd-menu span{white-space:nowrap}
