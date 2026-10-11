@@ -226,3 +226,11 @@ body .Header h1 a,body .Header h1:not(:has(a)){font-family:'Playfair Display','N
 .rc-fcard .header-form h1,.rc-form-header h1,.dh h2,.dashboard-header h2{font-family:'Playfair Display','Noto Serif Bengali',Georgia,serif;font-weight:700;letter-spacing:.3px}
 /* ===== প্লেসহোল্ডার: পুরো সাইটে একই সাইজ (14px) ===== */
 input::placeholder,textarea::placeholder{font-size:14px;font-weight:400}
+
+/* ===== ড্রপডাউন ফিল্ড: মেনু থেকে সিলেক্টও করা যাবে, ডাবল ক্লিক করে হাতেও লেখা যাবে ===== */
+.rc-combo .rc-dd-btn{position:relative;padding-right:34px}
+.rc-combo .rc-dd-btn::after{content:"▾";position:absolute;right:16px;top:50%;transform:translateY(-50%);color:#8a948e;font-size:12px;pointer-events:none}
+.rc-combo .rc-dd-btn.rc-dd-input input{padding:0;font-size:15px;font-family:inherit;color:#1b2a22;cursor:pointer}
+.rc-combo .rc-dd-btn.rc-dd-input input:not([readonly]){cursor:text}
+.rc-combo .rc-dd-btn.rc-dd-input input::placeholder{color:#a8aba5;font-size:14px;font-weight:400}
+.rc-combo .rc-dd-menu{top:calc(100% + 4px)}
