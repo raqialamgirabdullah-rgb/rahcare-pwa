@@ -386,9 +386,12 @@ export function createLabels(data, save) {
       p.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); editOne(k); };
       e.appendChild(p);
     });
-    const tb = mk("button", "lb-theme", "🎨 Colors");
+    const tb = mk("button", "lb-theme", "");
     tb.type = "button";
-    tb.style.cssText = "position:fixed;right:12px;bottom:12px;z-index:9990;padding:9px 14px;border:none;border-radius:20px;background:var(--primary-color);color:#fff;font-weight:700;font-size:13px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.25)";
+    tb.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="13.5" cy="6.5" r="1"/><circle cx="17.5" cy="10.5" r="1"/><circle cx="8.5" cy="7.5" r="1"/><circle cx="6.5" cy="12.5" r="1"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.9 0 1.5-.7 1.5-1.5 0-.4-.2-.8-.4-1.1-.3-.3-.4-.7-.4-1.1 0-.9.7-1.5 1.5-1.5H16c3.3 0 6-2.7 6-6 0-4.9-4.5-9-10-9z"/></svg><span>Colors</span>';
+    const bn = document.getElementById("rc-bnav");
+    const off = (bn && bn.offsetHeight ? bn.offsetHeight : 0) + 12;
+    tb.style.cssText = "position:fixed;right:12px;bottom:calc(" + off + "px + env(safe-area-inset-bottom,0px));z-index:9990;display:inline-flex;align-items:center;gap:6px;padding:7px 13px;border:1px solid rgba(255,255,255,.35);border-radius:999px;background:var(--primary-color);color:#fff;font-weight:600;font-size:12px;letter-spacing:.2px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.22)";
     tb.onclick = themeEditor;
     document.body.appendChild(tb);
     const shown = new Set([...document.querySelectorAll(".lb-ed")].map(e => e.dataset.k));
