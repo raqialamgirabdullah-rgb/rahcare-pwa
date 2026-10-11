@@ -122,7 +122,7 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 
 /* ===== Shared: Blogger-এর মেনু/হেডার লুকানো (login, signup, worker-management, worker-portal) =====
    ব্যবহার: পেজের HTML-এর একদম শুরুতে <i data-rc-hide-chrome="1" hidden></i> (২ দিলে হেডারও লুকায় ও পেজ মাঝখানে বসে) */
-body:has([data-rc-hide-chrome]) :is(#PageList1,.main-navigation,.menu,.nav-bar,.nav-menu,.tabs-inner,.tabs-outer){display:none!important}
+body:has([data-rc-hide-chrome]) :is(#PageList1,.main-navigation,.menu,.nav-bar,.nav-menu,.tabs-inner,.tabs-outer){display:none!important}body:has([data-rc-hide-chrome]) :is(#rc-bnav,#rc-burger,#rc-side,#rc-side-scrim,#rc-np){display:none!important}body.rc-has-nav:has([data-rc-hide-chrome]){padding-bottom:10px!important}
 body:has([data-rc-hide-chrome="2"]) .header-wrapper{display:none!important}
 body:has([data-rc-hide-chrome="2"]){min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
 
