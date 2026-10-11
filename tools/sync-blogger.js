@@ -13,7 +13,7 @@ function build(p) {
   const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => { scripts.push(m); return ""; });
   return `<script>window.__RC_HTML=window.__RC_HTML||{};window.__RC_HTML[${esc(p.page)}]=${esc(html)};</script>\n` +
     `<div id="rc-app" data-static="1">${markup}</div>\n` + scripts.join("\n") + "\n" +
-    `<script src="${cfg.base}loader.js" data-page="${p.page}"></script>`;
+    `<script src="${cfg.base}loader.js?v=${cfg.loaderVer || 1}" data-page="${p.page}"></script>`;
 }
 
 async function token() {

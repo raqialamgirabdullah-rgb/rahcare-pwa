@@ -1,15 +1,61 @@
 {
   "blogId": "2495886550817634607",
   "base": "https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/",
+  "loaderVer": 2,
   "pages": [
-    { "slug": "dashboard", "page": "dashboard", "id": "8374369247535429273", "enabled": true },
-    { "slug": "appointment", "page": "appointment", "id": "3957826609357521991", "enabled": false },
-    { "slug": "billing", "page": "billing", "id": "2689642397304526191", "enabled": false },
-    { "slug": "accounts", "page": "accounts", "id": "3575714392946044512", "enabled": false },
-    { "slug": "admin", "page": "admin", "id": "1485995135065633893", "enabled": false },
-    { "slug": "admin-panel", "page": "admin-panel", "id": "3580544106021081123", "enabled": false },
-    { "slug": "profile", "page": "profile", "id": "8792187750548315247", "enabled": false },
-    { "slug": "login", "page": "login", "id": "4546206767067260976", "enabled": false },
-    { "slug": "worker-portal", "page": "worker-portal", "id": "1477019553701112327", "enabled": false }
+    {
+      "slug": "dashboard",
+      "page": "dashboard",
+      "id": "8374369247535429273",
+      "enabled": true
+    },
+    {
+      "slug": "appointment",
+      "page": "appointment",
+      "id": "3957826609357521991",
+      "enabled": false
+    },
+    {
+      "slug": "billing",
+      "page": "billing",
+      "id": "2689642397304526191",
+      "enabled": false
+    },
+    {
+      "slug": "accounts",
+      "page": "accounts",
+      "id": "3575714392946044512",
+      "enabled": false
+    },
+    {
+      "slug": "admin",
+      "page": "admin",
+      "id": "1485995135065633893",
+      "enabled": false
+    },
+    {
+      "slug": "admin-panel",
+      "page": "admin-panel",
+      "id": "3580544106021081123",
+      "enabled": false
+    },
+    {
+      "slug": "profile",
+      "page": "profile",
+      "id": "8792187750548315247",
+      "enabled": false
+    },
+    {
+      "slug": "login",
+      "page": "login",
+      "id": "4546206767067260976",
+      "enabled": false
+    },
+    {
+      "slug": "worker-portal",
+      "page": "worker-portal",
+      "id": "1477019553701112327",
+      "enabled": false
+    }
   ]
 }
