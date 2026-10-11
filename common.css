@@ -95,8 +95,8 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 .img-row:nth-child(-n+2) .toggle-wrap{flex-direction:column;align-items:flex-end;gap:2px}
 .img-row:nth-child(-n+2) :is(.val,.img-preview){grid-column:1;margin-top:0}
 .img-row:nth-child(-n+2)>div:first-child{display:contents}
-.img-row:nth-child(3){flex-basis:100%}
-.img-row:nth-child(3)>div:first-child{flex:1;min-width:0}
+
+#row-appointment>div:first-child{flex:1;min-width:0}.hd-row{flex-direction:column;align-items:stretch}.hd-row>.hd-in{flex:1;min-width:0;width:100%}
 .lbl{color:var(--text-muted);text-transform:uppercase;font-size:11px;font-weight:700}
 .lbl-row{display:flex;align-items:center;gap:10px}
 .opt-btn{background:var(--primary-color);color:#fff;border:0;border-radius:4px;padding:5px 15px;font-weight:600;cursor:pointer}
