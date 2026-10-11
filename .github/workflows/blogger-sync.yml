@@ -1,0 +1,26 @@
+name: Sync pages to Blogger
+on:
+  push:
+    branches: [main]
+    paths: ["pages/**", "loader.js", "tools/**"]
+  workflow_dispatch:
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - name: Sync
+        env:
+          BLOGGER_CLIENT_ID: ${{ secrets.BLOGGER_CLIENT_ID }}
+          BLOGGER_CLIENT_SECRET: ${{ secrets.BLOGGER_CLIENT_SECRET }}
+          BLOGGER_REFRESH_TOKEN: ${{ secrets.BLOGGER_REFRESH_TOKEN }}
+        run: node tools/sync-blogger.js
+      - name: Keep a backup of the previous Blogger content
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: blogger-backup
+          path: backup/
+          if-no-files-found: ignore
