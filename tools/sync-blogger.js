@@ -8,7 +8,11 @@ const esc = s => JSON.stringify(s).replace(/</g, "\\u003c").replace(/>/g, "\\u00
 
 function build(p) {
   const html = fs.readFileSync(path.join(root, "pages", p.page + ".html"), "utf8");
+  // Split into static markup (painted together with Blogger's own header) and scripts (run in original order).
+  const scripts = [];
+  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => { scripts.push(m); return ""; });
   return `<script>window.__RC_HTML=window.__RC_HTML||{};window.__RC_HTML[${esc(p.page)}]=${esc(html)};</script>\n` +
+    `<div id="rc-app" data-static="1">${markup}</div>\n` + scripts.join("\n") + "\n" +
     `<script src="${cfg.base}loader.js" data-page="${p.page}"></script>`;
 }
 
