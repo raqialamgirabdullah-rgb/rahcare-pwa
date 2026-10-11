@@ -1119,3 +1119,16 @@ document.addEventListener("input",e=>{const i=e.target&&e.target.closest?e.targe
 ;if(!window.__rcHdInit){window.__rcHdInit=1;
 document.addEventListener("click",e=>{const t=e.target&&e.target.closest?e.target:null;if(!t)return;const sp=t.closest(".hd-menu [data-hv]");if(sp){const b=sp.closest(".hd-blk"),lb=b&&b.querySelector("label.hd-dd");if(lb){const k=lb.dataset.hk,v=sp.dataset.hv,st=window.__rcHd=window.__rcHd||{};v===lb.dataset.h0?delete st[k]:st[k]=v;window.__rcApplyHd&&window.__rcApplyHd()}const mn=sp.closest(".hd-menu");mn&&mn.classList.remove("open");return}const lb=t.closest("label.hd-dd");if(lb){const mn=lb.closest(".hd-blk").querySelector(":scope>.hd-menu");mn&&toggleDropdown(mn)}else document.querySelectorAll(".hd-menu.open").forEach(m=>m.classList.remove("open"))})}
 ;window.rcHdSlip=(root,hd)=>{if(!root)return;hd=hd||{};const lab=el=>{const tr=el.closest&&el.closest("tr");if(tr&&tr.firstElementChild&&tr.firstElementChild!==el)return tr.firstElementChild;let p=el.previousElementSibling;while(p&&p.tagName==="BR")p=p.previousElementSibling;return p&&/^(STRONG|B|TD|TH|SPAN|LABEL)$/.test(p.tagName)?p:null};[[hd.name,["slipName","inv-name"]],[hd.phone,["slipPhone","inv-phone"]],[hd.age,["slipAge","inv-age"]],[hd.gender,["slipGender","inv-gender"]],[hd.addr,["slipAddr","inv-addr"]],[hd.time||hd.date,["slipSchedule"]]].forEach(([ch,ids])=>ids.forEach(id=>{const v=root.querySelector("#"+id);if(!v)return;const l=lab(v);if(!l)return;l.dataset.hd0===void 0&&(l.dataset.hd0=l.textContent);const b=l.dataset.hd0;l.textContent=ch?ch+(/:\s*$/.test(b)?":":""):b}))};
+
+/* ===== তারিখের ফিল্টারে (ড্যাশবোর্ড, অ্যাকাউন্টস) লেখা/অংশের যেকোনো জায়গায় চাপলেই ক্যালেন্ডার খোলে =====
+   ব্রাউজারের date input শুধু নিজের ছোট আইকনে চাপলে ক্যালেন্ডার খোলে (কম্পিউটারে); তাই লুকানো input-এর ওপর
+   যেকোনো ক্লিকে সরাসরি showPicker() ডাকা হয়। একাধিকবার লোড হলেও একবারই বসে। */
+if (!window.__rcDatePick) {
+  window.__rcDatePick = 1;
+  document.addEventListener("click", e => {
+    const i = e.target && e.target.closest ? e.target.closest("input.rc-filter-hidden-input") : null;
+    if (!i || i.disabled || i.readOnly || typeof i.showPicker !== "function") return;
+    e.preventDefault();
+    try { i.showPicker(); } catch (x) { /* খুলতে না পারলে ব্রাউজারের নিজস্ব আচরণই থাকে */ }
+  }, true);
+}
