@@ -285,7 +285,7 @@ function genSlipBlocks(def, a, size, r, P) {
   };
   const dir = row => row ? `flex-direction:${flip ? "row-reverse" : "row"};` : "";
   const minH = size.minH ? `min-height:${Math.max(0, size.minH - 2 * pad)}px;` : "";
-  let body = "", rowRoot = false;
+  let body = "", rowRoot = false, sigS = "", spread = false;
   const bar = (j) => `<div style="background:${P.p};padding:${F(8)} 14px;display:flex;justify-content:${j};">${title("#fff", F(17))}</div>`;
   if (a === "split") {
     body = bar(pick(r, ["center", "flex-start"])) +
@@ -308,21 +308,96 @@ function genSlipBlocks(def, a, size, r, P) {
     rowRoot = true;
     body = `<div style="width:36%;flex:none;background:${P.p};color:#fff;padding:18px 14px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center">${lg(64, 64, "background:#fff;border-radius:50%;padding:3px")}${title("#fff", F(16), "flex-direction:column;gap:2px")}${centre("center", "#fff", "#eee", "#eee")}</div>` +
       `<div style="flex:1;min-width:0;padding:16px;display:flex;flex-direction:column;gap:12px"><div style="display:flex;justify-content:space-between;align-items:center">${date()}${pid()}</div>${fields(2)}</div>`;
+  } else if (a === "grammar") {
+    const rem = new Set(["L", "T", "C", "D", "I"]);
+    const WT = { L: 0.6, T: 1.4, C: 2.1, D: 0.9, I: 1.1, F: 3 };
+    const take = (...ks) => ks.filter(k => rem.delete(k));
+    const jcOf = al => al === "center" ? "center" : al === "right" ? "flex-end" : "flex-start";
+    const lsz = Math.round(pick(r, narrow ? [40, 46, 52] : [48, 56, 64, 72]) * Math.min(1.15, u));
+    const roundLogo = r() < 0.5;
+    const blk = (k, al, dark, cols) => {
+      if (k === "L") return lg(lsz, lsz, dark && roundLogo ? "background:#fff;border-radius:50%;padding:3px;box-sizing:content-box" : "");
+      if (k === "T") return title(dark ? "#fff" : P.p, F(pick(r, [14, 16, 18, 20])), `justify-content:${jcOf(al)}`);
+      if (k === "C") return centre(al, dark ? "#fff" : P.p, dark ? "#f0f0f0" : "#333", dark ? "#f0f0f0" : "#333");
+      if (k === "D") return date(`text-align:${al};${dark ? "color:#fff;" : ""}`);
+      if (k === "I") return `<div style="display:flex;justify-content:${jcOf(al)}">${pid(dark)}</div>`;
+      return fields(cols);
+    };
+    const cell = (ks, o = {}) => {
+      let al = o.al || "left"; if (flip) al = al === "left" ? "right" : al === "right" ? "left" : al; const jc = jcOf(al), hasF = ks.includes("F");
+      const wt = ks.reduce((m, k) => m + WT[k], 0) * (0.85 + r() * 0.4);
+      return `<div style="flex:${wt.toFixed(2)} 1 0;min-width:0;display:flex;flex-direction:column;gap:${o.gap ?? 8}px;align-items:${hasF ? "stretch" : jc};justify-content:center;padding:${o.pad ?? "10px 12px"};${o.bg ? `background:${o.bg};` : ""}${o.bd || ""}">` +
+        ks.map(k => `<div style="display:flex;flex-direction:column;align-items:${k === "F" ? "stretch" : jc};${k === "F" ? "width:100%;" : ""}">${blk(k, al, o.dark, o.cols)}</div>`).join("") + `</div>`;
+    };
+    const band = (cells, o = {}) => `<div style="display:flex;${flip ? "flex-direction:row-reverse;" : ""}align-items:stretch;${o.bg ? `background:${o.bg};` : ""}${o.bd || ""}">${cells.join("")}</div>`;
+    const sepLine = pick(r, ["", `border-top:1px solid ${P.mid};`, `border-top:2px solid ${P.p};`]);
+    const sigp = [];
+    const edge = (n, i) => n === 1 ? pick(r, ["center", "left"]) : i === 0 ? "left" : i === n - 1 ? "right" : "center";
+    const mode = ((size.o === "l" ? r() < 0.55 : size.w >= 424 && r() < 0.3)) ? "side" : "stack";
+    sigp.push(mode);
+    if (mode === "stack") {
+      const hv = Math.floor(r() * 4), hdark = hv === 0, hbg = hv === 0 ? P.p : hv === 1 ? P.soft : "", hbd = hv === 2 ? `border-bottom:2px solid ${P.p};` : "";
+      const h = pick(r, narrow ? ["T", "T", "TD", "TI", "LT"] : ["T", "TD", "TI", "LT", "LTD", "LTI", "DT", "IT"]);
+      sigp.push("h" + h + hv);
+      const hk = [...h]; take(...hk);
+      body = band(hk.map((k, i) => cell([k], { al: h === "LT" && i === 1 ? "left" : edge(hk.length, i), dark: hdark })), { bg: hbg, bd: hbd });
+      const iOpts = ["C", "C"];
+      if (rem.has("L")) iOpts.push("LC", "CL", "LC", "CL");
+      iOpts.push("CX", "XC");
+      if (rem.has("L") && !narrow) iOpts.push("LCX", "XCL");
+      const ic = pick(r, iOpts); sigp.push("i" + ic);
+      const ik = [...ic], bgI = r() < 0.25 ? P.soft : "";
+      body += band(ik.map((k, i) => {
+        const al = edge(ik.length, i);
+        if (k === "X") { const xs = take("D", "I"); return xs.length ? cell(xs, { al: i === 0 ? "left" : "right" }) : ""; }
+        take(k); return cell([k], { al: k === "C" && ik.length === 1 ? edge(1, 0) : al });
+      }).filter(Boolean), { bg: bgI });
+      const left = [...rem];
+      const f = pick(r, left.length && !narrow ? ["F", "F", "FX", "XF", "FX", "XF"] : ["F"]); sigp.push("f" + f);
+      if (f === "F") body += band([cell(["F"], { cols: size.w >= 600 ? 3 : 2, pad: "6px 14px 12px" })], { bd: sepLine });
+      else {
+        const xs = take(...left), dkX = r() < 0.5;
+        const xc = cell(xs, { al: "center", dark: dkX, bg: dkX ? P.p : P.soft, pad: "12px", gap: 10 });
+        const fc = cell(["F"], { cols: size.w >= 600 ? 2 : 1, pad: "10px 12px" });
+        body += band(f === "FX" ? [fc, xc] : [xc, fc], { bd: sepLine });
+      }
+      const rest = [...rem];
+      if (rest.length) {
+        sigp.push("b" + rest.join(""));
+        body += `<div style="display:flex;${flip ? "flex-direction:row-reverse;" : ""}justify-content:${pick(r, ["space-between", "center", "flex-end"])};align-items:center;gap:10px;padding:8px 14px 12px;${sepLine}">${rest.map(k => `<div>${blk(k, "left", false, 1)}</div>`).join("")}</div>`;
+        rem.clear();
+      }
+    } else {
+      rowRoot = true;
+      const extra = ["T", "D", "I"].filter(() => r() < 0.55); if (!extra.length) extra.push(pick(r, ["T", "I"]));
+      const aks = ["L", ...extra]; take(...aks);
+      const aw = pick(r, [26, 30, 34]); sigp.push("a" + aks.join("") + aw);
+      const aside = `<div style="width:${aw}%;flex:none;background:${P.p};padding:14px 8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;text-align:center">` +
+        aks.map(k => `<div style="display:flex;flex-direction:column;align-items:center">${blk(k, "center", true, 1)}</div>`).join("") + `</div>`;
+      let m = "";
+      if (rem.has("T")) { take("T"); m += band([cell(["T"], { al: "left", pad: "12px 14px 0" })], {}); }
+      const xs = take("D", "I");
+      m += band(xs.length ? [cell(["C"], { al: "left", pad: "12px 14px" }), cell(xs, { al: "right", pad: "12px 14px" })] : [cell(["C"], { al: "left", pad: "12px 14px" })], {});
+      m += band([cell(["F"], { cols: size.w >= 600 ? 2 : 1, pad: "6px 14px 14px" })], { bd: sepLine });
+      body = aside + `<div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center">${m}</div>`;
+    }
+    spread = mode === "stack" && size.minH >= 500;
+    sigS = sigp.join("|") + "|" + fv + "|" + (flip ? 1 : 0);
   } else { /* strip */
     rowRoot = true;
     body = `<div style="width:30%;flex:none;padding:12px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;border-right:1px solid ${P.mid}">${lg(48, 48)}${centre("center", P.p, "#333", "#333")}</div>` +
       `<div style="flex:1;min-width:0;padding:12px;display:flex;flex-direction:column;gap:8px">${title(P.p, F(15))}${fields(3)}</div>` +
       `<div style="width:22%;flex:none;padding:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:${P.soft};border-left:1px solid ${P.mid}">${date()}${pid()}</div>`;
   }
-  const html = `<div class="slip-main-box" style="${outer}${ff}${minH}${rowRoot ? dir(1) : ""}">${body}</div>`;
-  return { html, pad: pad + "px" };
+  const html = `<div class="slip-main-box" style="${outer}${ff}${minH}${rowRoot ? dir(1) : ""}${spread ? "justify-content:space-between;" : ""}">${body}</div>`;
+  return { html, pad: pad + "px", sig: sigS ? "s|" + size.id + "|" + sigS : undefined };
 }
 
-const SLIP_ARCH = { p: ["classic", "classic", "split", "side", "center", "minimal"], l: ["ticket", "strip", "side", "ticket"] };
+const SLIP_ARCH = { p: ["classic", "grammar", "grammar", "grammar", "grammar", "grammar", "grammar", "grammar", "split", "side", "center", "minimal"], l: ["grammar", "grammar", "grammar", "grammar", "grammar", "grammar", "ticket", "strip", "side"] };
 function genSlip(def, seed) {
   const r = mulberry((seed * 2654435761) >>> 0), P = palette(r), size = wpick(r, SLIP_SIZES), a = pick(r, SLIP_ARCH[size.o]);
   const out = a === "classic" ? genSlipClassic(def, r, P, size) : genSlipBlocks(def, a, size, r, P);
-  out.size = { w: size.w, minH: size.minH }; out.css = layoutCss("slip", size); out.v = 3; out.name = size.id + "-" + a;
+  out.size = { w: size.w, minH: size.minH }; out.css = layoutCss("slip", size); out.v = 3; out.name = size.id + "-" + a; out.sig = out.sig || ("s|" + size.id + "|" + a);
   return out;
 }
 
@@ -338,21 +413,22 @@ function genInvoice(def, seed) {
   const old = logoBox.querySelector("img"), fb = old.getAttribute("src");
   const lg = document.createElement("img");
   lg.setAttribute("data-rc-logo", ""); lg.setAttribute("data-fallback", fb); lg.setAttribute("src", fb); lg.setAttribute("alt", "Logo");
-  lg.setAttribute("crossorigin", "anonymous"); lg.className = "rc-logo"; lg.setAttribute("style", "max-width:85px;height:auto;display:block");
+  lg.setAttribute("crossorigin", "anonymous"); lg.className = "rc-logo"; lg.setAttribute("style", "width:64px;height:54px;object-fit:contain;display:block");
   logoBox.replaceChild(lg, old);
   [comp, logoBox, meta].forEach(n => { n.style.order = "0"; });
   const D = (st, ...kids) => { const d = document.createElement("div"); d.setAttribute("style", st); kids.forEach(k => k && d.appendChild(k)); return d; };
   inner.innerHTML = "";
   const flip = r() < 0.5;
-  let titleMB = null, noPad = false, skipTitle = false, arche;
+  let titleMB = null, noPad = false, skipTitle = false, arche, sigx = "";
   card.style.width = size.w + "px"; card.style.height = size.h + "px";
   const longP = size.id === "long";
   if (!land) {
-    arche = pick(r, longP ? ["perm", "titlerow", "center", "dual", "boxbill"] : ["perm", "titlerow", "dual", "dual", "boxbill"]);
+    arche = pick(r, longP ? ["perm", "titlerow", "center", "dual", "boxbill", "inline", "bannermeta"] : ["perm", "titlerow", "dual", "boxbill", "inline", "bannermeta", "perm", "dual"]);
     bill.style.gridTemplateColumns = longP ? pick(r, ["1.4fr 1.1fr .5fr", "1fr 1fr", "1fr"]) : "1.4fr 1.1fr .5fr";
     if (arche === "perm" || arche === "boxbill") {
       const pm = pick(r, [["c", "l", "m"], ["l", "c", "m"], ["m", "l", "c"], ["c", "m", "l"], ["l", "m", "c"], ["m", "c", "l"]]), map = { c: comp, l: logoBox, m: meta };
       const h = D("display:flex;justify-content:space-between;align-items:flex-start;width:100%;margin-bottom:8px");
+      sigx = pm.join(""); logoBox.style.marginTop = "0";
       pm.forEach((k, i) => { const n = map[k]; n.style.width = k === "l" ? "30%" : "35%"; n.style.textAlign = k === "m" ? (i === 0 ? "left" : "right") : (k === "c" && i === 2 ? "right" : (k === "l" ? "center" : "left")); h.appendChild(n); });
       if (arche === "boxbill") Object.assign(bill.style, { background: P.soft, borderLeft: `3px solid ${P.p}`, padding: "6px 8px", boxSizing: "border-box", marginBottom: "10px" });
       inner.append(title, h, dash, bill, table, words, terms);
@@ -362,6 +438,22 @@ function genInvoice(def, seed) {
       meta.style.width = "100%"; meta.style.textAlign = flip ? "left" : "right"; bill.style.gridTemplateColumns = "1fr"; bill.style.marginBottom = "0";
       left.append(logoBox, comp); right.append(meta, bill);
       inner.append(title, D(`display:flex;gap:14px;width:100%;margin-bottom:8px;${flip ? "flex-direction:row-reverse;" : ""}`, left, right), dash, table, words, terms);
+    } else if (arche === "inline") {
+      const h = D("display:flex;align-items:center;gap:10px;width:100%;margin-bottom:6px;" + (flip ? "flex-direction:row-reverse;" : ""));
+      comp.style.width = "auto"; comp.style.flex = "1"; comp.style.textAlign = flip ? "right" : "left"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0";
+      h.append(logoBox, comp);
+      Object.assign(meta.style, { width: "100%", display: "flex", justifyContent: "space-between", textAlign: "left", marginBottom: "2px" });
+      inner.append(title, h, meta, dash, bill, table, words, terms);
+    } else if (arche === "bannermeta") {
+      skipTitle = true;
+      const bar = D("display:flex;justify-content:space-between;align-items:center;width:100%;gap:8px;margin-bottom:8px;padding:4px 8px;box-sizing:border-box;background:" + P.p + ";" + (flip ? "flex-direction:row-reverse;" : ""));
+      title.style.cssText = "margin:0;color:#fff;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:1px";
+      meta.style.width = "auto"; meta.style.color = "#fff"; meta.style.textAlign = flip ? "left" : "right"; meta.querySelectorAll("p,strong").forEach(x => { x.style.color = "#fff"; });
+      bar.append(title, meta);
+      const h = D("display:flex;align-items:center;gap:10px;width:100%;margin-bottom:6px;" + (flip ? "flex-direction:row-reverse;" : ""));
+      comp.style.width = "auto"; comp.style.flex = "1"; comp.style.textAlign = flip ? "right" : "left"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0";
+      h.append(logoBox, comp);
+      inner.append(bar, h, dash, bill, table, words, terms);
     } else if (arche === "titlerow") {
       const tr = D("display:flex;justify-content:space-between;align-items:center;width:100%;margin-bottom:10px;gap:8px");
       title.style.margin = "0"; title.style.textAlign = "left"; meta.style.width = "auto"; meta.style.textAlign = flip ? "left" : "right";
@@ -372,14 +464,14 @@ function genInvoice(def, seed) {
       inner.append(tr, h, dash, bill, table, words, terms); titleMB = "0";
     } else {
       logoBox.style.width = "100%"; logoBox.style.marginTop = "0"; logoBox.style.marginBottom = "4px";
-      bill.style.gridTemplateColumns = "1.4fr 1.1fr .5fr"; lg.style.maxWidth = "64px";
+      bill.style.gridTemplateColumns = "1.4fr 1.1fr .5fr";
       comp.style.width = "100%"; comp.style.textAlign = "center"; comp.style.marginBottom = "6px";
       Object.assign(meta.style, { width: "100%", display: "flex", justifyContent: "space-between", marginBottom: "4px", textAlign: "left" });
       inner.append(title, logoBox, comp, meta, dash, bill, table, words, terms);
     }
     card.style.padding = `25px ${pick(r, [18, 20, 22])}px`;
   } else {
-    arche = pick(r, ["split", "head", "side"]);
+    arche = pick(r, ["split", "head", "side", "banner", "banner"]);
     table.style.marginBottom = "10px"; words.style.marginBottom = "10px";
     if (arche === "split") {
       const wrap = D(`display:flex;gap:22px;width:100%;align-items:stretch;${flip ? "flex-direction:row-reverse;" : ""}`);
@@ -388,6 +480,17 @@ function genInvoice(def, seed) {
       meta.style.width = "100%"; meta.style.textAlign = "left"; bill.style.gridTemplateColumns = "1fr"; bill.style.marginBottom = "0"; dash.style.margin = "4px 0";
       left.append(title, D("display:flex;gap:10px;align-items:center", logoBox, comp), meta, dash, bill);
       right.append(table, words, terms); wrap.append(left, right); inner.append(wrap); titleMB = "0";
+    } else if (arche === "banner") {
+      skipTitle = true;
+      const bar = D("display:flex;justify-content:space-between;align-items:center;width:100%;gap:12px;margin-bottom:12px;padding:6px 12px;box-sizing:border-box;background:" + P.p + ";" + (flip ? "flex-direction:row-reverse;" : ""));
+      title.style.cssText = "margin:0;color:#fff;font-size:16px;font-weight:700;text-transform:uppercase;letter-spacing:2px";
+      meta.style.width = "auto"; meta.style.color = "#fff"; meta.style.textAlign = flip ? "left" : "right"; meta.querySelectorAll("p,strong").forEach(x => { x.style.color = "#fff"; });
+      bar.append(title, meta);
+      comp.style.width = "auto"; comp.style.flex = "1"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0";
+      bill.style.gridTemplateColumns = "1fr"; bill.style.marginBottom = "0"; dash.style.margin = "8px 0";
+      const left = D("width:34%;flex:none;display:flex;flex-direction:column;gap:10px", D("display:flex;gap:10px;align-items:center", logoBox, comp), dash, bill);
+      const right = D("flex:1;min-width:0;display:flex;flex-direction:column", table, words, terms);
+      inner.append(bar, D(`display:flex;gap:20px;width:100%;${flip ? "flex-direction:row-reverse;" : ""}`, left, right)); titleMB = "0";
     } else if (arche === "head") {
       comp.style.width = "auto"; comp.style.flex = "1"; logoBox.style.width = "auto"; logoBox.style.marginTop = "0"; meta.style.width = "auto";
       title.style.margin = "0"; title.style.flex = "none";
@@ -427,6 +530,16 @@ function genInvoice(def, seed) {
     else Object.assign(title.style, { border: `1.5px solid ${P.p}`, color: P.p, padding: "2px 8px", marginBottom: titleMB ?? "17px", borderRadius: pick(r, ["0px", "6px"]) });
   }
   const cn = q("#inv-centre-name"); if (cn) cn.style.color = P.p;
+  const bvv = Math.floor(r() * 4);
+  if (arche !== "boxbill" && arche !== "dual" && !noPad) {
+    if (bvv === 1) Object.assign(bill.style, { background: P.soft, padding: "4px 8px", borderRadius: pick(r, ["0px", "6px"]), boxSizing: "border-box" });
+    else if (bvv === 2) Object.assign(bill.style, { borderTop: `1px solid ${P.mid}`, borderBottom: `1px solid ${P.mid}`, padding: "4px 0" });
+    else if (bvv === 3) Object.assign(bill.style, { border: `1px dashed ${P.p}`, padding: "4px 8px", borderRadius: "4px", boxSizing: "border-box" });
+  }
+  const fvv = Math.floor(r() * 3);
+  if (fvv === 1) { words.style.textAlign = "center"; words.style.width = "100%"; }
+  else if (fvv === 2) Object.assign(terms.style, { border: `1px solid ${P.mid}`, padding: "3px 6px", borderRadius: "4px", boxSizing: "border-box" });
+  sigx += "|b" + bvv + "f" + fvv;
   $$(".billing-info strong").forEach(x => { x.style.color = P.p; });
   dash.style.borderTop = `${pick(r, [1, 1, 2])}px ${pick(r, ["solid", "dashed", "dotted"])} ${P.p}`;
   if (!land && arche !== "center") dash.style.margin = arche === "boxbill" ? "10px 0" : arche === "dual" ? "0 0 12px" : pick(r, ["18px 0", "14px 0", "16px 0"]);
@@ -451,16 +564,64 @@ function genInvoice(def, seed) {
     dash.style.margin = arche === "dual" ? "0 0 8px" : "6px 0";
     if (!(arche === "dual")) bill.style.marginBottom = "8px";
     table.style.marginBottom = "8px"; words.style.marginBottom = "10px";
-    lg.style.maxWidth = "60px"; lg.style.maxHeight = "50px";
+    lg.style.width = "56px"; lg.style.height = "46px";
     if (arche === "perm" || arche === "boxbill") [...inner.children].find(n => n.contains(logoBox)).style.marginBottom = "4px";
   }
   if (land) words.style.whiteSpace = "normal";
   const ws = [...words.querySelectorAll("strong")].find(x => /Payable In Word/.test(x.textContent)); if (ws) ws.style.color = P.p;
-  return { html: box.innerHTML, rows, size: { w: size.w, h: size.h, mm: size.mm, sc: size.sc }, css: layoutCss("invoice", size), v: 3, name: size.id + "-" + arche };
+  return { html: box.innerHTML, rows, size: { w: size.w, h: size.h, mm: size.mm, sc: size.sc }, css: layoutCss("invoice", size), v: 3, name: size.id + "-" + arche, sig: "i|" + size.id + "|" + arche + "|" + sigx + "|" + (flip ? 1 : 0) };
 }
 export const generate = (kind, def, seed) => kind === "slip" ? genSlip(def, seed) : genInvoice(def, seed);
 
+/* ---------- মান যাচাই: লোগো/লেখা একটার ওপর আরেকটা, কাটা লেখা — এমন টেমপ্লেট বাদ ---------- */
+function qualityOK(pv, kind, size) {
+  const rr = pv.getBoundingClientRect();
+  const inter = (a, b, t) => a.left < b.right - t && b.left < a.right - t && a.top < b.bottom - t && b.top < a.bottom - t;
+  const texts = [], w = document.createTreeWalker(pv, NodeFilter.SHOW_TEXT);
+  let n;
+  while ((n = w.nextNode())) {
+    if (!n.nodeValue.trim()) continue;
+    const par = n.parentElement; if (!par || par.closest("style,script")) continue;
+    const cs = getComputedStyle(par); if (cs.display === "none" || cs.visibility === "hidden") continue;
+    const rg = document.createRange(); rg.selectNodeContents(n);
+    const rs = [...rg.getClientRects()].filter(r => r.width > 1 && r.height > 1);
+    if (rs.length) texts.push({ par, rs });
+  }
+  const rgb = c => { const m = (c || "").match(/[\d.]+/g); return m && m.length >= 3 ? { r: +m[0], g: +m[1], b: +m[2], a: m[3] === undefined ? 1 : +m[3] } : null; };
+  const lum = c => { const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }; return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b); };
+  for (const t of texts) {
+    const fg = rgb(getComputedStyle(t.par).color); let bg = { r: 255, g: 255, b: 255 };
+    for (let e = t.par; e && e !== pv.parentElement; e = e.parentElement) { const c = rgb(getComputedStyle(e).backgroundColor); if (c && c.a > 0.5) { bg = c; break; } }
+    if (fg) { const L1 = lum(fg), L2 = lum(bg), cr = (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05); if (cr < 2.8) return false; }
+  }
+  for (const t of texts) for (const r of t.rs) {
+    if (r.right > rr.right + 0.5 || r.left < rr.left - 0.5) return false;
+    if (kind === "invoice" && r.bottom > rr.bottom + 0.5) return false;
+  }
+  for (let i = 0; i < texts.length; i++) for (let j = i + 1; j < texts.length; j++) {
+    if (texts[i].par === texts[j].par) continue;
+    for (const a of texts[i].rs) for (const b of texts[j].rs) if (inter(a, b, 2)) return false;
+  }
+  const logos = [...pv.querySelectorAll("img[data-rc-logo]")].filter(i => getComputedStyle(i).display !== "none");
+  for (const lg of logos) {
+    const L = lg.getBoundingClientRect();
+    if (L.left < rr.left - 0.5 || L.right > rr.right + 0.5 || L.top < rr.top - 0.5 || (kind === "invoice" && L.bottom > rr.bottom)) return false;
+    for (const t of texts) for (const r of t.rs) if (inter(L, r, 1.5)) return false;
+    for (const el of pv.querySelectorAll("table,td,th,[style*='background'],[style*='border']")) {
+      if (el === lg || el.contains(lg) || lg.contains(el)) continue;
+      const cs = getComputedStyle(el);
+      const draws = el.tagName === "TABLE" || /^T[DH]$/.test(el.tagName) || parseFloat(cs.borderTopWidth) > 0 || parseFloat(cs.borderLeftWidth) > 0 || /rgba?\((?!\d+, \d+, \d+, 0\))/.test(cs.backgroundColor);
+      if (!draws) continue;
+      const E = el.getBoundingClientRect(); if (E.width < 2 || E.height < 2) continue;
+      if (inter(L, E, 2)) return false;
+    }
+  }
+  if (kind === "slip" && size && size.o === "l" && rr.height > size.w * 0.62) return false;
+  return true;
+}
+
 /* ---------- editor ---------- */
+
 export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   document.getElementById("rceBack")?.remove();
   let defHtml;
@@ -858,21 +1019,36 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   const grid = tpl.querySelector("#tGrid");
   let seedBase = 1, made = 0;
 
-  const buildTile = seed => {
-    const g = generate(kind, defHtml, seed);
+  const renderInto = (root, g) => {
+    root.innerHTML = g.html;
+    root.querySelectorAll("img[onerror]").forEach(n => n.remove());
+    root.querySelectorAll("[data-rc-h]").forEach(n => { n.style.display = "none"; });
+    fillSample(root); fillLogos(root);
+    if (kind === "invoice") { const tb = root.querySelector("#inv-items"); if (tb) styleRows(tb, g.rows); }
+    root.style.padding = kind === "slip" && g.pad ? g.pad : "";
+    if (g.size) { root.style.width = g.size.w + "px"; if (kind === "invoice") root.style.height = g.size.h + "px"; else root.style.minHeight = g.size.minH ? g.size.minH + "px" : ""; }
+  };
+  const meas = document.createElement("div");
+  meas.className = "rce-pv"; meas.setAttribute("data-k", kind); meas.style.cssText = "visibility:hidden;pointer-events:none;transform:none;z-index:-1";
+  back.appendChild(meas);
+  const Q = (window.__rcQ = window.__rcQ || { tried: 0, rejected: 0, dup: 0 });
+  const recent = [];
+  const accept = g => {
+    Q.tried++;
+    if (g.sig && recent.includes(g.sig)) { Q.dup++; return false; }
+    renderInto(meas, g);
+    meas.querySelectorAll("img[data-rc-logo]").forEach(i => i.removeAttribute("data-rc-nologo"));
+    const ok = qualityOK(meas, kind, g.size);
+    meas.innerHTML = "";
+    if (!ok) { Q.rejected++; return false; }
+    if (g.sig) { recent.push(g.sig); if (recent.length > 40) recent.shift(); }
+    return true;
+  };
+  const buildTile = (g, seed) => {
     const tile = document.createElement("button"); tile.className = "rce-tile";
     tile.innerHTML = '<div class="rce-pvbox"><div class="rce-pv" data-k="' + kind + '"></div></div><div class="cap">Template ' + seed + (g.name ? " · " + g.name : "") + "</div>";
     const pv = tile.querySelector(".rce-pv"), pb = tile.querySelector(".rce-pvbox");
-    const fill = root => {
-      root.innerHTML = g.html;
-      root.querySelectorAll("img[onerror]").forEach(n => n.remove());
-      root.querySelectorAll("[data-rc-h]").forEach(n => { n.style.display = "none"; });
-      fillSample(root); fillLogos(root);
-      if (kind === "invoice") { const tb = root.querySelector("#inv-items"); if (tb) styleRows(tb, g.rows); }
-    };
-    fill(pv);
-    if (kind === "slip" && g.pad) pv.style.padding = g.pad;
-    if (g.size) { pv.style.width = g.size.w + "px"; if (kind === "invoice") pv.style.height = g.size.h + "px"; else if (g.size.minH) pv.style.minHeight = g.size.minH + "px"; }
+    renderInto(pv, g);
     addLogoImgs(pv, g.size);
     tile.onclick = () => applyTemplate(g);
     grid.appendChild(tile);
@@ -881,7 +1057,14 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
       pv.style.transform = "scale(" + sc + ")"; pb.style.height = pv.offsetHeight * sc + "px";
     });
   };
-  const moreTiles = n => { for (let i = 0; i < n; i++) buildTile(seedBase + made++); };
+  const moreTiles = n => {
+    let added = 0, tries = 0;
+    while (added < n && tries++ < n * 25) {
+      const seed = seedBase + made++, g = generate(kind, defHtml, seed);
+      if (!accept(g)) continue;
+      buildTile(g, seed); added++;
+    }
+  };
   /* স্ক্রল করলেই নতুন টেমপ্লেট আসতে থাকে — কোনো "Show more" বাটন লাগে না */
   const check = () => {
     if (tpl.hidden || !grid.clientHeight) return;
@@ -911,3 +1094,4 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
 
   hidCount(); refreshMargins();
 }
+export { qualityOK };
