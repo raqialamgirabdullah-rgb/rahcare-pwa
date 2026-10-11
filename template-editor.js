@@ -373,6 +373,7 @@ function genInvoice(def, seed) {
       inner.append(tr, h, dash, bill, table, words, terms); titleMB = "0";
     } else {
       logoBox.style.width = "100%"; logoBox.style.marginTop = "0"; logoBox.style.marginBottom = "4px";
+      bill.style.gridTemplateColumns = "1.4fr 1.1fr .5fr"; lg.style.maxWidth = "64px";
       comp.style.width = "100%"; comp.style.textAlign = "center"; comp.style.marginBottom = "6px";
       Object.assign(meta.style, { width: "100%", display: "flex", justifyContent: "space-between", marginBottom: "4px", textAlign: "left" });
       inner.append(title, logoBox, comp, meta, dash, bill, table, words, terms);
@@ -432,22 +433,33 @@ function genInvoice(def, seed) {
   if (!land && arche !== "center") dash.style.margin = arche === "boxbill" ? "10px 0" : arche === "dual" ? "0 0 12px" : pick(r, ["18px 0", "14px 0", "16px 0"]);
   const bc = pick(r, [P.mid, P.p, "#000"]), thv = Math.floor(r() * 3);
   $$(".invoice-table th").forEach(th => {
-    th.style.borderColor = bc;
+    th.style.borderColor = bc; if (!land && !longP) th.style.padding = "3px 2px";
     if (thv === 0) { th.style.background = P.p; th.style.color = "#fff"; }
     else if (thv === 1) { th.style.background = P.soft; th.style.color = P.p; }
     else { th.style.background = "transparent"; th.style.color = P.p; th.style.borderBottom = `2px solid ${P.p}`; }
   });
-  const rows = {}, B = `border-color:${bc};`, set = (k, i, st) => { rows[k + "|" + i] = { s: st, h: 0 }; };
+  const compact = !land && !longP, PB = compact ? "padding-top:3px;padding-bottom:3px;" : "";
+  const rows = {}, B = `border-color:${bc};` + PB, set = (k, i, st) => { rows[k + "|" + i] = { s: st, h: 0 }; };
   for (let i = 0; i < 7; i++) set("item", i, B);
   ["Sub Total", "Online Service Charge", "Total Amount", "Discount"].forEach(k => { set(k, 0, B); set(k, 1, B); });
   const hv = r() < 0.35 ? `background:${P.p};color:#fff;font-weight:700;` : `background:${P.soft};color:${P.p};font-weight:700;`;
   set("Payable Amount", 0, B + hv); set("Payable Amount", 1, B + hv);
   set("Paid Amount", 0, "vertical-align:middle;padding-right:10px;" + B); set("Paid Amount", 1, "padding:0;vertical-align:middle;" + B); set("Paid Amount", 2, "vertical-align:middle;" + B);
   set("Due Amount", 0, "color:red;" + B); set("Due Amount", 1, "color:red;" + B);
+  if (compact) {
+    card.style.paddingTop = "18px"; card.style.paddingBottom = "14px";
+    if (!skipTitle && !titleMB) title.style.marginBottom = "9px";
+    dash.style.margin = arche === "dual" ? "0 0 8px" : "6px 0";
+    if (!(arche === "dual")) bill.style.marginBottom = "8px";
+    table.style.marginBottom = "8px"; words.style.marginBottom = "10px";
+    lg.style.maxWidth = "60px"; lg.style.maxHeight = "50px";
+    if (arche === "perm" || arche === "boxbill") [...inner.children].find(n => n.contains(logoBox)).style.marginBottom = "4px";
+  }
+  if (land) words.style.whiteSpace = "normal";
   const ws = [...words.querySelectorAll("strong")].find(x => /Payable In Word/.test(x.textContent)); if (ws) ws.style.color = P.p;
   return { html: box.innerHTML, rows, size: { w: size.w, h: size.h, mm: size.mm, sc: size.sc }, css: layoutCss("invoice", size), v: 3, name: size.id + "-" + arche };
 }
-const generate = (kind, def, seed) => kind === "slip" ? genSlip(def, seed) : genInvoice(def, seed);
+export const generate = (kind, def, seed) => kind === "slip" ? genSlip(def, seed) : genInvoice(def, seed);
 
 /* ---------- editor ---------- */
 export async function openTemplateEditor(kind, { data = {}, save } = {}) {
