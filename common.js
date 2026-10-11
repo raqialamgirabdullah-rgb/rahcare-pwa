@@ -1047,17 +1047,17 @@ v("instCus").onclick=()=>{v("instName").value=uData?.centreName||DEF_NAME;instBo
 let dt=0;v("instName").oninput=()=>{clearTimeout(dt);busy(!0);dt=setTimeout(()=>setManifest(v("instName").value.trim(),logo())?busy(!0):busy(!1),600)};
 v("instGo").onclick=()=>install(v("instName").value.trim()||DEF_NAME,logo());
 v("instCancel").onclick=()=>instBox.style.display="none";
-/* ইন্সটল থাকলে বাটনে স্বয়ংক্রিয়ভাবে "Uninstall" দেখায় (ব্রাউজার ওয়েবসাইট থেকে আনইন্সটল করতে দেয় না, তাই চাপলে ধাপ দেখায়) */
-const LSK="rcInstalled",UNI_MSG="🗑️ আনইন্সটল: ফোনের হোম স্ক্রিন/অ্যাপ লিস্টে অ্যাপের আইকন চেপে ধরে 'Uninstall' বা 'Remove' চাপুন",
+/* ইন্সটল থাকলে দুই Install বাটনই ধূসর (নিষ্ক্রিয়) দেখায়; লেখা "Install"-ই থাকে */
+const LSK="rcInstalled",
 lsg=()=>{try{return localStorage.getItem(LSK)}catch{}},
 lss=x=>{try{x?localStorage.setItem(LSK,"1"):localStorage.removeItem(LSK)}catch{}};
 let installed=lsg()==="1"||matchMedia("(display-mode:standalone)").matches;
 if(window.__bip)installed=false;
-const paintInst=()=>{["instDef","instCus"].forEach(i=>v(i).textContent=installed?"Uninstall":"Install");installed&&(instBox.style.display="none")},
+const paintInst=()=>{["instDef","instCus"].forEach(i=>{const b=v(i);b.textContent="Install";b.style.opacity=installed?".4":"";b.style.filter=installed?"grayscale(1)":"";b.style.cursor=installed?"not-allowed":"";b.setAttribute("aria-disabled",installed?"true":"false")});installed&&(instBox.style.display="none")},
 setInst=x=>{installed=x;lss(x);paintInst()};
 {const od=v("instDef").onclick,oc=v("instCus").onclick;
-v("instDef").onclick=()=>installed?msg(UNI_MSG):od();
-v("instCus").onclick=()=>installed?msg(UNI_MSG):oc()}
+v("instDef").onclick=()=>installed?0:od();
+v("instCus").onclick=()=>installed?0:oc()}
 addEventListener("appinstalled",()=>setInst(!0));
 addEventListener("bip",()=>setInst(!1));
 try{navigator.getInstalledRelatedApps&&navigator.getInstalledRelatedApps().then(a=>a&&a.length&&setInst(!0)).catch(()=>{})}catch{}
