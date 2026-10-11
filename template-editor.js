@@ -133,7 +133,6 @@ const CSS = `
 .rce-tile:active{background:#e3f1e8}
 .rce-pvbox{position:relative;overflow:hidden;width:100%;background:#fff;border-radius:4px;pointer-events:none}
 .rce-tile .cap{margin-top:5px}
-#tMoreW{padding:8px 10px 14px;text-align:center}
 [data-rc-nologo]{display:none!important}
 .rce-sel{outline:2px solid #2563eb!important;outline-offset:1px}
 .rce-hid{opacity:.3;outline:1px dashed #64748b}
@@ -854,7 +853,7 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   const tpl = document.createElement("div");
   tpl.id = "rceTpl"; tpl.hidden = true;
   tpl.innerHTML = '<div class="bar"><b>Templates</b><button class="rce-b" id="tShuf">🔀 New set</button><button class="rce-b" id="tClose">Close</button></div>' +
-    '<div id="tGrid"></div><div id="tMoreW"><button class="rce-b p" id="tMore">Show more</button></div>';
+    '<div id="tGrid"></div>';
   back.appendChild(tpl);
   const grid = tpl.querySelector("#tGrid");
   let seedBase = 1, made = 0;
@@ -883,6 +882,12 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
     });
   };
   const moreTiles = n => { for (let i = 0; i < n; i++) buildTile(seedBase + made++); };
+  /* স্ক্রল করলেই নতুন টেমপ্লেট আসতে থাকে — কোনো "Show more" বাটন লাগে না */
+  const check = () => {
+    if (tpl.hidden || !grid.clientHeight) return;
+    if (grid.scrollHeight - grid.scrollTop - grid.clientHeight < 700) { moreTiles(8); setTimeout(check, 150); }
+  };
+  grid.addEventListener("scroll", check, { passive: true });
 
   function applyTemplate(g) {
     push(); select(null);
@@ -899,10 +904,10 @@ export async function openTemplateEditor(kind, { data = {}, save } = {}) {
   $("rceTplBtn").onclick = () => {
     tpl.hidden = false;
     if (!made) moreTiles(8);
+    setTimeout(check, 200);
   };
   tpl.querySelector("#tClose").onclick = () => { tpl.hidden = true; };
-  tpl.querySelector("#tMore").onclick = () => moreTiles(8);
-  tpl.querySelector("#tShuf").onclick = () => { grid.innerHTML = ""; seedBase = 1 + Math.floor(Math.random() * 900000); made = 0; moreTiles(8); grid.scrollTop = 0; };
+  tpl.querySelector("#tShuf").onclick = () => { grid.innerHTML = ""; seedBase = 1 + Math.floor(Math.random() * 900000); made = 0; moreTiles(8); grid.scrollTop = 0; setTimeout(check, 200); };
 
   hidCount(); refreshMargins();
 }
