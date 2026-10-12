@@ -13,49 +13,49 @@
       "slug": "appointment",
       "page": "appointment",
       "id": "3957826609357521991",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "billing",
       "page": "billing",
       "id": "2689642397304526191",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "accounts",
       "page": "accounts",
       "id": "3575714392946044512",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "admin",
       "page": "admin",
       "id": "1485995135065633893",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "admin-panel",
       "page": "admin-panel",
       "id": "3580544106021081123",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "profile",
       "page": "profile",
       "id": "8792187750548315247",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "login",
       "page": "login",
       "id": "4546206767067260976",
-      "enabled": false
+      "enabled": true
     },
     {
       "slug": "worker-portal",
       "page": "worker-portal",
       "id": "1477019553701112327",
-      "enabled": false
+      "enabled": true
     }
   ]
 }
