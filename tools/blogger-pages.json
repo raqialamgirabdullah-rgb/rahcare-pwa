@@ -56,6 +56,24 @@
       "page": "worker-portal",
       "id": "1477019553701112327",
       "enabled": true
+    },
+    {
+      "slug": "sign-up",
+      "page": "signup",
+      "id": "6975179079981062436",
+      "enabled": true
+    },
+    {
+      "slug": "worker",
+      "page": "worker-management",
+      "id": "3578722922833109760",
+      "enabled": true
+    },
+    {
+      "slug": "symptom-diagnosis",
+      "page": "symptom",
+      "id": "5104552236406426510",
+      "enabled": true
     }
   ]
 }
