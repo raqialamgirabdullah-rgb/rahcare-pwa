@@ -147,14 +147,24 @@ function emit(nodes, opts) {
       const isRoot = /^\s*(:root|html)\s*$/.test(n.selector);
       if (opts.skipRoot && isRoot) continue;
       const decls = [];
+      let textClip = false;
+      n.each(d => { if (d.type === 'decl' && /^(-webkit-)?background-clip$/i.test(d.prop) && /text/i.test(d.value)) textClip = true; });
       n.each(d => {
         if (d.type !== 'decl') return;
-        const cls = classify(d.prop, isRoot);
+        let cls = classify(d.prop, isRoot);
         if (!cls) return;
+        if (cls === 'bg' && textClip) cls = 'fg';   // gradient TEXT: light colours, not dark surfaces
         const nv = mapValue(d.value, MAPPERS[cls]);
         if (nv !== d.value) decls.push(d.prop + ':' + nv + (d.important ? '!important' : ''));
       });
       if (!decls.length) continue;
+      // `background:` shorthand resets background-clip: re-state clip / text-fill so gradient text stays visible
+      if (decls.some(x => /^background(-image)?:/.test(x))) {
+        n.each(d => {
+          if (d.type === 'decl' && /^(-webkit-)?background-clip$|^-webkit-text-fill-color$/i.test(d.prop) && !decls.some(x => x.startsWith(d.prop + ':')))
+            decls.push(d.prop + ':' + d.value + (d.important ? '!important' : ''));
+        });
+      }
       const sels = n.selectors.map(prefixSel).filter(Boolean);
       if (sels.length) out += sels.join(',') + '{' + decls.join(';') + '}\n';
     } else if (n.type === 'atrule') {

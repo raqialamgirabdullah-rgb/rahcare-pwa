@@ -72,7 +72,7 @@ html.rc-dark #pwGate .box{background:#111d17}
 html.rc-dark .toggle-slider{background:#090e0b}
 html.rc-dark .toggle-slider:before{background:#111d17}
 html.rc-dark .rc-card,html.rc-dark .category-section,html.rc-dark .top-nav-bar{background:#111d17}
-html.rc-dark .rc-fcard .header-form h1{background:linear-gradient(135deg,#19945c,#1b925a 55%,#1f8e64)}
+html.rc-dark .rc-fcard .header-form h1{background:linear-gradient(135deg,#caefde,#c0ebd6 55%,#aee2ce);-webkit-background-clip:text;background-clip:text}
 html.rc-dark .rc-fcard .header-form p{color:#ddcd9f}
 html.rc-dark .rc-fcard #pnb{border-top:1px solid #242826;border-bottom:1px solid #242826}
 html.rc-dark .rc-fcard #pnb .pib:active{background:#0f1914}
@@ -93,7 +93,7 @@ html.rc-dark #rc-bnav .rc-bn-i:active .rc-bn-p{background:#0e1813}
 html.rc-dark #rc-burger{background:#111d17}
 html.rc-dark #rc-side-scrim{background:rgba(35,139,97,0.38)}
 html.rc-dark #rc-side{background:#111d17}
-html.rc-dark #rc-side .rc-sd-t{background:linear-gradient(135deg,#19945c,#1b925a 55%,#1f8e64)}
+html.rc-dark #rc-side .rc-sd-t{background:linear-gradient(135deg,#caefde,#c0ebd6 55%,#aee2ce);-webkit-background-clip:text;background-clip:text}
 html.rc-dark #rc-side .rc-sd-x{background:#0f1914;color:#becac4}
 html.rc-dark #rc-side .rc-sd-i{color:#cbd5d0}
 html.rc-dark #rc-side .rc-sd-i:active{background:#0f1914}
@@ -102,7 +102,7 @@ html.rc-dark #rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-p:after{background:#111d1
 html.rc-dark .rc-np-b{background:#111d17}
 html.rc-dark .rc-np-b button{color:#d6deda}
 html.rc-dark .rc-np-b button.on{background:#0d1511}
-html.rc-dark body .Header h1 a,html.rc-dark body .Header h1:not(:has(a)){background:linear-gradient(135deg,#19945c 0%,#1b925a 48%,#b8923a 100%)}
+html.rc-dark body .Header h1 a,html.rc-dark body .Header h1:not(:has(a)){background:linear-gradient(135deg,#caefde 0%,#c0ebd6 48%,#cfbd92 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 html.rc-dark .rc-combo .rc-dd-btn::after{color:#a2b3aa}
 html.rc-dark .rc-combo .rc-dd-btn.rc-dd-input input{color:#d8dfdc}
 html.rc-dark .rc-combo .rc-dd-btn.rc-dd-input input::placeholder{color:#9caea5}
@@ -155,7 +155,7 @@ html.rc-dark .patient-id{color:#b2cdea}
 html.rc-dark .branch-name,html.rc-dark .center-info h3,html.rc-dark .center-info p,html.rc-dark .info-table td,html.rc-dark .slip-date,html.rc-dark .slip-header h2{color:#ebefed}
 /* pages/billing.html#1 */
 html.rc-dark .billing-card.rc-fcard .rc-form-header{background:linear-gradient(180deg,#101a15 0%,#111d17 100%)}
-html.rc-dark .billing-card.rc-fcard .rc-form-header h1{background:linear-gradient(135deg,#19945c,#1b925a 55%,#b8923a)}
+html.rc-dark .billing-card.rc-fcard .rc-form-header h1{background:linear-gradient(135deg,#caefde,#c0ebd6 55%,#cfbd92);-webkit-background-clip:text;background-clip:text}
 html.rc-dark .billing-card.rc-fcard #pnb{background:linear-gradient(135deg,#101a15,#0e1813);border:1px solid rgba(27,146,90,0.1)}
 html.rc-dark .billing-card.rc-fcard #pnb .pib{background:#111d17}
 html.rc-dark .billing-card.rc-fcard #pnb .pib:active{background:#0f1914}
@@ -174,7 +174,7 @@ html.rc-dark .ct{border-bottom:1px dashed #203028}
 html.rc-dark .al{color:#c6d0cb}
 html.rc-dark td,html.rc-dark th{border-bottom:1px solid #242826}
 html.rc-dark .dh{background:linear-gradient(180deg,#111d17 0%,#101a15 100%);border:1px solid rgba(27,146,90,0.08)}
-html.rc-dark .dh #ti{background:linear-gradient(135deg,#19945c 0%,#1b925a 50%,#b8923a 100%)}
+html.rc-dark .dh #ti{background:linear-gradient(135deg,#caefde 0%,#c0ebd6 50%,#cfbd92 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 html.rc-dark .dh .fs{background:var(--primary-light,#0e1713);border:1px solid rgba(27,146,90,0.1);color:var(--primary,#c0ebd6)}
 html.rc-dark .dh #mo{color:#d8c79d}
 html.rc-dark .dh .rc-filter-text{color:var(--primary,#c0ebd6)}
