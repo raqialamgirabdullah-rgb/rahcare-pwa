@@ -523,21 +523,6 @@ export function mountEditModeToggles(containerId) {
 }
 /* ===== EDIT MODE শেষ ===== */
 
-/* Report পেজে (#myReportWrap আছে) Edit Mode টগল নিজে থেকে বসবে */
-(function autoMountEditToggles() {
-  const go = () => {
-    const wrap = document.getElementById("myReportWrap");
-    if (!wrap || document.getElementById("editModeBox")) return;
-    const card = document.createElement("div");
-    card.className = "wrap";
-    card.innerHTML = '<div class="sec" style="margin-bottom:0"><div class="sec-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0"><span>✎ Edit Mode</span><span id="editModeBox"></span></div></div>';
-    const second = wrap.querySelectorAll(":scope > .wrap")[1];
-    second ? wrap.insertBefore(card, second) : wrap.appendChild(card);
-    mountEditModeToggles("editModeBox");
-  };
-  document.readyState === "loading" ? document.addEventListener("DOMContentLoaded", go) : go();
-})();
-
 /* টাইটেলের বাম পাশে পেজের আইকন; ✎ সুইচ আর ক্লিক-টগল বন্ধ (টগল এখন Report পেজে) */
 (function pageIcons() {
   const go = () => {
