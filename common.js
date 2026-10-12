@@ -427,6 +427,21 @@ export function createLabels(data, save) {
       obs = new MutationObserver(relabel);
       obs.observe(document.body, { childList: true, subtree: true, characterData: true });
     }
+    /* পরের বার পেজ খোলার সময় ডিফল্ট লেখা না দেখিয়ে সঙ্গে সঙ্গে এই লেখাগুলো বসানোর জন্য (sync-blogger.js-এর early স্ক্রিপ্ট পড়ে) */
+    if (root === document && Object.keys(data).length) {
+      try {
+        const m = { l: {}, p: {} };
+        document.querySelectorAll("[data-l]").forEach(e => { m.l[e.dataset.l] = L(e.dataset.l); });
+        document.querySelectorAll("[data-lp]").forEach(e => { m.p[e.dataset.lp] = L(e.dataset.lp).replace(/^\s*🔍\s*/u, ""); });
+        const st = iconState();
+        if (st.pg) { const t = st.none ? "" : (st.custom || PAGE_ICONS[st.pg] || ""); m.i = [t, (st.hide || !t) ? 1 : 0]; }
+        const ls = document.getElementById("rc-lstyle");
+        m.s = ls ? ls.textContent : "";
+        const ti = document.getElementById("ti");
+        if (ti && preset.dashboardTitle) m.t = ti.textContent;
+        localStorage.setItem("rcLT:" + location.pathname, JSON.stringify(m));
+      } catch (e) {}
+    }
     if (on) pencils();
   };
   /* পেজের কোডে হার্ডকোড করা ডিফল্ট লেখা (কলামের "Patient", টাইটেলের "Dashboard") ম্যানেজমেন্ট টাইপ অনুযায়ী বদলায় */

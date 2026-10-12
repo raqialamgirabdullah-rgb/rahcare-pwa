@@ -6,13 +6,15 @@ const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, "blogger-pages.json"
 const dry = process.argv.includes("--dry");
 const esc = s => JSON.stringify(s).replace(/</g, "\\u003c").replace(/>/g, "\\u003e").replace(/&/g, "\\u0026").replace(/\u2028/g, "\\u2028").replace(/\u2029/g, "\\u2029");
 
+const EARLY = '<script>!function(){try{var c=JSON.parse(localStorage.getItem("rcLT:"+location.pathname)||"null");if(!c)return;var r=document.getElementById("rc-app")||document,q=function(s){return[].slice.call(r.querySelectorAll(s))};q("[data-l]").forEach(function(e){var v=c.l&&c.l[e.getAttribute("data-l")];"string"==typeof v&&(e.textContent=v)});q("[data-lp]").forEach(function(e){var v=c.p&&c.p[e.getAttribute("data-lp")];"string"==typeof v&&(e.placeholder=v)});c.i&&q(".lb-sw").forEach(function(e){e.textContent=c.i[0];e.style.display=c.i[1]?"none":""});if(c.s){var s=document.createElement("style");s.id="rc-lstyle";s.textContent=c.s;document.head.appendChild(s)}var t=document.getElementById("ti");t&&c.t&&(t.textContent=c.t)}catch(e){}}()</script>';
+
 function build(p) {
   const html = fs.readFileSync(path.join(root, "pages", p.page + ".html"), "utf8");
   // Split into static markup (painted together with Blogger's own header) and scripts (run in original order).
   const scripts = [];
   const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => { scripts.push(m); return ""; });
   return `<script>window.__RC_HTML=window.__RC_HTML||{};window.__RC_HTML[${esc(p.page)}]=${esc(html)};</script>\n` +
-    `<div id="rc-app" data-static="1">${markup}</div>\n` + scripts.join("\n") + "\n" +
+    `<div id="rc-app" data-static="1">${markup}</div>\n` + EARLY + "\n" + scripts.join("\n") + "\n" +
     `<script src="${cfg.base}loader.js?v=${cfg.loaderVer || 1}" data-page="${p.page}"></script>`;
 }
 
