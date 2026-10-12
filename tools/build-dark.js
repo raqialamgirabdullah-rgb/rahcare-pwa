@@ -71,7 +71,7 @@ function mapBg(c) {
   let nh = h, ns = s, nl = l;
   if (l >= 0.8) {                       // white / light tints -> deep surfaces (white == --card-bg)
     nl = 0.045 + (l - 0.8) * 0.225;
-    if (s < 0.5) { nh = GREEN; ns = 0.25; } else ns = Math.min(s, 0.3);   // greys/slates -> brand-tinted neutrals
+    if (s < 0.5) { nh = GREEN; ns = 0.18; } else ns = Math.min(s, 0.3);   // greys/slates -> brand-tinted neutrals
   } else if (l >= 0.55) {               // pastels (badges, highlights) -> deep tints
     nl = 0.2 - (l - 0.55) * 0.56;
     if (s < 0.3) { nh = GREEN; ns = 0.2; } else ns = Math.min(s, 0.55) * 0.85;
@@ -85,7 +85,8 @@ function mapFg(c) {
   const { h, s, l } = toHsl(c);
   if (l >= 0.8) return c;               // white text stays white
   let nl = l < 0.5 ? 0.93 - l * 0.5 : 0.68 - (l - 0.5) * 0.2;
-  if (s < 0.3) return fromHsl(GREEN, 0.1, nl, c.a);   // neutral text -> soft green-white
+  if (s < 0.3) return fromHsl(GREEN, 0.08, nl, c.a);   // neutral text -> crisp soft green-white
+  if (h >= 28 && h <= 62 && s >= 0.3) return fromHsl(GREEN, 0.3, Math.max(nl, 0.78), c.a);  // gold/khaki text -> clean mint (no muddy gold)
   return fromHsl(h, Math.min(s * 0.75, 0.75), nl, c.a);
 }
 function mapBd(c) {
@@ -136,6 +137,7 @@ function prefixSel(sel) {
   return 'html.rc-dark ' + sel;
 }
 
+const HEAD_GRAD = 'linear-gradient(135deg,#f3fff8 0%,#c6f3dc 45%,#7fdcaa 100%)';
 const DOC_ZONES = /#(invT|invWM|slipTemplate|slipWM|sPImg|pImg)\b|\.invoice-table|\.trans-container|\.dashed-line/;
 
 /* ---------- walk css ---------- */
@@ -154,7 +156,7 @@ function emit(nodes, opts) {
         let cls = classify(d.prop, isRoot);
         if (!cls) return;
         if (cls === 'bg' && textClip) cls = 'fg';   // gradient TEXT: light colours, not dark surfaces
-        const nv = mapValue(d.value, MAPPERS[cls]);
+        const nv = (textClip && /^background(-image)?$/i.test(d.prop)) ? HEAD_GRAD : mapValue(d.value, MAPPERS[cls]);
         if (nv !== d.value) decls.push(d.prop + ':' + nv + (d.important ? '!important' : ''));
       });
       if (!decls.length) continue;
@@ -191,14 +193,14 @@ for (const f of fs.readdirSync(path.join(ROOT, 'pages')).filter(x => x.endsWith(
 
 /* ---------- hand-tuned palette (premium dark: deep green-tinted neutrals + gold accent) ---------- */
 const PALETTE = `
-html.rc-dark{color-scheme:dark;background:#0a120e;
---primary:#268a5e;--primary-dark:#1c6f4a;--primary-light:#15291f;--accent:#d4b35a;--accent-light:#2b2614;
+html.rc-dark{color-scheme:dark;background:#0a0f0d;
+--primary:#268a5e;--primary-dark:#1c6f4a;--primary-light:#15291f;--accent:#7fdcaa;--accent-light:#14261c;
 --danger:#f26b6b;--danger-light:#3b1b1d;--info:#38b6f0;--info-light:#0f2b3a;--success:#3fcf7a;--warning:#f2b134;--warning-light:#33280e;
---bg:#0a120e;--card-bg:#111c16;--border:#25392e;--border-light:#1d2e25;
---text-main:#e6efe9;--text-sub:#b3c6ba;--text-muted:#8399 8c;
+--bg:#0a0f0d;--card-bg:#131b17;--border:#243029;--border-light:#1c2722;
+--text-main:#eef3f0;--text-sub:#bccbc3;--text-muted:#8a9c93;
 --shadow-card:0 0 0 1px rgba(138,212,172,.08),0 4px 14px rgba(0,0,0,.45);--shadow-pop:0 0 0 1px rgba(138,212,172,.1),0 12px 32px rgba(0,0,0,.65);
---primary-color:#8ad4ac;--text-color:#e6efe9;--bg-color:#0a120e;--line:#25392e;--bg-soft:#162720;--muted-2:#7f9488;--line-soft:#2d4538;
---text-slate:#c5d3ca;--text-dark:#e6efe9;--text-mid:#a9bdb1;--green-dark:#5fe39b}
+--primary-color:#8fe0b4;--text-color:#eef3f0;--bg-color:#0a0f0d;--line:#243029;--bg-soft:#17201c;--muted-2:#82958b;--line-soft:#2b3a32;
+--text-slate:#cad6cf;--text-dark:#eef3f0;--text-mid:#aebdb5;--green-dark:#5fe39b}
 `.replace('#8399 8c', '#83998c');
 
 const EXTRAS = `
@@ -207,10 +209,10 @@ html.rc-dark .body-fauxcolumn-outer,html.rc-dark .body-fauxcolumns,html.rc-dark 
 html.rc-dark #invT,html.rc-dark #slipTemplate{color:#111827;color-scheme:light}
 html.rc-dark ::selection{background:rgba(43,148,104,.4)}
 html.rc-dark ::placeholder{color:#6f867a;opacity:1}
-html.rc-dark input,html.rc-dark select,html.rc-dark textarea{background-color:#0e1812;color:var(--text-main);border-color:#2a4034}
-html.rc-dark option{background:#111c16;color:#e6efe9}
+html.rc-dark input,html.rc-dark select,html.rc-dark textarea{background-color:#0e1511;color:var(--text-main);border-color:#2a3830}
+html.rc-dark option{background:#131b17;color:#e6efe9}
 html.rc-dark img{filter:brightness(.9)}
-html.rc-dark #rc-side .rc-sd-f{border-top-color:#1d2e25;color:#d4e3da}
+html.rc-dark #rc-side .rc-sd-f{border-top-color:#1c2722;color:#d4e3da}
 html.rc-dark .rc-sd-sl{background:#33493d}
 html.rc-dark .rc-sd-sw input:checked+.rc-sd-sl{background:#268a5e}
 html.rc-dark #rc-side-scrim{background:rgba(0,0,0,.6)}
