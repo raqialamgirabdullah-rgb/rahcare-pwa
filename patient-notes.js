@@ -95,7 +95,7 @@ export function mountNotePage(kind) {
         try {
           const isAdminP = (await GD(DO(db, "admins", user.uid))).exists();
           if (isAdminP) {
-            const { mountPrescriptionPlan } = await import("./prescription-plan.js?v=3");
+            const { mountPrescriptionPlan } = await import("./prescription-plan.js?v=4");
             const pbox = el("div", "margin:10px 0");
             card.appendChild(pbox);
             mountPrescriptionPlan(pbox, {
