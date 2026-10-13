@@ -4,6 +4,7 @@
 
 import { symptomSummary } from "./symptom-checklist.js?v=3";
 import { responseSummary } from "./response-checklist.js?v=3";
+import { extraSteps } from "./prescription-extras.js?v=1";
 
 const toBn = x => String(x).replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
@@ -372,6 +373,7 @@ function buildSteps(ctx, A) {
         "হুমকি বাস্তব হলে কল রেকর্ড/স্ক্রিনশট রেখে আইনের সাহায্য নিন"] }
     ],
     pairs: [], result: "" });
+  S.push(...extraSteps(ctx, A));
   return S;
 }
 
@@ -419,7 +421,7 @@ export function mountPrescriptionPlan(box, opt) {
   const st = {
     name: opt.patientName || "", dx: sv.dx || "", kinds: Array.isArray(sv.kinds) ? sv.kinds.slice() : [],
     type: sv.type || A.auto || "", caution: Array.isArray(sv.caution) ? sv.caution.slice() : [],
-    far: !!sv.far, jabaliForce: !!sv.jabaliForce, tantrik: !!sv.tantrik, dig: Array.isArray(sv.dig) && sv.dig.length === 3 ? sv.dig.map(Boolean) : [false, false, false]
+    far: !!sv.far, jabaliForce: !!sv.jabaliForce, tantrik: !!sv.tantrik, bondForce: !!sv.bondForce, birdForce: !!sv.birdForce, tafriqForce: !!sv.tafriqForce, dig: Array.isArray(sv.dig) && sv.dig.length === 3 ? sv.dig.map(Boolean) : [false, false, false]
   };
   const el = (tag, css, txt) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
   box.innerHTML = "";
@@ -467,6 +469,9 @@ export function mountPrescriptionPlan(box, opt) {
   ex.appendChild(chk("রোগী দূরে/প্রবাসে (দূর থেকে যাদু কাটার নিয়ম নোটে যাবে)", st.far, on => { st.far = on; render(); }));
   ex.appendChild(chk("পাহাড়ি ১১ দিনের রুটিন জোর করে যোগ করুন" + (A.jabali ? " (শর্ত পূর্ণ - আপনা-আপনি আছে)" : ""), st.jabaliForce, on => { st.jabaliForce = on; render(); }));
   ex.appendChild(chk("তান্ত্রিক/যাদুকরকে ভয় দেখানোর আমল যোগ করুন", st.tantrik, on => { st.tantrik = on; render(); }));
+  ex.appendChild(chk("বন্দিশ ছুটানোর আমল জোর করে যোগ করুন (বন্দি-আলামত টিক থাকলে আপনা-আপনি আসে)", st.bondForce, on => { st.bondForce = on; render(); }));
+  ex.appendChild(chk("পাখির ডানা/গলায় যাদুর আমল জোর করে যোগ করুন (পাখি চালান টিক থাকলে আপনা-আপনি)", st.birdForce, on => { st.birdForce = on; render(); }));
+  ex.appendChild(chk("বিচ্ছেদের (তাফরিক) যাদুর আমল জোর করে যোগ করুন (তাফরিক বা 'তালাকের মুখে সংসার' টিক থাকলে আপনা-আপনি)", st.tafriqForce, on => { st.tafriqForce = on; render(); }));
   set.appendChild(ex);
   if (A.outOn.some(Boolean)) {
     const dw = el("div", "margin-top:8px;padding-top:8px;border-top:1px dashed #cbd5e1");
@@ -564,7 +569,7 @@ export function mountPrescriptionPlan(box, opt) {
   };
   save.onclick = async () => {
     save.disabled = true; msg.style.color = "#64748b"; msg.textContent = "Saving...";
-    try { await opt.onSavePlan({ dx: st.dx, kinds: st.kinds, type: st.type, caution: st.caution, far: st.far, jabaliForce: st.jabaliForce, tantrik: st.tantrik, dig: st.dig }); msg.style.color = "#16a34a"; msg.textContent = "✅ Saved"; }
+    try { await opt.onSavePlan({ dx: st.dx, kinds: st.kinds, type: st.type, caution: st.caution, far: st.far, jabaliForce: st.jabaliForce, tantrik: st.tantrik, bondForce: st.bondForce, birdForce: st.birdForce, tafriqForce: st.tafriqForce, dig: st.dig }); msg.style.color = "#16a34a"; msg.textContent = "✅ Saved"; }
     catch (e) { console.error(e); msg.style.color = "#dc2626"; msg.textContent = "Save failed"; }
     save.disabled = false;
   };
