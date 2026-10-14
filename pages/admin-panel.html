@@ -12,7 +12,7 @@ const v=i=>document.getElementById(i);
 const T=mountAdminTools(),{initImg,updU,UNF}=T;
 
 {const ra=v("row-appointment"),h=v("hdRow");ra&&h&&ra.after(h)}
-v("hdSave").onclick=async()=>{const t=v("hdTitle").value.trim(),b=v("hdSave"),m=v("hdMsg");if(!T.uDoc)return alert(UNF);b.disabled=!0;m.textContent="";try{await updU({siteHeading:t});if(t){const h=document.getElementById("site-heading-h1");if(h){const l=h.querySelector("a");l?l.textContent=t:h.textContent=t}m.textContent="✔ Saved"}else m.textContent="✔ Saved (default heading will show after refresh)"}catch(e){alert("Error: "+e.message)}b.disabled=!1};
+v("hdSave").onclick=async()=>{const t=v("hdTitle").value.trim(),b=v("hdSave"),m=v("hdMsg");if(!T.uDoc)return alert(UNF);b.disabled=!0;m.textContent="";try{await updU({siteHeading:t});try{localStorage.setItem("rcSH",t)}catch(e){}if(t){const h=document.getElementById("site-heading-h1");if(h){const l=h.querySelector("a");l?l.textContent=t:h.textContent=t}m.textContent="✔ Saved"}else m.textContent="✔ Saved (default heading will show after refresh)"}catch(e){alert("Error: "+e.message)}b.disabled=!1};
 requireAuth(async u=>{v("authOverlay").style.display="none";
 v("myReportWrap").style.display="block";initImg(u.uid).then(()=>{v("hdTitle").value=T.uData?.siteHeading||"";
 const bx=v("imgBox"),hr=v("hdRow"),last=hr&&hr.parentNode===bx?hr:v("row-appointment");
