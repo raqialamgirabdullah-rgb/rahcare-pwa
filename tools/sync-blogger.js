@@ -1,4 +1,4 @@
-// Builds each enabled page as "inline HTML + loader tag" and pushes it to its Blogger page.
+// Builds each enabled page as inline HTML (+ its own scripts) and pushes it to its Blogger page. No loader.
 // Usage: node tools/sync-blogger.js [--dry]   (--dry only writes dist/*.html, no network)
 const fs = require("fs"), path = require("path");
 const root = path.join(__dirname, "..");
@@ -11,11 +11,10 @@ const EARLY = '<script>!function(){try{var c=JSON.parse(localStorage.getItem("rc
 function build(p) {
   const html = fs.readFileSync(path.join(root, "pages", p.page + ".html"), "utf8");
   // Split into static markup (painted together with Blogger's own header) and scripts (run in original order).
+  // Everything shared (menu, sidebar, bottom bar, dark mode, fonts) lives in common.js / common.css - no loader any more.
   const scripts = [];
   const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => { scripts.push(m); return ""; });
-  return `<script>window.__RC_HTML=window.__RC_HTML||{};window.__RC_HTML[${esc(p.page)}]=${esc(html)};</script>\n` +
-    `<div id="rc-app" data-static="1">${markup}</div>\n` + EARLY + "\n" + scripts.join("\n") + "\n" +
-    `<script src="${cfg.base}loader.js?v=${cfg.loaderVer || 1}" data-page="${p.page}"></script>`;
+  return `<div id="rc-app">${markup}</div>\n` + EARLY + "\n" + scripts.join("\n");
 }
 
 async function token() {

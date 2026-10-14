@@ -6,7 +6,7 @@
  * copy with a dark-tuned colour. Nothing in the originals is changed.
  *
  * Run after ANY css change:   npm i postcss && node tools/build-dark.js
- * then bump the ?v= of dark.css in loader.js (DARK_V) and loaderVer in tools/blogger-pages.json.
+ * then bump the ?v= of dark.css (DARK_CSS in the RC-SHELL block of common.js) and the common.js ?v= in pages/*.html.
  */
 const fs = require('fs'), path = require('path');
 const postcss = require('postcss');
