@@ -4,7 +4,7 @@
 
 import { symptomSummary } from "./symptom-checklist.js?v=3";
 import { responseSummary } from "./response-checklist.js?v=3";
-import { extraSteps } from "./prescription-extras.js?v=1";
+import { extraSteps } from "./prescription-extras.js?v=2";
 
 const toBn = x => String(x).replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
@@ -421,7 +421,7 @@ export function mountPrescriptionPlan(box, opt) {
   const st = {
     name: opt.patientName || "", dx: sv.dx || "", kinds: Array.isArray(sv.kinds) ? sv.kinds.slice() : [],
     type: sv.type || A.auto || "", caution: Array.isArray(sv.caution) ? sv.caution.slice() : [],
-    far: !!sv.far, jabaliForce: !!sv.jabaliForce, tantrik: !!sv.tantrik, bondForce: !!sv.bondForce, birdForce: !!sv.birdForce, tafriqForce: !!sv.tafriqForce, dig: Array.isArray(sv.dig) && sv.dig.length === 3 ? sv.dig.map(Boolean) : [false, false, false]
+    far: !!sv.far, jabaliForce: !!sv.jabaliForce, tantrik: !!sv.tantrik, bondForce: !!sv.bondForce, birdForce: !!sv.birdForce, tafriqForce: !!sv.tafriqForce, marriageForce: !!sv.marriageForce, universalOn: !!sv.universalOn, letterOn: !!sv.letterOn, dig: Array.isArray(sv.dig) && sv.dig.length === 3 ? sv.dig.map(Boolean) : [false, false, false]
   };
   const el = (tag, css, txt) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
   box.innerHTML = "";
@@ -471,6 +471,9 @@ export function mountPrescriptionPlan(box, opt) {
   ex.appendChild(chk("তান্ত্রিক/যাদুকরকে ভয় দেখানোর আমল যোগ করুন", st.tantrik, on => { st.tantrik = on; render(); }));
   ex.appendChild(chk("বন্দিশ ছুটানোর আমল জোর করে যোগ করুন (বন্দি-আলামত টিক থাকলে আপনা-আপনি আসে)", st.bondForce, on => { st.bondForce = on; render(); }));
   ex.appendChild(chk("পাখির ডানা/গলায় যাদুর আমল জোর করে যোগ করুন (পাখি চালান টিক থাকলে আপনা-আপনি)", st.birdForce, on => { st.birdForce = on; render(); }));
+  ex.appendChild(chk("বিয়ে বন্ধের যাদু কাটার আমল জোর করে যোগ করুন ('বিয়ে বন্দি' টিক থাকলে আপনা-আপনি আসে)", st.marriageForce, on => { st.marriageForce = on; render(); }));
+  ex.appendChild(chk("এক আমলে সব যাদু কাটা (৩০ মিনিট, ১১ দিন) যোগ করুন", st.universalOn, on => { st.universalOn = on; render(); }));
+  ex.appendChild(chk("যাদুগ্রস্ত উম্মতের খোলা চিঠি (দোয়া) যোগ করুন", st.letterOn, on => { st.letterOn = on; render(); }));
   ex.appendChild(chk("বিচ্ছেদের (তাফরিক) যাদুর আমল জোর করে যোগ করুন (তাফরিক বা 'তালাকের মুখে সংসার' টিক থাকলে আপনা-আপনি)", st.tafriqForce, on => { st.tafriqForce = on; render(); }));
   set.appendChild(ex);
   if (A.outOn.some(Boolean)) {
@@ -556,6 +559,7 @@ export function mountPrescriptionPlan(box, opt) {
       }
       if (s.result) d.appendChild(el("div", "font-size:13px;margin-top:6px;padding:6px 8px;border-radius:8px;background:#dcfce7;color:#166534;font-weight:700", "➜ ফল: " + s.result));
       if (s.note) d.appendChild(el("div", "font-size:12px;color:#b45309;margin-top:6px", "⚠ " + s.note));
+      if (s.uiNote) d.appendChild(el("div", "font-size:12px;color:#92400e;background:#fffbeb;border-radius:8px;padding:6px 8px;margin-top:6px", "🔎 যাচাই (নোটে বসে না): " + s.uiNote));
       plan.appendChild(d);
     }
   }
@@ -569,7 +573,7 @@ export function mountPrescriptionPlan(box, opt) {
   };
   save.onclick = async () => {
     save.disabled = true; msg.style.color = "#64748b"; msg.textContent = "Saving...";
-    try { await opt.onSavePlan({ dx: st.dx, kinds: st.kinds, type: st.type, caution: st.caution, far: st.far, jabaliForce: st.jabaliForce, tantrik: st.tantrik, bondForce: st.bondForce, birdForce: st.birdForce, tafriqForce: st.tafriqForce, dig: st.dig }); msg.style.color = "#16a34a"; msg.textContent = "✅ Saved"; }
+    try { await opt.onSavePlan({ dx: st.dx, kinds: st.kinds, type: st.type, caution: st.caution, far: st.far, jabaliForce: st.jabaliForce, tantrik: st.tantrik, bondForce: st.bondForce, birdForce: st.birdForce, tafriqForce: st.tafriqForce, marriageForce: st.marriageForce, universalOn: st.universalOn, letterOn: st.letterOn, dig: st.dig }); msg.style.color = "#16a34a"; msg.textContent = "✅ Saved"; }
     catch (e) { console.error(e); msg.style.color = "#dc2626"; msg.textContent = "Save failed"; }
     save.disabled = false;
   };
