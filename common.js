@@ -1132,3 +1132,342 @@ if (!window.__rcDatePick) {
     try { i.showPicker(); } catch (x) { /* খুলতে না পারলে ব্রাউজারের নিজস্ব আচরণই থাকে */ }
   }, true);
 }
+
+/* ===== RC-SHELL:BEGIN — burger menu, sidebar, bottom nav, dark mode, fonts (replaces the old loader.js) ===== */
+(function () {
+  if (window.__rcShell) return;
+  window.__rcShell = 1;
+
+  var BASE = new URL(".", import.meta.url).href;
+  var SITE = "https://rahcare.blogspot.com/p/";
+  var FONT_URL = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..800&family=Noto+Serif+Bengali:wght@400..800&family=Noto+Sans+Bengali:wght@400;500;700&family=Roboto:wght@400;500;700&family=Inter:wght@400..700&family=Hind+Siliguri:wght@400;500;600;700&display=swap";
+  var DARK_CSS = "dark.css?v=5";
+  var ICONS = {dashboard:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',appointment:'<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>',billing:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>',accounts:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>',profile:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',admin:'<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',"admin-panel":'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',other:'<circle cx="12" cy="12" r="3.2"/>'};
+  var BURGER = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>';
+  var ASIDE = '<div class="rc-sd-h"><span class="rc-sd-t">Rah Care</span><button type="button" class="rc-sd-x" aria-label="Close">&times;</button></div><div class="rc-sd-l"></div><div class="rc-sd-f"><div class="rc-sd-r"><span class="rc-sd-ft">🌙 Dark Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-dm"><span class="rc-sd-sl"></span></label></div><div class="rc-sd-r"><span class="rc-sd-ft">✎ Edit Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-em"><span class="rc-sd-sl"></span></label></div></div>';
+  /* fixed menu (the old top navigation bar is gone, so there is nothing to scrape any more) */
+  var NAV = ["dashboard", "appointment", "billing", "accounts", "profile", "admin-panel", "admin"];
+  var EDIT_PAGES = ["appointment", "billing", "dashboard"];
+
+  /* ---------- tiny helpers ---------- */
+  function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function lsDel(k) { try { localStorage.removeItem(k); } catch (e) {} }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return "&#" + c.charCodeAt(0) + ";"; }); }
+  function icon(path, size) {
+    return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + "</svg>";
+  }
+  function addLink(rel, href, cors) {
+    try {
+      var l = document.createElement("link");
+      l.rel = rel; l.href = href;
+      if (cors) l.crossOrigin = "";
+      document.head.appendChild(l);
+    } catch (e) {}
+  }
+
+  /* bottom-bar slots (left / right) chosen by the user */
+  function navCfg() {
+    var c = {};
+    try { c = JSON.parse(lsGet("rcNav") || "{}"); } catch (e) {}
+    var l = c.l || "appointment", r = c.r || "accounts";
+    if (lsGet("rcNavV2") !== "1" && r === "billing" && l !== "accounts") r = "accounts";
+    return { l: l, r: r };
+  }
+  function editOn() {
+    return EDIT_PAGES.some(function (p) { return lsGet("rc_edit_" + p) === "1"; });
+  }
+  /* label of a menu item (custom label cache first, then management type, then the slug) */
+  function label(slug) {
+    var custom = "", add = "";
+    try {
+      custom = JSON.parse(lsGet("rcNL") || "{}")[slug] || "";
+      add = lsGet("rcAdd") || "";
+      if (!add) {
+        var m = lsGet("mgmtType");
+        if (m) add = "Add " + m.charAt(0).toUpperCase() + m.slice(1).toLowerCase();
+      }
+    } catch (e) {}
+    var r = custom && custom.length < 14 ? custom : "";
+    if (slug === "appointment") return (!add || (r && !/^Add /.test(r)) ? r : add) || "Add Patient";
+    return r || slug.replace(/-/g, " ").replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+  function item(slug) {
+    return { slug: slug, href: SITE + slug + ".html", path: "/p/" + slug + ".html", text: label(slug) };
+  }
+
+  /* ---------- fonts ---------- */
+  function fonts() {
+    if (document.getElementById("rc-fonts")) return;
+    try {
+      addLink("preconnect", "https://fonts.googleapis.com");
+      addLink("preconnect", "https://fonts.gstatic.com", true);
+      var f = document.createElement("link");
+      f.id = "rc-fonts"; f.rel = "stylesheet"; f.href = FONT_URL; f.media = "print";
+      f.onload = function () { f.media = "all"; };
+      document.head.appendChild(f);
+    } catch (e) {}
+  }
+
+  /* ---------- dark mode: follows the phone setting; the sidebar switch overrides until the phone setting changes ---------- */
+  var mq = null;
+  try { mq = matchMedia("(prefers-color-scheme: dark)"); } catch (e) {}
+  function applyDark() {
+    var q = lsGet("rcDark"), z = lsGet("rcDarkSys"), sys = !!(mq && mq.matches);
+    if (q !== null && z !== (sys ? "1" : "0")) { lsDel("rcDark"); lsDel("rcDarkSys"); q = null; }
+    var on = q === "1" || (q === null && sys);
+    document.documentElement.classList.toggle("rc-dark", on);
+    if (on && !document.getElementById("rc-dark-css")) {
+      var k = document.createElement("link");
+      k.id = "rc-dark-css"; k.rel = "stylesheet"; k.href = BASE + DARK_CSS;
+      document.head.appendChild(k);
+    }
+    try { dispatchEvent(new Event("rc-dark")); } catch (e) {}
+    return on;
+  }
+  window.__rcDK = applyDark;
+  applyDark();
+  if (mq) {
+    var onSys = function () { lsDel("rcDark"); lsDel("rcDarkSys"); applyDark(); };
+    mq.addEventListener ? mq.addEventListener("change", onSys) : mq.addListener && mq.addListener(onSys);
+  }
+
+  /* ---------- invoice / slip images are always rendered light ---------- */
+  (function () {
+    function wrap(f) {
+      if (typeof f !== "function" || f.__rcw) return f;
+      var w = function (el, o) {
+        o = o || {};
+        var oc = o.onclone;
+        o.onclone = function (d) {
+          try { d.documentElement.classList.remove("rc-dark"); } catch (e) {}
+          return oc ? oc.apply(this, arguments) : void 0;
+        };
+        return f.call(this, el, o);
+      };
+      w.__rcw = 1;
+      return w;
+    }
+    try {
+      var held = wrap(window.html2canvas);
+      Object.defineProperty(window, "html2canvas", {
+        configurable: true,
+        get: function () { return held; },
+        set: function (v) { held = wrap(v); }
+      });
+    } catch (e) {}
+  })();
+
+  /* ---------- PWA install prompt (kept for the install button in the admin panel) ---------- */
+  try {
+    addEventListener("beforeinstallprompt", function (e) {
+      e.preventDefault();
+      window.__bip = e;
+      dispatchEvent(new Event("bip"));
+    });
+  } catch (e) {}
+
+  /* ---------- clean up caches left behind by the old loader ---------- */
+  try {
+    ["rcCJ", "rcCS", "rcBeta", "rcBetaReset"].forEach(lsDel);
+    var drop = [];
+    for (var n = 0; n < localStorage.length; n++) {
+      var key = localStorage.key(n);
+      if (key && key.indexOf("rcP_") === 0) drop.push(key);
+    }
+    drop.forEach(lsDel);
+  } catch (e) {}
+
+  /* ---------- show the page as soon as a saved login exists (before firebase finishes loading) ---------- */
+  (function () {
+    var IDS = ["dw", "appRoot", "billingWrap", "dashWrap"], ok = 0;
+    function reveal() {
+      IDS.forEach(function (i) {
+        var e = document.getElementById(i);
+        if (e && !e.__rv) { e.__rv = 1; e.style.display = "block"; }
+      });
+      [].forEach.call(document.querySelectorAll("[data-rc-wrap]"), function (e) {
+        if (!e.__rv) { e.__rv = 1; e.style.display = "block"; }
+      });
+      document.documentElement.style.visibility = "visible";
+    }
+    function hasSession() {
+      return new Promise(function (res) {
+        try {
+          var q = indexedDB.open("firebaseLocalStorageDb");
+          q.onerror = function () { res(0); };
+          q.onupgradeneeded = function () { try { q.transaction.abort(); } catch (e) {} res(0); };
+          q.onsuccess = function () {
+            try {
+              var d = q.result;
+              if (!d.objectStoreNames.contains("firebaseLocalStorage")) { d.close(); res(0); return; }
+              var g = d.transaction("firebaseLocalStorage", "readonly").objectStore("firebaseLocalStorage").getAllKeys();
+              g.onsuccess = function () {
+                d.close();
+                res((g.result || []).some(function (k) { return /^firebase:authUser:/.test(k); }) ? 1 : 0);
+              };
+              g.onerror = function () { d.close(); res(0); };
+            } catch (e) { res(0); }
+          };
+        } catch (e) { res(0); }
+      });
+    }
+    try {
+      var app = document.getElementById("rc-app");
+      if (app) new MutationObserver(function () { ok && reveal(); }).observe(app, { childList: true, subtree: true });
+    } catch (e) {}
+    hasSession().then(function (v) { ok = v; v && reveal(); });
+  })();
+
+  /* ---------- admin check for the sidebar ---------- */
+  function checkAdmin() {
+    if (window.__rcAdm !== undefined) return Promise.resolve(window.__rcAdm);
+    return (async function () {
+      try {
+        await auth.authStateReady();
+        var u = auth.currentUser;
+        if (!u) return false;
+        return (await GD(DO(db, "admins", u.uid))).exists();
+      } catch (e) { return false; }
+    })();
+  }
+
+  /* ---------- burger menu + sidebar + bottom bar ---------- */
+  function buildShell() {
+    var m = /\/p\/([\w-]+)\.html/.exec(location.pathname);
+    var cur = m ? m[1] : "";
+    if (cur === "login" || cur === "sign-up" || cur === "signup" || document.querySelector("[data-rc-hide-chrome]") || document.getElementById("rc-bnav")) return;
+
+    /* bottom bar */
+    var bar = document.createElement("nav");
+    bar.id = "rc-bnav";
+    function renderBar() {
+      var cfg = navCfg(), html = "";
+      [[cfg.l, "l"], ["dashboard", ""], [cfg.r, "r"]].forEach(function (s) {
+        var slug = s[0], home = slug === "dashboard", it = item(slug);
+        html += '<a class="rc-bn-i' + (slug === cur ? " on" : "") + (home ? " rc-home" : "") + '" role="link" data-u="' + it.href + '"' +
+          (s[1] ? ' data-s="' + s[1] + '"' : "") + '><span class="rc-bn-p">' + icon(ICONS[slug] || ICONS.other, 24) +
+          (s[1] ? '<i class="rc-bn-pen"></i>' : "") + '</span><span class="rc-bn-l">' + esc(home ? "Home" : it.text) + "</span></a>";
+      });
+      bar.innerHTML = html;
+      bar.classList.toggle("ed", editOn());
+    }
+    function openPicker(side) {
+      var old = document.getElementById("rc-np");
+      if (old) old.remove();
+      var cfg = navCfg(), box = document.createElement("div");
+      var html = '<div class="rc-np-b"><div class="rc-np-h">' + (side === "l" ? "বাম" : "ডান") + " পাশের অপশন বেছে নিন</div>";
+      NAV.filter(function (s) { return s !== "dashboard" && s !== "admin"; }).forEach(function (s) {
+        html += '<button type="button" data-s="' + s + '"' + (cfg[side] === s ? ' class="on"' : "") + ">" + icon(ICONS[s] || ICONS.other, 22) + "<span>" + esc(label(s)) + "</span></button>";
+      });
+      box.id = "rc-np";
+      box.innerHTML = html + "</div>";
+      box.onclick = function (ev) {
+        var b = ev.target.closest("button[data-s]");
+        if (b) {
+          var other = side === "l" ? "r" : "l", next = { l: cfg.l, r: cfg.r };
+          if (next[other] === b.dataset.s) next[other] = cfg[side];
+          next[side] = b.dataset.s;
+          lsSet("rcNav", JSON.stringify(next)); lsSet("rcNavV2", "1"); lsSet("rcNavDirty", "1");
+          dispatchEvent(new Event("rc-nav-save")); dispatchEvent(new Event("rc-nav"));
+        }
+        if (b || ev.target === box) box.remove();
+      };
+      document.body.appendChild(box);
+    }
+    renderBar();
+    bar.onclick = function (ev) {
+      var a = ev.target.closest("a[data-u]");
+      if (!a) return;
+      if (a.dataset.s && editOn() && ev.target.closest(".rc-bn-pen")) openPicker(a.dataset.s);
+      else location.href = a.dataset.u;
+    };
+    addEventListener("rc-nav", renderBar);
+    addEventListener("rc-mgmt", renderBar);
+    addEventListener("pageshow", renderBar);
+    document.body.appendChild(bar);
+
+    /* burger button, dim layer and sidebar */
+    var burger = document.createElement("button");
+    burger.id = "rc-burger"; burger.type = "button"; burger.setAttribute("aria-label", "Menu");
+    burger.innerHTML = BURGER;
+    var scrim = document.createElement("div");
+    scrim.id = "rc-side-scrim";
+    var side = document.createElement("aside");
+    side.id = "rc-side"; side.setAttribute("aria-hidden", "true");
+    side.innerHTML = ASIDE;
+    (document.querySelector(".header-wrapper") || document.body).appendChild(burger);
+    document.body.appendChild(scrim);
+    document.body.appendChild(side);
+    document.body.classList.add("rc-has-nav", "rc-hide-topnav");
+    var list = side.querySelector(".rc-sd-l");
+
+    /* dark mode switch */
+    var dm = side.querySelector("#rc-dm");
+    function syncDark() { dm.checked = document.documentElement.classList.contains("rc-dark"); }
+    syncDark();
+    addEventListener("pageshow", syncDark);
+    addEventListener("rc-dark", syncDark);
+    dm.onchange = function () {
+      lsSet("rcDark", dm.checked ? "1" : "0");
+      lsSet("rcDarkSys", mq && mq.matches ? "1" : "0");
+      applyDark();
+    };
+
+    /* edit mode switch (all three pages together) */
+    var em = side.querySelector("#rc-em");
+    function syncEdit() { em.checked = EDIT_PAGES.every(function (p) { return lsGet("rc_edit_" + p) === "1"; }); }
+    syncEdit();
+    addEventListener("pageshow", syncEdit);
+    em.onchange = function () {
+      EDIT_PAGES.forEach(function (p) { lsSet("rc_edit_" + p, em.checked ? "1" : "0"); });
+      setTimeout(function () { location.reload(); }, 220);
+    };
+
+    function closeSide() {
+      document.body.classList.remove("rc-side-open");
+      side.setAttribute("aria-hidden", "true");
+    }
+    list.onclick = function (ev) {
+      var a = ev.target.closest("a[data-u]");
+      if (a) location.href = a.dataset.u;
+    };
+    /* sidebar entries: Billing for everybody, Admin only for admins */
+    function renderList(isAdmin) {
+      list.innerHTML = "";
+      var here = location.pathname.replace(/\/$/, "") || "/", cfg = navCfg();
+      ["admin-panel", "profile", "admin", "appointment", "accounts", "billing"].map(item).filter(function (it) {
+        if (it.slug === "billing") return true;
+        if (it.slug === cfg.l || it.slug === cfg.r) return false;
+        return it.slug !== "admin" || isAdmin;
+      }).forEach(function (it) {
+        var a = document.createElement("a");
+        a.className = "rc-sd-i" + (it.path === here ? " on" : "");
+        a.dataset.u = it.href;
+        a.setAttribute("role", "link");
+        var ic = document.createElement("span");
+        ic.className = "rc-sd-ic"; ic.innerHTML = icon(ICONS[it.slug] || ICONS.other, 22);
+        var tx = document.createElement("span");
+        tx.className = "rc-sd-tx"; tx.textContent = it.text;
+        a.appendChild(ic); a.appendChild(tx); list.appendChild(a);
+      });
+    }
+    burger.onclick = function () {
+      renderList(window.__rcAdm === true);
+      if (window.__rcAdm === undefined) checkAdmin().then(function (z) { window.__rcAdm = z; z && renderList(true); });
+      document.body.classList.add("rc-side-open");
+      side.setAttribute("aria-hidden", "false");
+    };
+    scrim.onclick = closeSide;
+    side.querySelector(".rc-sd-x").onclick = closeSide;
+    document.addEventListener("keydown", function (ev) { if (ev.key === "Escape") closeSide(); });
+  }
+
+  function boot() {
+    fonts();
+    try { buildShell(); } catch (e) { console.error("RahCare shell:", e); }
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
+  else boot();
+})();
+/* ===== RC-SHELL:END ===== */

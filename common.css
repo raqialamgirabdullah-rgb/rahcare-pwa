@@ -245,3 +245,19 @@ label.hd-dd::after{content:"▾";font-size:11px;opacity:.7}
 
 /* ===== ওপরের নেভিগেশন বার কোনো পেজে নেই (শুধু নিচের বার) — body-ক্লাস ছাড়াই সবসময় লুকানো ===== */
 .nav-wrapper,#menuToggleBtn,#PageList1,.main-navigation,.nav-bar,.nav-menu,.tabs-inner,.tabs-outer,#navbar,.navbar,#navbar-iframe,[data-rc-topnav]{display:none!important}
+
+/* ===== shell extras (moved from the old loader.js) ===== */
+html.rc-dark{color-scheme:dark;background:#0a0f0d}
+#authOverlay,.rc-auth-overlay{display:none!important}
+#rc-side .rc-sd-r{display:flex;align-items:center;justify-content:space-between;gap:12px}
+#rc-side .rc-sd-f{display:flex;flex-direction:column;gap:14px;padding:14px 24px 18px;border-top:1px solid #eef0ef;font-size:15px;font-weight:500;color:#33423b}
+.rc-sd-sw{position:relative;display:inline-block;width:42px;height:24px;flex-shrink:0;cursor:pointer}
+.rc-sd-sw input{opacity:0;width:0;height:0;position:absolute}
+.rc-sd-sl{position:absolute;inset:0;background:#cfd6d2;transition:.2s;border-radius:24px}
+.rc-sd-sl:before{position:absolute;content:'';height:18px;width:18px;left:3px;bottom:3px;background:#fff;transition:.2s;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.rc-sd-sw input:checked+.rc-sd-sl{background:#0f5132}
+.rc-sd-sw input:checked+.rc-sd-sl:before{transform:translateX(18px)}
+#rc-bnav .rc-bn-pen{display:none}
+#rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-p:after{content:none!important}
+#rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-pen{display:block;position:absolute;top:-5px;right:2px;width:18px;height:18px;box-sizing:border-box;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f5132' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E") center/9px 9px no-repeat;border:1px solid rgba(15,81,50,.22);box-shadow:0 1px 3px rgba(0,0,0,.14);cursor:pointer}
+#rc-bnav .rc-bn-pen:before{content:'';position:absolute;inset:-12px}
