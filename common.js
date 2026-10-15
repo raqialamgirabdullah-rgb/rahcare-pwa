@@ -1157,6 +1157,12 @@ if (!window.__rcDatePick) {
   function icon(path, size) {
     return '<svg viewBox="0 0 24 24" width="' + size + '" height="' + size + '" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + "</svg>";
   }
+  /* replace innerHTML only when the markup really differs (no repaint of identical content) */
+  function setHtml(el, html) {
+    var t = document.createElement("div");
+    t.innerHTML = html;
+    if (t.innerHTML !== el.innerHTML) el.innerHTML = html;
+  }
   function addLink(rel, href, cors) {
     try {
       var l = document.createElement("link");
@@ -1336,21 +1342,28 @@ if (!window.__rcDatePick) {
   function buildShell() {
     var m = /\/p\/([\w-]+)\.html/.exec(location.pathname);
     var cur = m ? m[1] : "";
-    if (cur === "login" || cur === "sign-up" || cur === "signup" || document.querySelector("[data-rc-hide-chrome]") || document.getElementById("rc-bnav")) return;
+    /* the page already painted the bar + burger from cache (see the pre-paint script in every page) - adopt them */
+    var preBar = document.getElementById("rc-bnav");
+    if (cur === "login" || cur === "sign-up" || cur === "signup" || document.querySelector("[data-rc-hide-chrome]") || (preBar && !preBar.hasAttribute("data-pre"))) return;
 
     /* bottom bar */
-    var bar = document.createElement("nav");
+    var bar = preBar || document.createElement("nav");
     bar.id = "rc-bnav";
-    function renderBar() {
+    bar.removeAttribute("data-pre");
+    function barHtml(onSlug) {
       var cfg = navCfg(), html = "";
       [[cfg.l, "l"], ["dashboard", ""], [cfg.r, "r"]].forEach(function (s) {
         var slug = s[0], home = slug === "dashboard", it = item(slug);
-        html += '<a class="rc-bn-i' + (slug === cur ? " on" : "") + (home ? " rc-home" : "") + '" role="link" data-u="' + it.href + '"' +
+        html += '<a class="rc-bn-i' + (slug === onSlug ? " on" : "") + (home ? " rc-home" : "") + '" role="link" data-u="' + it.href + '"' +
           (s[1] ? ' data-s="' + s[1] + '"' : "") + '><span class="rc-bn-p">' + icon(ICONS[slug] || ICONS.other, 24) +
           (s[1] ? '<i class="rc-bn-pen"></i>' : "") + '</span><span class="rc-bn-l">' + esc(home ? "Home" : it.text) + "</span></a>";
       });
-      bar.innerHTML = html;
+      return html;
+    }
+    function renderBar() {
+      setHtml(bar, barHtml(cur));
       bar.classList.toggle("ed", editOn());
+      lsSet("rcBarH", barHtml(""));   /* next page load paints this before the first frame */
     }
     function openPicker(side) {
       var old = document.getElementById("rc-np");
@@ -1385,18 +1398,19 @@ if (!window.__rcDatePick) {
     addEventListener("rc-nav", renderBar);
     addEventListener("rc-mgmt", renderBar);
     addEventListener("pageshow", renderBar);
-    document.body.appendChild(bar);
+    if (!bar.parentNode) document.body.appendChild(bar);
 
     /* burger button, dim layer and sidebar */
-    var burger = document.createElement("button");
+    var burger = document.getElementById("rc-burger") || document.createElement("button");
     burger.id = "rc-burger"; burger.type = "button"; burger.setAttribute("aria-label", "Menu");
-    burger.innerHTML = BURGER;
+    burger.removeAttribute("data-pre");
+    setHtml(burger, BURGER);
     var scrim = document.createElement("div");
     scrim.id = "rc-side-scrim";
     var side = document.createElement("aside");
     side.id = "rc-side"; side.setAttribute("aria-hidden", "true");
     side.innerHTML = ASIDE;
-    (document.querySelector(".header-wrapper") || document.body).appendChild(burger);
+    if (!burger.parentNode) (document.querySelector(".header-wrapper") || document.body).appendChild(burger);
     document.body.appendChild(scrim);
     document.body.appendChild(side);
     document.body.classList.add("rc-has-nav", "rc-hide-topnav");
