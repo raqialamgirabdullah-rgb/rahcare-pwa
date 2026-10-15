@@ -36,30 +36,31 @@ const LB_BASE = {
   rmsgTomorrow: "Session tomorrow. Please confirm.",
   rmsgMissed: "Missed yesterday. Please share a new time.",
   waHello: "Assalamu Alaikum, {name}. {msg}",
-  billingTitle: "Billing", dashboardTitle: "Dashboard", msgNoPerson: "No {person}!", notFound: "Not found"
+  billingTitle: "Billing", dashboardTitle: "Dashboard", msgNoPerson: "No {person}!", notFound: "Not found",
+  banner: "Care, simply managed"
 };
 let MT_SEL_VAL = ""; /* ফাইলের শুরুতে, কারণ নিচের autoMountEditToggles লোডের সময়ই এটা ব্যবহার করে */
 /* শুধু শুরুর প্রিসেট, সীমা নয় */
 const LB_PRESETS = {
-  patient: {},
-  student: { person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard",
+  patient: { banner: "Care, simply managed" },
+  student: { banner: "Every student, every step", person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard",
     doctor: "Teacher", slipTitle: "Admission Slip", slipId: "Student ID", bnPerson: "স্টুডেন্ট",
     msgOk: "Admission Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ভর্তি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
-  worker: { person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard",
+  worker: { banner: "Your team, organised", person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard",
     doctor: "Supervisor", slipTitle: "Work Slip", slipId: "Worker ID", bnPerson: "কর্মী",
     msgOk: "Work Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার কাজ {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
-  client: { person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard",
+  client: { banner: "Every client, well served", person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard",
     doctor: "Consultant", slipTitle: "Booking Slip", slipId: "Client ID", bnPerson: "ক্লায়েন্ট",
     msgOk: "Booking Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার বুকিং {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
-  staff: { person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard",
+  staff: { banner: "Your staff, in one place", person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard",
     doctor: "Manager", slipTitle: "Duty Slip", slipId: "Staff ID", bnPerson: "স্টাফ",
     msgOk: "Staff Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ডিউটি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" }
 };
 /* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
 const LB_PAGES = {
-  appointment: ["appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
-  dashboard: ["searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello", "symptomDx", "responseDx", "prescription"],
-  billing: ["billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
+  appointment: ["banner", "appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
+  dashboard: ["banner", "searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello", "symptomDx", "responseDx", "prescription"],
+  billing: ["banner", "billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
 };
 
 const PAGE_ICONS = { appointment: "📅", billing: "🧾", dashboard: "📊" };
@@ -437,6 +438,7 @@ export function createLabels(data, save) {
         if (st.pg) { const t = st.none ? "" : (st.custom || PAGE_ICONS[st.pg] || ""); m.i = [t, (st.hide || !t) ? 1 : 0]; }
         const ls = document.getElementById("rc-lstyle");
         m.s = ls ? ls.textContent : "";
+        try { const ub = user.banner; if (typeof ub === "string" && ub.trim()) localStorage.setItem("rcBanner", ub); else localStorage.removeItem("rcBanner"); } catch (e2) {}
         const ti = document.getElementById("ti");
         if (ti && preset.dashboardTitle) m.t = ti.textContent;
         localStorage.setItem("rcLT:" + location.pathname, JSON.stringify(m));
@@ -1422,31 +1424,32 @@ if (!window.__rcDatePick) {
     document.body.appendChild(side);
     document.body.classList.add("rc-has-nav", "rc-hide-topnav");
 
-    /* tag line under the site heading, chosen by management type */
-    var TAGS = {
-      patient: "Care, simply managed",
-      worker: "Your team, organised",
-      student: "Every student, every step",
-      client: "Every client, well served",
-      staff: "Your staff, in one place"
-    };
-    function renderTag() {
-      var h = document.getElementById("header-inner");
-      if (!h) return;
-      var t = document.getElementById("rc-tag");
-      if (!t) {
-        t = document.createElement("div");
-        t.id = "rc-tag";
-        var tw = h.querySelector(".titlewrapper");
-        if (tw && tw.nextSibling) h.insertBefore(t, tw.nextSibling); else h.appendChild(t);
+    /* banner card under the heading card: text follows the management type; editable through the normal label
+       system (data-l="banner" gets its pencil in edit mode on the Appointment / Billing / Dashboard pages) */
+    function renderBanner() {
+      var root = document.documentElement;
+      if (root.classList.contains("rc-pub")) return;
+      var top = document.querySelector(".topbar-wrapper");
+      if (!top) return;
+      var b = document.getElementById("rc-banner");
+      if (!b) {
+        b = document.createElement("div");
+        b.id = "rc-banner";
+        b.innerHTML = '<span class="rc-ban-t" data-l="banner"></span>';
+        top.parentNode.insertBefore(b, top.nextSibling);
       }
-      var s = TAGS[String(lsGet("mgmtType") || "").toLowerCase()] || "";
-      if (t.textContent !== s) t.textContent = s;
-      t.style.display = s ? "" : "none";
+      var t = b.firstChild, m = String(lsGet("mgmtType") || "").toLowerCase();
+      var s = lsGet("rcBanner") || (LB_PRESETS[m] && LB_PRESETS[m].banner) || (m ? LB_BASE.banner : "");
+      var tn = t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild : null;
+      if ((tn ? tn.nodeValue : "") !== s) {
+        if (tn) tn.nodeValue = s; else t.insertBefore(document.createTextNode(s), t.firstChild);
+      }
+      b.style.visibility = s ? "" : "hidden";
+      root.classList.add("rc-ban");
     }
-    renderTag();
-    addEventListener("rc-mgmt", renderTag);
-    addEventListener("pageshow", renderTag);
+    renderBanner();
+    addEventListener("rc-mgmt", renderBanner);
+    addEventListener("pageshow", renderBanner);
     var list = side.querySelector(".rc-sd-l");
 
     /* dark mode switch */
