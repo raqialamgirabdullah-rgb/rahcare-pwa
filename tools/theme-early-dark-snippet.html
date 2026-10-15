@@ -1,0 +1,4 @@
+<!-- Paste once into the Blogger THEME <head>, just BEFORE the common.css <link> (Theme > Edit HTML).
+     It applies dark mode before the first paint (no light flash on refresh). common.js keeps working as before:
+     it sees id="rc-dark-css" and does not add a second dark.css. If DARK_CSS in common.js is bumped from v=5, change v=5 here too. -->
+<script>/* dark-mode early apply: runs before first paint so there is no light flash on refresh */(function(){try{var d=document.documentElement,s=localStorage,q=s.getItem("rcDark"),z=s.getItem("rcDarkSys"),m=window.matchMedia?matchMedia("(prefers-color-scheme: dark)"):null,y=m?m.matches:false;if(q!==null){if(z!==(y?"1":"0"))q=null}if(q==="1"||(q===null?y:false)){d.classList.add("rc-dark");document.write("\x3clink id='rc-dark-css' rel='stylesheet' href='https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/dark.css?v=5'\x3e")}}catch(e){}})();</script>
