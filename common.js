@@ -1421,6 +1421,32 @@ if (!window.__rcDatePick) {
     document.body.appendChild(scrim);
     document.body.appendChild(side);
     document.body.classList.add("rc-has-nav", "rc-hide-topnav");
+
+    /* tag line under the site heading, chosen by management type */
+    var TAGS = {
+      patient: "Care, simply managed",
+      worker: "Your team, organised",
+      student: "Every student, every step",
+      client: "Every client, well served",
+      staff: "Your staff, in one place"
+    };
+    function renderTag() {
+      var h = document.getElementById("header-inner");
+      if (!h) return;
+      var t = document.getElementById("rc-tag");
+      if (!t) {
+        t = document.createElement("div");
+        t.id = "rc-tag";
+        var tw = h.querySelector(".titlewrapper");
+        if (tw && tw.nextSibling) h.insertBefore(t, tw.nextSibling); else h.appendChild(t);
+      }
+      var s = TAGS[String(lsGet("mgmtType") || "").toLowerCase()] || "";
+      if (t.textContent !== s) t.textContent = s;
+      t.style.display = s ? "" : "none";
+    }
+    renderTag();
+    addEventListener("rc-mgmt", renderTag);
+    addEventListener("pageshow", renderTag);
     var list = side.querySelector(".rc-sd-l");
 
     /* dark mode switch */
