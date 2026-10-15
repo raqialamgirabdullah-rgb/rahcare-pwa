@@ -970,11 +970,18 @@ function mtSelectSync(v) {
     })();
   };
 
+  window.__rcDyn = run;
   const start = () => {
-    new MutationObserver(() => {
+    /* run in the observer callback itself (a microtask, i.e. before the browser paints) — doing it in
+       requestAnimationFrame let the raw table paint first (unequal columns, shorter rows) and then jump */
+    const mo = new MutationObserver(() => {
       if (raf) return;
-      raf = requestAnimationFrame(() => { raf = 0; run(); });
-    }).observe(document.body, { childList: true, subtree: true, characterData: true });
+      raf = 1;
+      try { run(); } catch (e) { console.error(e); }
+      mo.takeRecords();
+      raf = 0;
+    });
+    mo.observe(document.body, { childList: true, subtree: true, characterData: true });
     document.addEventListener("rc-preset", run);
     document.addEventListener("click", e => {
       const t = e.target;
