@@ -1,7 +1,7 @@
 /* রোগীর নোট পেজ: Symptom Diagnosis / Response Diagnosis / Prescription
    ব্যবহার: Blogger পেজে mountNotePage("symptom" | "response" | "prescription") */
 import { db, requireAuth, loadUser, createLabels, UP, DO, GD } from "./common.js?v=17";
-import { mountSymptomChecklist } from "./symptom-checklist.js";
+import { mountSymptomChecklist } from "./symptom-checklist.js?v=4";
 import { createDocUpload } from "./doc-upload.js";
 
 const KINDS = {
@@ -95,7 +95,7 @@ export function mountNotePage(kind) {
         try {
           const isAdminP = (await GD(DO(db, "admins", user.uid))).exists();
           if (isAdminP) {
-            const { mountPrescriptionPlan } = await import("./prescription-plan.js?v=5");
+            const { mountPrescriptionPlan } = await import("./prescription-plan.js?v=6");
             const pbox = el("div", "margin:10px 0");
             card.appendChild(pbox);
             mountPrescriptionPlan(pbox, {
