@@ -2,9 +2,9 @@
    ধাপ ১ = তাশখিস নিজেই, তাই এখানে শুধু "তাশখিসের সারাংশ"। প্রতিটি ধাপে: কাজ → রিঅ্যাকশন → ফলাফল।
    mountPrescriptionPlan(box, { symptomChecks, responseChecks, saved, patientName, onSavePlan(obj), onFill(text) }) */
 
-import { symptomSummary } from "./symptom-checklist.js?v=3";
+import { symptomSummary } from "./symptom-checklist.js?v=4";
 import { responseSummary } from "./response-checklist.js?v=3";
-import { extraSteps } from "./prescription-extras.js?v=2";
+import { extraSteps } from "./prescription-extras.js?v=3";
 
 const toBn = x => String(x).replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[d]);
 
@@ -421,7 +421,7 @@ export function mountPrescriptionPlan(box, opt) {
   const st = {
     name: opt.patientName || "", dx: sv.dx || "", kinds: Array.isArray(sv.kinds) ? sv.kinds.slice() : [],
     type: sv.type || A.auto || "", caution: Array.isArray(sv.caution) ? sv.caution.slice() : [],
-    far: !!sv.far, jabaliForce: !!sv.jabaliForce, tantrik: !!sv.tantrik, bondForce: !!sv.bondForce, birdForce: !!sv.birdForce, tafriqForce: !!sv.tafriqForce, marriageForce: !!sv.marriageForce, universalOn: !!sv.universalOn, letterOn: !!sv.letterOn, dig: Array.isArray(sv.dig) && sv.dig.length === 3 ? sv.dig.map(Boolean) : [false, false, false]
+    far: !!sv.far, jabaliForce: !!sv.jabaliForce, tantrik: !!sv.tantrik, bondForce: !!sv.bondForce, birdForce: !!sv.birdForce, tafriqForce: !!sv.tafriqForce, marriageForce: !!sv.marriageForce, universalOn: !!sv.universalOn, letterOn: !!sv.letterOn, chalanForce: !!sv.chalanForce, dig: Array.isArray(sv.dig) && sv.dig.length === 3 ? sv.dig.map(Boolean) : [false, false, false]
   };
   const el = (tag, css, txt) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (txt != null) e.textContent = txt; return e; };
   box.innerHTML = "";
@@ -472,6 +472,7 @@ export function mountPrescriptionPlan(box, opt) {
   ex.appendChild(chk("বন্দিশ ছুটানোর আমল জোর করে যোগ করুন (বন্দি-আলামত টিক থাকলে আপনা-আপনি আসে)", st.bondForce, on => { st.bondForce = on; render(); }));
   ex.appendChild(chk("পাখির ডানা/গলায় যাদুর আমল জোর করে যোগ করুন (পাখি চালান টিক থাকলে আপনা-আপনি)", st.birdForce, on => { st.birdForce = on; render(); }));
   ex.appendChild(chk("বিয়ে বন্ধের যাদু কাটার আমল জোর করে যোগ করুন ('বিয়ে বন্দি' টিক থাকলে আপনা-আপনি আসে)", st.marriageForce, on => { st.marriageForce = on; render(); }));
+  ex.appendChild(chk("চালান জ্বিনের ১২ প্রকার চার্ট ও কাটার অস্ত্র জোর করে যোগ করুন (চালানের আলামত টিক থাকলে আপনা-আপনি)", st.chalanForce, on => { st.chalanForce = on; render(); }));
   ex.appendChild(chk("এক আমলে সব যাদু কাটা (৩০ মিনিট, ১১ দিন) যোগ করুন", st.universalOn, on => { st.universalOn = on; render(); }));
   ex.appendChild(chk("যাদুগ্রস্ত উম্মতের খোলা চিঠি (দোয়া) যোগ করুন", st.letterOn, on => { st.letterOn = on; render(); }));
   ex.appendChild(chk("বিচ্ছেদের (তাফরিক) যাদুর আমল জোর করে যোগ করুন (তাফরিক বা 'তালাকের মুখে সংসার' টিক থাকলে আপনা-আপনি)", st.tafriqForce, on => { st.tafriqForce = on; render(); }));
@@ -573,7 +574,7 @@ export function mountPrescriptionPlan(box, opt) {
   };
   save.onclick = async () => {
     save.disabled = true; msg.style.color = "#64748b"; msg.textContent = "Saving...";
-    try { await opt.onSavePlan({ dx: st.dx, kinds: st.kinds, type: st.type, caution: st.caution, far: st.far, jabaliForce: st.jabaliForce, tantrik: st.tantrik, bondForce: st.bondForce, birdForce: st.birdForce, tafriqForce: st.tafriqForce, marriageForce: st.marriageForce, universalOn: st.universalOn, letterOn: st.letterOn, dig: st.dig }); msg.style.color = "#16a34a"; msg.textContent = "✅ Saved"; }
+    try { await opt.onSavePlan({ dx: st.dx, kinds: st.kinds, type: st.type, caution: st.caution, far: st.far, jabaliForce: st.jabaliForce, tantrik: st.tantrik, bondForce: st.bondForce, birdForce: st.birdForce, tafriqForce: st.tafriqForce, marriageForce: st.marriageForce, universalOn: st.universalOn, letterOn: st.letterOn, chalanForce: st.chalanForce, dig: st.dig }); msg.style.color = "#16a34a"; msg.textContent = "✅ Saved"; }
     catch (e) { console.error(e); msg.style.color = "#dc2626"; msg.textContent = "Save failed"; }
     save.disabled = false;
   };
