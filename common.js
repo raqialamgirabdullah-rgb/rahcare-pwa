@@ -56,6 +56,19 @@ const LB_PRESETS = {
     doctor: "Manager", slipTitle: "Duty Slip", slipId: "Staff ID", bnPerson: "স্টাফ",
     msgOk: "Staff Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ডিউটি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" }
 };
+/* organisation type ("management": Ruqyah & Hijama, Ruqyah, Hijama, Garments, School, Travel Agency) -> key for the banner photo / tag line */
+const ORG_TAG = { rh: "Healing by the Qur\u2019an and Sunnah", ruqyah: "Healing with the Qur\u2019an", hijama: "Healing by the Sunnah" };
+function orgKey(t) {
+  t = String(t || "").toLowerCase();
+  const r = /ruqy|ruky|raqi|roqy/.test(t), h = /hijam|hijoma/.test(t);
+  if (r && h) return "rh";
+  if (r) return "ruqyah";
+  if (h) return "hijama";
+  if (/garment/.test(t)) return "garments";
+  if (/school/.test(t)) return "school";
+  if (/travel/.test(t)) return "travel";
+  return "";
+}
 /* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
 const LB_PAGES = {
   appointment: ["tagline", "appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
@@ -151,13 +164,13 @@ try { applyTheme(JSON.parse(localStorage.getItem("rcTheme") || "{}")); } catch (
 
 export function createLabels(data, save) {
   data = data || {};
-  if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); rcNavSync(data); }
+  if (Object.keys(data).length) { FORM_DEFAULT = Object.assign({}, data.formDefault || {}, FORM_DEFAULT); mtSetType(data.managementType); rcNavSync(data); try { localStorage.setItem("rcCT", String(data.centreType || "")); dispatchEvent(new Event("rc-org")); } catch (e) {} }
   const user = Object.assign({}, data.labels || {});
   const styles = Object.assign({}, data.labelStyle || {});
   let theme = cleanTheme(data.theme);
   if (Object.keys(data).length) { applyTheme(theme); cacheTheme(theme); }
   const preset = LB_PRESETS[String(data.managementType || "").toLowerCase().trim()] || {};
-  const dflt = k => (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : (NAVDEF[k] !== undefined ? NAVDEF[k] : k)));
+  const dflt = k => (k === "tagline" && ORG_TAG[orgKey(data.centreType)]) || (preset[k] !== undefined ? preset[k] : (LB_BASE[k] !== undefined ? LB_BASE[k] : (NAVDEF[k] !== undefined ? NAVDEF[k] : k)));
   const raw = k => {
     const u = user[k];
     return typeof u === "string" && u.trim() ? u : dflt(k);
@@ -1508,10 +1521,11 @@ if (!window.__rcDatePick) {
     student: '<path d="M-86 -12L0 -50 86 -12 0 26Z"/><path d="M-48 6V42C-22 64 22 64 48 42V6M86 -12V42"/>',
     worker: '<circle r="50" stroke-width="22" stroke-dasharray="15.7 15.7"/><circle r="34"/><circle r="14"/>',
     client: '<circle cx="-38" cy="-34" r="20"/><circle cx="38" cy="-34" r="20"/><path d="M-80 48Q-38 -8-2 48M2 48Q38 -8 80 48"/>',
+    islamic: '<rect x="-60" y="-60" width="120" height="120"/><rect x="-60" y="-60" width="120" height="120" transform="rotate(45)"/><circle r="26"/>',
     staff: '<rect x="-76" y="-48" width="152" height="96" rx="14"/><circle cx="-32" cy="-10" r="15"/><path d="M-52 30Q-32 8-12 30M12 -16H54M12 4H54M12 24H38"/>'
   };
   function art(t) {
-    var ic = ICON[t] || ICON.patient;
+    var ic = ICON[{ rh: "islamic", ruqyah: "islamic", hijama: "islamic", garments: "worker", school: "student", travel: "client" }[t] || t] || ICON.patient;
     var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a3a24"/><stop offset=".6" stop-color="#0f5132"/><stop offset="1" stop-color="#1b7a56"/></linearGradient><radialGradient id="r" cx=".84" cy=".5" r=".55"><stop offset="0" stop-color="#c9a84c" stop-opacity=".38"/><stop offset="1" stop-color="#c9a84c" stop-opacity="0"/></radialGradient></defs><rect width="1000" height="300" fill="url(#g)"/><rect width="1000" height="300" fill="url(#r)"/><g fill="none" stroke="#c9a84c" stroke-opacity=".28" stroke-width="2">' + gold + '</g><path d="M40 210H300L330 160 370 250 405 185 430 210H640" fill="none" stroke="#c9a84c" stroke-opacity=".35" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(840 150)" fill="none" stroke="#f3e6bd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' + ic + '</g></svg>';
     return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
   }
@@ -1522,14 +1536,22 @@ if (!window.__rcDatePick) {
   var cached = function (m) { return lg("rcBannerImg:" + m) || ""; };
   /* default photos per management type (free Unsplash licence, served by Unsplash's image CDN, cropped to the banner ratio);
      the drawn art stays as the background / fallback while a photo loads or if it cannot be reached */
+  /* no people at all (modest, religious feel for Ruqyah / Hijama): mosque prayer rug, Qur'an with dates and prayer beads, honeycomb ... */
   var PHOTO = {
-    patient: "photo-1758691461935-202e2ef6b69f",
-    student: "photo-1758270705482-cee87ea98738",
-    worker: "photo-1653280662710-1cac52cde6d7",
-    client: "photo-1551836022-d5d88e9218df",
-    staff: "photo-1560264280-88b68371db39"
+    rh: "photo-1600814832809-579119f47045",
+    ruqyah: "photo-1587617425953-9075d28b8c46",
+    hijama: "photo-1623018697148-8350cf18e64e",
+    garments: "photo-1705250466297-90035b3a2b26",
+    school: "photo-1495446815901-a7297e633e8d",
+    travel: "photo-1581553673739-c4906b5d0de8",
+    patient: "photo-1700832082200-af7deeb63d9b",
+    student: "photo-1604866830893-c13cafa515d5",
+    worker: "photo-1685320198649-781e83a61de4",
+    client: "photo-1612367980327-7454a7276aa7",
+    staff: "photo-1531346878377-a5be20888e57"
   };
-  var photo = function (m) { return PHOTO[m] ? "https://images.unsplash.com/" + PHOTO[m] + "?auto=format&fit=crop&crop=faces,edges&w=1000&h=300&q=70" : ""; };
+  var bkey = function () { return orgKey(lg("rcCT")) || mtype(); };
+  var photo = function (m) { return PHOTO[m] ? "https://images.unsplash.com/" + PHOTO[m] + "?auto=format&fit=crop&crop=entropy&w=1000&h=300&q=70" : ""; };
   var dflt = function (m) { return photo(m) || art(m); };
 
   /* ---- tag line (inside the heading card; editable like any label: data-l="tagline") ---- */
@@ -1545,7 +1567,7 @@ if (!window.__rcDatePick) {
       if (tw && tw.nextSibling) h.insertBefore(t, tw.nextSibling); else h.appendChild(t);
     }
     var m = mtype();
-    var s = lg("rcTagline") || (m && LB_PRESETS[m].tagline) || (m ? LB_BASE.tagline : "");
+    var s = lg("rcTagline") || ORG_TAG[orgKey(lg("rcCT"))] || (m && LB_PRESETS[m].tagline) || (m ? LB_BASE.tagline : "");
     var tn = t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild : null;
     if ((tn ? tn.nodeValue : "") !== s) { if (tn) tn.nodeValue = s; else t.insertBefore(document.createTextNode(s), t.firstChild); }
     t.style.display = s ? "" : "none";
@@ -1565,18 +1587,18 @@ if (!window.__rcDatePick) {
       b.querySelector(".rc-ban-ed").onclick = openSheet;
       top.parentNode.insertBefore(b, top.nextSibling);
     }
-    var m = mtype(), im = b.querySelector("img");
-    var src = m ? (cached(m) || dflt(m)) : "";
+    var m = mtype(), bk = bkey(), im = b.querySelector("img");
+    var src = bk ? ((m && cached(m)) || dflt(bk)) : "";
     if (im.getAttribute("src") !== src) {
       if (src) {
         im.classList.remove("on");
         im.onload = function () { im.classList.add("on"); };
-        im.onerror = function () { if (im.getAttribute("src") !== art(m)) im.setAttribute("src", art(m)); else im.classList.add("on"); };
+        im.onerror = function () { if (im.getAttribute("src") !== art(bk)) im.setAttribute("src", art(bk)); else im.classList.add("on"); };
         im.setAttribute("src", src);
         if (im.complete && im.naturalWidth) im.classList.add("on");
       } else im.removeAttribute("src");
     }
-    b.style.backgroundImage = m ? 'url("' + art(m) + '")' : "";
+    b.style.backgroundImage = bk ? 'url("' + art(bk) + '")' : "";
     b.style.backgroundSize = "cover";
     b.style.visibility = src ? "" : "hidden";
     root.classList.add("rc-ban");
@@ -1584,6 +1606,7 @@ if (!window.__rcDatePick) {
   function both() { renderTag(); renderBanner(); }
   both();
   addEventListener("rc-mgmt", both);
+  addEventListener("rc-org", both);
   addEventListener("pageshow", both);
 
   /* ---- change the banner (edit mode only) ---- */
@@ -1624,7 +1647,7 @@ if (!window.__rcDatePick) {
     ov.innerHTML = '<div class="rc-ban-box"><div class="rc-ban-h">Banner image</div><img class="rc-ban-pv" alt=""><div class="rc-ban-msg"></div><input type="file" accept="image/*" hidden><div class="rc-ban-bt"><button type="button" class="b-def">Default</button><button type="button" class="b-x">Cancel</button><button type="button" class="b-ok">Choose photo</button></div></div>';
     document.body.appendChild(ov);
     var pv = ov.querySelector(".rc-ban-pv"), msg = ov.querySelector(".rc-ban-msg"), fi = ov.querySelector("input");
-    pv.src = cached(m) || dflt(m);
+    pv.src = cached(m) || dflt(bkey());
     var close = function () { ov.remove(); };
     ov.onclick = function (e) { if (e.target === ov) close(); };
     ov.querySelector(".b-x").onclick = close;
@@ -1648,9 +1671,10 @@ if (!window.__rcDatePick) {
       loadUserBase(u).then(function (res) {
         if (!res || !res.d) return;
         userRef = res.ref;
+        ls("rcCT", String(res.d.centreType || ""));
         var bs = res.d.banners || {};
         Object.keys(LB_PRESETS).forEach(function (k) { ls("rcBannerImg:" + k, typeof bs[k] === "string" && bs[k] ? bs[k] : null); });
-        renderBanner();
+        both();
       }).catch(function () {});
     });
   } catch (e) {}
