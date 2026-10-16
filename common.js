@@ -37,30 +37,30 @@ const LB_BASE = {
   rmsgMissed: "Missed yesterday. Please share a new time.",
   waHello: "Assalamu Alaikum, {name}. {msg}",
   billingTitle: "Billing", dashboardTitle: "Dashboard", msgNoPerson: "No {person}!", notFound: "Not found",
-  banner: "Care, simply managed"
+  tagline: "Care, simply managed"
 };
 let MT_SEL_VAL = ""; /* ফাইলের শুরুতে, কারণ নিচের autoMountEditToggles লোডের সময়ই এটা ব্যবহার করে */
 /* শুধু শুরুর প্রিসেট, সীমা নয় */
 const LB_PRESETS = {
-  patient: { banner: "Care, simply managed" },
-  student: { banner: "Every student, every step", person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard",
+  patient: { tagline: "Care, simply managed" },
+  student: { tagline: "Every student, every step", person: "Student", persons: "students", appointmentTitle: "Admission", billingTitle: "Fees", dashboardTitle: "Student Dashboard",
     doctor: "Teacher", slipTitle: "Admission Slip", slipId: "Student ID", bnPerson: "স্টুডেন্ট",
     msgOk: "Admission Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ভর্তি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
-  worker: { banner: "Your team, organised", person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard",
+  worker: { tagline: "Your team, organised", person: "Worker", persons: "workers", appointmentTitle: "Work Entry", billingTitle: "Payment", dashboardTitle: "Worker Dashboard",
     doctor: "Supervisor", slipTitle: "Work Slip", slipId: "Worker ID", bnPerson: "কর্মী",
     msgOk: "Work Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার কাজ {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
-  client: { banner: "Every client, well served", person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard",
+  client: { tagline: "Every client, well served", person: "Client", persons: "clients", appointmentTitle: "Booking", billingTitle: "Billing", dashboardTitle: "Client Dashboard",
     doctor: "Consultant", slipTitle: "Booking Slip", slipId: "Client ID", bnPerson: "ক্লায়েন্ট",
     msgOk: "Booking Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার বুকিং {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" },
-  staff: { banner: "Your staff, in one place", person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard",
+  staff: { tagline: "Your staff, in one place", person: "Staff", persons: "staff", appointmentTitle: "Staff Entry", billingTitle: "Payroll", dashboardTitle: "Staff Dashboard",
     doctor: "Manager", slipTitle: "Duty Slip", slipId: "Staff ID", bnPerson: "স্টাফ",
     msgOk: "Staff Entry Submitted Successfully!", msgWa: "আসসালামু আলাইকুম {name}, আপনার ডিউটি {date} তারিখে{time} নিশ্চিত করা হয়েছে। ধন্যবাদ।" }
 };
 /* কোন পেজে কোন কী এডিট হবে। নতুন কী যোগ করলে এখানে আর LB_BASE-এ দিন */
 const LB_PAGES = {
-  appointment: ["banner", "appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
-  dashboard: ["banner", "searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello", "symptomDx", "responseDx", "prescription"],
-  billing: ["banner", "billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
+  appointment: ["tagline", "appointmentTitle", "appointmentSub", "submit", "clear", "person", "persons", "msgFill", "msgOk", "msgWa", "msgTime"],
+  dashboard: ["tagline", "searchPh", "addCard", "emptyToday", "results", "noMatch", "persons", "reminders", "rToday", "rTomorrow", "rMissed", "rmsgToday", "rmsgTomorrow", "rmsgMissed", "waHello", "symptomDx", "responseDx", "prescription"],
+  billing: ["tagline", "billingTitle", "submit", "clear", "person", "msgNoPerson", "notFound"]
 };
 
 const PAGE_ICONS = { appointment: "📅", billing: "🧾", dashboard: "📊" };
@@ -438,7 +438,7 @@ export function createLabels(data, save) {
         if (st.pg) { const t = st.none ? "" : (st.custom || PAGE_ICONS[st.pg] || ""); m.i = [t, (st.hide || !t) ? 1 : 0]; }
         const ls = document.getElementById("rc-lstyle");
         m.s = ls ? ls.textContent : "";
-        try { const ub = user.banner; if (typeof ub === "string" && ub.trim()) localStorage.setItem("rcBanner", ub); else localStorage.removeItem("rcBanner"); } catch (e2) {}
+        try { const ub = user.tagline; if (typeof ub === "string" && ub.trim()) localStorage.setItem("rcTagline", ub); else localStorage.removeItem("rcTagline"); } catch (e2) {}
         const ti = document.getElementById("ti");
         if (ti && preset.dashboardTitle) m.t = ti.textContent;
         localStorage.setItem("rcLT:" + location.pathname, JSON.stringify(m));
@@ -1424,32 +1424,6 @@ if (!window.__rcDatePick) {
     document.body.appendChild(side);
     document.body.classList.add("rc-has-nav", "rc-hide-topnav");
 
-    /* banner card under the heading card: text follows the management type; editable through the normal label
-       system (data-l="banner" gets its pencil in edit mode on the Appointment / Billing / Dashboard pages) */
-    function renderBanner() {
-      var root = document.documentElement;
-      if (root.classList.contains("rc-pub")) return;
-      var top = document.querySelector(".topbar-wrapper");
-      if (!top) return;
-      var b = document.getElementById("rc-banner");
-      if (!b) {
-        b = document.createElement("div");
-        b.id = "rc-banner";
-        b.innerHTML = '<span class="rc-ban-t" data-l="banner"></span>';
-        top.parentNode.insertBefore(b, top.nextSibling);
-      }
-      var t = b.firstChild, m = String(lsGet("mgmtType") || "").toLowerCase();
-      var s = lsGet("rcBanner") || (LB_PRESETS[m] && LB_PRESETS[m].banner) || (m ? LB_BASE.banner : "");
-      var tn = t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild : null;
-      if ((tn ? tn.nodeValue : "") !== s) {
-        if (tn) tn.nodeValue = s; else t.insertBefore(document.createTextNode(s), t.firstChild);
-      }
-      b.style.visibility = s ? "" : "hidden";
-      root.classList.add("rc-ban");
-    }
-    renderBanner();
-    addEventListener("rc-mgmt", renderBanner);
-    addEventListener("pageshow", renderBanner);
     var list = side.querySelector(".rc-sd-l");
 
     /* dark mode switch */
@@ -1521,3 +1495,142 @@ if (!window.__rcDatePick) {
   else boot();
 })();
 /* ===== RC-SHELL:END ===== */
+
+/* ===== RC-BANNER: tag line under the heading + banner image card below the heading card ===== */
+(function () {
+  var root = document.documentElement;
+  if (root.classList.contains("rc-pub")) return;
+  var lg = function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  var ls = function (k, v) { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} };
+  var gold = '<circle cx="840" cy="150" r="70" /><circle cx="840" cy="150" r="115" /><circle cx="840" cy="150" r="165" /><circle cx="840" cy="150" r="220" />';
+  var ICON = {
+    patient: '<path d="M0 44C-78 -6-66 -62-27 -62-10 -62 0 -50 0 -42 0 -50 10 -62 27 -62 66 -62 78 -6 0 44Z"/><path d="M0 -22V18M-20 -2H20"/>',
+    student: '<path d="M-86 -12L0 -50 86 -12 0 26Z"/><path d="M-48 6V42C-22 64 22 64 48 42V6M86 -12V42"/>',
+    worker: '<circle r="50" stroke-width="22" stroke-dasharray="15.7 15.7"/><circle r="34"/><circle r="14"/>',
+    client: '<circle cx="-38" cy="-34" r="20"/><circle cx="38" cy="-34" r="20"/><path d="M-80 48Q-38 -8-2 48M2 48Q38 -8 80 48"/>',
+    staff: '<rect x="-76" y="-48" width="152" height="96" rx="14"/><circle cx="-32" cy="-10" r="15"/><path d="M-52 30Q-32 8-12 30M12 -16H54M12 4H54M12 24H38"/>'
+  };
+  function art(t) {
+    var ic = ICON[t] || ICON.patient;
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" preserveAspectRatio="xMidYMid slice"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0a3a24"/><stop offset=".6" stop-color="#0f5132"/><stop offset="1" stop-color="#1b7a56"/></linearGradient><radialGradient id="r" cx=".84" cy=".5" r=".55"><stop offset="0" stop-color="#c9a84c" stop-opacity=".38"/><stop offset="1" stop-color="#c9a84c" stop-opacity="0"/></radialGradient></defs><rect width="1000" height="300" fill="url(#g)"/><rect width="1000" height="300" fill="url(#r)"/><g fill="none" stroke="#c9a84c" stroke-opacity=".28" stroke-width="2">' + gold + '</g><path d="M40 210H300L330 160 370 250 405 185 430 210H640" fill="none" stroke="#c9a84c" stroke-opacity=".35" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><g transform="translate(840 150)" fill="none" stroke="#f3e6bd" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">' + ic + '</g></svg>';
+    return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+  }
+  function mtype() {
+    var m = String(lg("mgmtType") || "").toLowerCase();
+    return LB_PRESETS[m] ? m : "";
+  }
+  var cached = function (m) { return lg("rcBannerImg:" + m) || ""; };
+
+  /* ---- tag line (inside the heading card; editable like any label: data-l="tagline") ---- */
+  function renderTag() {
+    var h = document.getElementById("header-inner");
+    if (!h) return;
+    var t = document.getElementById("rc-tag");
+    if (!t) {
+      t = document.createElement("div");
+      t.id = "rc-tag";
+      t.setAttribute("data-l", "tagline");
+      var tw = h.querySelector(".titlewrapper");
+      if (tw && tw.nextSibling) h.insertBefore(t, tw.nextSibling); else h.appendChild(t);
+    }
+    var m = mtype();
+    var s = lg("rcTagline") || (m && LB_PRESETS[m].tagline) || (m ? LB_BASE.tagline : "");
+    var tn = t.firstChild && t.firstChild.nodeType === 3 ? t.firstChild : null;
+    if ((tn ? tn.nodeValue : "") !== s) { if (tn) tn.nodeValue = s; else t.insertBefore(document.createTextNode(s), t.firstChild); }
+    t.style.display = s ? "" : "none";
+  }
+
+  /* ---- banner image card ---- */
+  var userRef = null;
+  function renderBanner() {
+    var top = document.querySelector(".topbar-wrapper");
+    if (!top) return;
+    var b = document.getElementById("rc-banner");
+    if (!b) {
+      b = document.createElement("div");
+      b.id = "rc-banner";
+      b.innerHTML = '<img alt="" decoding="async"><button type="button" class="rc-ban-ed" aria-label="Change banner">✎ Banner</button>';
+      b.querySelector(".rc-ban-ed").onclick = openSheet;
+      top.parentNode.insertBefore(b, top.nextSibling);
+    }
+    var m = mtype(), im = b.querySelector("img");
+    var src = m ? (cached(m) || art(m)) : "";
+    if (im.getAttribute("src") !== src) { if (src) im.setAttribute("src", src); else im.removeAttribute("src"); }
+    b.style.visibility = src ? "" : "hidden";
+    root.classList.add("rc-ban");
+  }
+  function both() { renderTag(); renderBanner(); }
+  both();
+  addEventListener("rc-mgmt", both);
+  addEventListener("pageshow", both);
+
+  /* ---- change the banner (edit mode only) ---- */
+  function resize(file) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onerror = rej;
+      fr.onload = function () {
+        var im = new Image();
+        im.onerror = rej;
+        im.onload = function () {
+          var W = 1000, H = 300, c = document.createElement("canvas");
+          c.width = W; c.height = H;
+          var x = c.getContext("2d"), k = Math.max(W / im.width, H / im.height), w = im.width * k, h = im.height * k;
+          x.drawImage(im, (W - w) / 2, (H - h) / 2, w, h);
+          res(c.toDataURL("image/jpeg", 0.82));
+        };
+        im.src = fr.result;
+      };
+      fr.readAsDataURL(file);
+    });
+  }
+  async function save(m, v) {
+    var u = auth.currentUser;
+    if (!u) throw new Error("not signed in");
+    if (!userRef) { var r0 = await loadUserBase(u); userRef = r0 && r0.ref; }
+    if (!userRef) throw new Error("no user");
+    var o = {}; o["banners." + m] = v || "";
+    await UPD(userRef, o);
+    ls("rcBannerImg:" + m, v || null);
+    renderBanner();
+  }
+  function openSheet() {
+    var m = mtype();
+    if (!m || document.getElementById("rc-ban-ov")) return;
+    var ov = document.createElement("div");
+    ov.id = "rc-ban-ov";
+    ov.innerHTML = '<div class="rc-ban-box"><div class="rc-ban-h">Banner image</div><img class="rc-ban-pv" alt=""><div class="rc-ban-msg"></div><input type="file" accept="image/*" hidden><div class="rc-ban-bt"><button type="button" class="b-def">Default</button><button type="button" class="b-x">Cancel</button><button type="button" class="b-ok">Choose photo</button></div></div>';
+    document.body.appendChild(ov);
+    var pv = ov.querySelector(".rc-ban-pv"), msg = ov.querySelector(".rc-ban-msg"), fi = ov.querySelector("input");
+    pv.src = cached(m) || art(m);
+    var close = function () { ov.remove(); };
+    ov.onclick = function (e) { if (e.target === ov) close(); };
+    ov.querySelector(".b-x").onclick = close;
+    ov.querySelector(".b-ok").onclick = function () { fi.click(); };
+    ov.querySelector(".b-def").onclick = async function () {
+      msg.textContent = "Saving…";
+      try { await save(m, ""); close(); } catch (e) { msg.textContent = "Could not save. Please try again."; }
+    };
+    fi.onchange = async function () {
+      var f = fi.files && fi.files[0];
+      if (!f) return;
+      msg.textContent = "Saving…";
+      try { var d = await resize(f); pv.src = d; await save(m, d); close(); } catch (e) { msg.textContent = "Could not save. Please try again."; }
+    };
+  }
+
+  /* ---- pick up banners saved on another device ---- */
+  try {
+    r(auth, function (u) {
+      if (!u) return;
+      loadUserBase(u).then(function (res) {
+        if (!res || !res.d) return;
+        userRef = res.ref;
+        var bs = res.d.banners || {};
+        Object.keys(LB_PRESETS).forEach(function (k) { ls("rcBannerImg:" + k, typeof bs[k] === "string" && bs[k] ? bs[k] : null); });
+        renderBanner();
+      }).catch(function () {});
+    });
+  } catch (e) {}
+})();
+
