@@ -1520,6 +1520,17 @@ if (!window.__rcDatePick) {
     return LB_PRESETS[m] ? m : "";
   }
   var cached = function (m) { return lg("rcBannerImg:" + m) || ""; };
+  /* default photos per management type (free Unsplash licence, served by Unsplash's image CDN, cropped to the banner ratio);
+     the drawn art stays as the background / fallback while a photo loads or if it cannot be reached */
+  var PHOTO = {
+    patient: "photo-1758691461935-202e2ef6b69f",
+    student: "photo-1758270705482-cee87ea98738",
+    worker: "photo-1653280662710-1cac52cde6d7",
+    client: "photo-1551836022-d5d88e9218df",
+    staff: "photo-1560264280-88b68371db39"
+  };
+  var photo = function (m) { return PHOTO[m] ? "https://images.unsplash.com/" + PHOTO[m] + "?auto=format&fit=crop&crop=faces,edges&w=1000&h=300&q=70" : ""; };
+  var dflt = function (m) { return photo(m) || art(m); };
 
   /* ---- tag line (inside the heading card; editable like any label: data-l="tagline") ---- */
   function renderTag() {
@@ -1548,14 +1559,25 @@ if (!window.__rcDatePick) {
     var b = document.getElementById("rc-banner");
     if (!b) {
       b = document.createElement("div");
+      var pc = document.createElement("link"); pc.rel = "preconnect"; pc.href = "https://images.unsplash.com"; document.head.appendChild(pc);
       b.id = "rc-banner";
       b.innerHTML = '<img alt="" decoding="async"><button type="button" class="rc-ban-ed" aria-label="Change banner">✎ Banner</button>';
       b.querySelector(".rc-ban-ed").onclick = openSheet;
       top.parentNode.insertBefore(b, top.nextSibling);
     }
     var m = mtype(), im = b.querySelector("img");
-    var src = m ? (cached(m) || art(m)) : "";
-    if (im.getAttribute("src") !== src) { if (src) im.setAttribute("src", src); else im.removeAttribute("src"); }
+    var src = m ? (cached(m) || dflt(m)) : "";
+    if (im.getAttribute("src") !== src) {
+      if (src) {
+        im.classList.remove("on");
+        im.onload = function () { im.classList.add("on"); };
+        im.onerror = function () { if (im.getAttribute("src") !== art(m)) im.setAttribute("src", art(m)); else im.classList.add("on"); };
+        im.setAttribute("src", src);
+        if (im.complete && im.naturalWidth) im.classList.add("on");
+      } else im.removeAttribute("src");
+    }
+    b.style.backgroundImage = m ? 'url("' + art(m) + '")' : "";
+    b.style.backgroundSize = "cover";
     b.style.visibility = src ? "" : "hidden";
     root.classList.add("rc-ban");
   }
@@ -1602,7 +1624,7 @@ if (!window.__rcDatePick) {
     ov.innerHTML = '<div class="rc-ban-box"><div class="rc-ban-h">Banner image</div><img class="rc-ban-pv" alt=""><div class="rc-ban-msg"></div><input type="file" accept="image/*" hidden><div class="rc-ban-bt"><button type="button" class="b-def">Default</button><button type="button" class="b-x">Cancel</button><button type="button" class="b-ok">Choose photo</button></div></div>';
     document.body.appendChild(ov);
     var pv = ov.querySelector(".rc-ban-pv"), msg = ov.querySelector(".rc-ban-msg"), fi = ov.querySelector("input");
-    pv.src = cached(m) || art(m);
+    pv.src = cached(m) || dflt(m);
     var close = function () { ov.remove(); };
     ov.onclick = function (e) { if (e.target === ov) close(); };
     ov.querySelector(".b-x").onclick = close;
