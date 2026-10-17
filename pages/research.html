@@ -132,14 +132,14 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  const bq=raw.trim();
  if(!q&&/[\u0980-\u09FF]/.test(bq)){if(bq.length<2){info.textContent="কমপক্ষে ২টি অক্ষর লিখুন";return}
   await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
-  const tv=(()=>{const u=new Set();let o=0;rb.slice(0,40).forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে"+(rb.length>40?" (প্রথম ৪০টি)":"");allCopy(info,rb.slice(0,40).flatMap(it=>lst(it,!1)));
-  rb.slice(0,40).forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);if(rb.length<=8)c.querySelector(".rs-rh").click()});return}
+  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে"+"";allCopy(info,rb.flatMap(it=>lst(it,!1)));
+  rb.forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);c.querySelector(".rs-rh").click()});return}
  if(!q){info.textContent="রুটে চাপ দিন — রূপ ও বাংলা অর্থসহ আয়াত দেখাবে";return}
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
- const LIM=40;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
- res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);if(res.length<=8||i===0&&it.sc>=80)c.querySelector(".rs-rh").click()})}
+ const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
+ res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
 function init(){const q=$("rsQ"),pad=$("rsPad");
  "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ء ة ى أ إ آ ؤ ئ".split(" ").forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value+=ch;go()};pad.appendChild(b)});
  const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);go()};pad.appendChild(bs);
