@@ -4,3 +4,10 @@
 [mustafa0x/quran-morphology](https://github.com/mustafa0x/quran-morphology), a fork of the
 Quranic Arabic Corpus morphology v0.4 (Kais Dukes, https://corpus.quran.com) - licensed under the GNU General Public License.
 Root assignments are research data, not a fatwa/tafsir source; verify against classical lexicons where it matters.
+
+## Bangla (Research page)
+
+- `quran-wbw-bn.json` and the word meanings inside `quran-roots.json`: from
+  [SadaqaWorks/Word-By-Word-Quran-Android](https://github.com/SadaqaWorks/Word-By-Word-Quran-Android) (MIT), `wordbyword.db`.
+- `quran-bn.json`: Bangla verse translation by Muhiuddin Khan, taken from [tanzil.net](https://tanzil.net) through
+  [risan/quran-json](https://github.com/risan/quran-json) (CC BY-SA 4.0). Built by `tools/build-quran-bn.py`.
