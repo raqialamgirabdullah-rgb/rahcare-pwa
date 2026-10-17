@@ -60,9 +60,8 @@ const bn2=n=>String(n).replace(/\d/g,d=>"০১২৩৪৫৬৭৮৯"[d]);
 async function loadRoots(){if(R)return R;const j=await(await fetch(BASE+"quran-roots.json?v="+DV)).json();
 R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m])=>({t,l,m:m||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
-const loadBn=()=>BN?Promise.resolve(BN):jf("quran-bn.json").then(j=>BN=j);
-const loadWb=()=>WB?Promise.resolve(WB):jf("quran-wbw-bn.json").then(j=>WB=j);
-function loadAyat(){return AY?Promise.resolve(AY):(ayP||(ayP=fetch(BASE+"quran-ayat.json?v="+DV).then(r=>r.json()).then(j=>AY=j)))}
+const CH={a:{},b:{},w:{}};
+const chunk=(k,s)=>CH[k][s]||(CH[k][s]=fetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).catch(e=>{delete CH[k][s];throw e}));
 function search(q){const out=[];for(const r of R){let sc=0,mf=null;
  if(r.rn===q)sc=100;
  else{const ex=r.forms.filter(f=>f.k1===q||f.k2===q||lessAl(f.k1)===q||lessAl(f.k2)===q);
@@ -78,16 +77,20 @@ function searchBn(q){const out=[];for(const r of R){const ex=[],pt=[];for(const 
  if(ex.length)out.push({r,sc:60,mf:ex,bn:1});else if(pt.length)out.push({r,sc:40,mf:pt,bn:1})}
  return out.sort((a,b)=>b.sc-a.sc||b.mf.length-a.mf.length||b.r.n-a.r.n)}
 function verses(host,refs){let shown=0;const step=15;
- const more=el("button","rs-more","আরও আয়াত দেখান");more.type="button";
- const add=async()=>{const[ay,bn]=await Promise.all([loadAyat(),loadBn()]);const end=Math.min(refs.length,shown+step);
-  for(;shown<end;shown++){const [s,a,w]=refs[shown].split(":").map(Number),t=(ay[s-1]||[])[a-1];if(t==null)continue;
-   const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a)),tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb",(bn[s-1]||[])[a-1]||""),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
+ const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
+ const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
+  const batch=refs.slice(shown,shown+step).map(r=>r.split(":").map(Number));
+  try{await Promise.all([...new Set(batch.map(x=>x[0]))].map(s=>Promise.all([chunk("a",s),chunk("b",s)])))}
+  catch(e){more.disabled=false;more.textContent="লোড করা যায়নি — আবার চেষ্টা করতে চাপুন";return}
+  for(const [s,a,w] of batch){shown++;const t=((await chunk("a",s))||[])[a-1];if(t==null)continue;const bn=(await chunk("b",s))||[];
+   const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a));
+   const tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb",bn[a-1]||""),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
    wb.type="button";
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
-    try{const m=((await loadWb())[s-1]||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি";wl=false}};
+    try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
    box.append(rf,tx,tb,wb,wh);host.insertBefore(box,more)}
-  more.style.display=shown<refs.length?"":"none";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"};
+  more.disabled=false;more.style.display=shown<refs.length?"":"none";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"};
  host.appendChild(more);more.onclick=add;add()}
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  l=el("div","rs-rl rs-ar"),
@@ -100,6 +103,7 @@ function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
    w.append(fw,fm,fl);row.append(w,ct);let vb=false;
    row.onclick=()=>{row.classList.toggle("open");if(vb)return;vb=true;verses(vh,f.refs)};
    fb.append(row,vh)});
+  {const f0=fb.querySelector(".rs-f");f0&&f0.click()}
   if(it.mf&&it.sc<60&&list.length<r.forms.length){const all=el("button","rs-more","এই রুটের সব রূপ দেখান ("+bn2(r.forms.length)+")");all.type="button";all.onclick=()=>{fb.innerHTML="";built=false;it.sc=100;c.classList.remove("open");h.onclick()};fb.append(all)}};
  return c}
 let tm=0;
@@ -109,7 +113,7 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
   await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
   info.textContent="বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে"+(rb.length>40?" (প্রথম ৪০টি)":"");
   rb.slice(0,40).forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);if(rb.length<=3)c.querySelector(".rs-rh").click()});return}
- if(!q){info.textContent="";return}
+ if(!q){info.textContent="রুটে চাপ দিন — রূপ ও বাংলা অর্থসহ আয়াত দেখাবে";return}
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
