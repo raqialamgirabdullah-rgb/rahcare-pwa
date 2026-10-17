@@ -107,7 +107,7 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
   if(r.r3===q3)sc=50;else{const p=r.forms.filter(f=>f.k3.includes(q3));if(p.length){sc=35;mf=p}}
   if(sc)out.push({r,sc,mf,loose:1})}}
  return out.sort((a,b)=>b.sc-a.sc||b.r.n-a.r.n)}
-let ALLF=true;
+let ALLF=false;
 function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.includes(q)){qs=g.slice();break}
  for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;if(qs.some(k=>f.m===k))ex.push(f);else if(qs.some(k=>f.m.includes(k)))pt.push(f)}
   if(ex.length||pt.length)out.push({r,sc:ex.length?60:40,mf:ex.concat(pt),bn:1})}
@@ -185,11 +185,11 @@ const lst=(it,exact)=>it.bn?(ALLF?it.r.forms:it.mf):((exact||it.sc>=60||!it.mf)?
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  l=el("div","rs-rl rs-ar"),
  m=el("div","rs-rm"),ch=el("div","rs-ch","▾");
- {const L=lst(it,exact),v=vset(L);m.innerHTML="<b>"+bn2(v.o)+"</b>টি ফলাফল · <b>"+bn2(L.length)+"</b>টি রূপ"+(v.o!==r.n?"<br><small>(রুটে মোট "+bn2(r.n)+"টি"+(it.bn&&!ALLF?" — “"+(window.__bq||"")+"” অর্থে মিলেছে":"")+")</small>":"")}
+ {const L=lst(it,exact),v=vset(L);m.innerHTML="<b>"+bn2(v.o)+"</b>টি ফলাফল · <b>"+bn2(L.length)+"</b>টি রূপ"+(v.o!==r.n&&!(it.bn&&!ALLF)?"<br><small>(রুটে মোট "+bn2(r.n)+"টি)</small>":"")}
  [...r.r].forEach(x=>l.appendChild(el("span",null,x)));h.append(l,m,ch);const fb=el("div","rs-forms");c.append(h,fb);let built=false;
  const list=lst(it,exact);
  h.onclick=()=>{c.classList.toggle("open");if(built)return;built=true;
-  {const L=lst(it,exact),v=vset(L),sm=el("div","rs-sum"),b=el("b",null,bn2(v.o)+"টি ফলাফল");sm.append(b," — ",el("span","rs-ar",[...r.r].join(" ")));if(v.o!==r.n)sm.append(" (রুটে মোট "+bn2(r.n)+"টি)");fb.append(sm)}
+  {const L=lst(it,exact),v=vset(L),sm=el("div","rs-sum"),b=el("b",null,bn2(v.o)+"টি ফলাফল");sm.append(b," — ",el("span","rs-ar",[...r.r].join(" ")));if(v.o!==r.n&&!(it.bn&&!ALLF))sm.append(" (রুটে মোট "+bn2(r.n)+"টি)");fb.append(sm)}
   {const set=new Set();list.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
    const cb=copyBtn("📋 এই শব্দের সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
    cb.style.margin="6px 0";fb.append(cb)}
@@ -232,7 +232,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");
   rs.innerHTML="";rs.classList.add("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   const hd=el("div","rs-rh2","“"+[...p].join(" ")+"” দিয়ে শুরু "+bn2(l.length)+"টি রুট — একটি বেছে নিন");rs.appendChild(hd);
   l.slice().sort((a,b)=>a.rn<b.rn?-1:a.rn>b.rn?1:0).forEach(r=>{const row=el("div","rs-ri"),b=el("b",null,[...r.rn].join(" ")),c=el("span",null,bn2(r.n)+" বার");row.append(b,c);row.onclick=()=>{q.value=r.rn;rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
- const go=()=>(ALLF=true,run()).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
+ const go=()=>(ALLF=false,run()).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
