@@ -70,8 +70,8 @@ async function loadRoots(){if(R)return R;const j=await rsFetch(BASE+"quran-roots
 R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m])=>({t,l,m:m||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
 const CH={a:{},b:{},w:{}};
-let actN=0;const qN=[];const lim=f=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift();n&&n()})};actN<5?run():qN.push(run)});
-const chunk=(k,s)=>CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}}).catch(e=>{delete CH[k][s];throw e}));
+let actN=0;const qN=[],qL=[];const lim=(f,low)=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift()||qL.shift();n&&n()})};if(actN<5&&(!low||!qN.length))run();else(low?qL:qN).push(run)});
+const chunk=(k,s,low)=>CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}},low).catch(e=>{delete CH[k][s];throw e}));
 function search(q){const out=[];for(const r of R){let sc=0,mf=null;
  if(r.rn===q)sc=100;
  else{const ex=r.forms.filter(f=>f.k1===q||f.k2===q||lessAl(f.k1)===q||lessAl(f.k2)===q);
@@ -137,11 +137,12 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
  row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
 function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.length,1);
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
- const one=async([s,a,w])=>{const t=((await chunk("a",s))||[])[a-1];if(t==null)return null;const bn=(await chunk("b",s))||[];
+ const one=async([s,a,w])=>{const[A,B]=await Promise.all([chunk("a",s),chunk("b",s)]);const t=(A||[])[a-1];if(t==null)return null;const bn=B||[];
    const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a));
    const tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb"),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
    wb.type="button";
-   {let g=fgl;try{const m=((await chunk("w",s))||[])[a-1].split("|")[w-1];if(m)g=m}catch(e){}markBn(tb,bn[a-1]||"",g)}
+   markBn(tb,bn[a-1]||"",fgl);
+   chunk("w",s,1).then(W=>{const m=(W[a-1]||"").split("|")[w-1];if(m&&m!==fgl)markBn(tb,bn[a-1]||"",m)}).catch(()=>{});
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
     try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
@@ -205,5 +206,6 @@ function init(){const q=$("rsQ"),pad=$("rsPad");
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
 loadRoots().catch(()=>{});
+setTimeout(async()=>{try{if(navigator.connection&&navigator.connection.saveData)return;for(let z=1;z<=114;z++){for(const k of["a","b"]){try{await chunk(k,z,1)}catch(e){}}}}catch(e){}},2500);
 requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");$("rsBox").style.visibility="visible";init()});
 </script>
