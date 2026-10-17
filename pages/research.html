@@ -90,7 +90,7 @@ function copyBtn(label,get){const b=el("button","rs-wb",label);b.type="button";b
 function allCopy(info,forms){const set=new Set();forms.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!all.length)return;
  const b=copyBtn("📋 সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
  b.style.cssText+=";display:block;margin:6px 0 0";info.appendChild(b)}
-function verses(host,refs,fgl){let shown=0;const step=15;
+function verses(host,refs,fgl){let shown=0;const step=Math.max(refs.length,1);
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
  const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
   const batch=refs.slice(shown,shown+step).map(r=>r.split(":").map(Number));
