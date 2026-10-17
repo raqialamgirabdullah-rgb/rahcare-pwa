@@ -83,6 +83,9 @@ function bnHit(w,toks){w=bnw(w);if(w.length<2)return false;for(const k of toks){
 function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));
  const ws=String(text||"").split(" "),hit=ws.map(w=>toks.length&&bnHit(w,toks));let i=0;
  while(i<ws.length){if(i)box.appendChild(document.createTextNode(" "));if(hit[i]){let j=i;while(j+1<ws.length&&hit[j+1])j++;box.appendChild(el("mark",null,ws.slice(i,j+1).join(" ")));i=j+1}else{box.appendChild(document.createTextNode(ws[i]));i++}}}
+async function vtext(s,a){const t=((await chunk("a",s))||[])[a-1],b=((await chunk("b",s))||[])[a-1];return t==null?"":"সূরা "+SN[s-1]+" — "+s+":"+a+"\n"+t+"\n"+(b||"")}
+async function copyTxt(x){try{await navigator.clipboard.writeText(x);return true}catch(e){try{const t=document.createElement("textarea");t.value=x;t.style.cssText="position:fixed;opacity:0";document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();return ok}catch(e2){return false}}}
+function copyBtn(label,get){const b=el("button","rs-wb",label);b.type="button";b.onclick=async()=>{b.disabled=true;const o=b.textContent;b.textContent="কপি হচ্ছে…";let ok=false;try{ok=await copyTxt(await get())}catch(e){}b.textContent=ok?"✅ কপি হয়েছে":"কপি করা যায়নি";setTimeout(()=>{b.textContent=o;b.disabled=false},1500)};return b}
 function verses(host,refs,fgl){let shown=0;const step=15;
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
  const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
@@ -97,7 +100,7 @@ function verses(host,refs,fgl){let shown=0;const step=15;
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
     try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
-   box.append(rf,tx,tb,wb,wh);host.insertBefore(box,more)}
+   box.append(rf,tx,tb,wb,copyBtn("📋 কপি",()=>vtext(s,a)),wh);host.insertBefore(box,more)}
   more.disabled=false;more.style.display=shown<refs.length?"":"none";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"};
  host.appendChild(more);more.onclick=add;add()}
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
@@ -107,6 +110,9 @@ function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  [...r.r].forEach(x=>l.appendChild(el("span",null,x)));h.append(l,m,ch);const fb=el("div","rs-forms");c.append(h,fb);let built=false;
  const list=(exact||it.sc>=60||!it.mf)?r.forms:it.mf;
  h.onclick=()=>{c.classList.toggle("open");if(built)return;built=true;
+  {const set=new Set();list.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
+   const cb=copyBtn("📋 এই শব্দের সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
+   cb.style.margin="6px 0";fb.append(cb)}
   [...list].sort((a,b)=>b.refs.length-a.refs.length).forEach(f=>{const row=el("div","rs-f"),w=el("div"),fw=el("div","rs-fw rs-ar",f.t),fm=el("div","rs-fm",f.m||""),fl=el("div","rs-fl rs-ar",f.l||""),ct=el("div","rs-fc",bn2(f.refs.length)),vh=el("div","rs-v");
    w.append(fw,fm,fl);row.append(w,ct);let vb=false;
    row.onclick=()=>{row.classList.toggle("open");if(vb)return;vb=true;verses(vh,f.refs,f.m)};
