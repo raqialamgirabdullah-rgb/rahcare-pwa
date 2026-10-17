@@ -69,7 +69,8 @@ async function loadRoots(){if(R)return R;const j=await(await fetch(BASE+"quran-r
 R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m])=>({t,l,m:m||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
 const CH={a:{},b:{},w:{}};
-const chunk=(k,s)=>CH[k][s]||(CH[k][s]=fetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV).then(r=>{if(!r.ok)throw new Error(r.status);return r.json()}).catch(e=>{delete CH[k][s];throw e}));
+let actN=0;const qN=[];const lim=f=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift();n&&n()})};actN<5?run():qN.push(run)});
+const chunk=(k,s)=>CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{const r=await fetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV);if(!r.ok)throw new Error(r.status);return await r.json()}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}}).catch(e=>{delete CH[k][s];throw e}));
 function search(q){const out=[];for(const r of R){let sc=0,mf=null;
  if(r.rn===q)sc=100;
  else{const ex=r.forms.filter(f=>f.k1===q||f.k2===q||lessAl(f.k1)===q||lessAl(f.k2)===q);
@@ -128,13 +129,9 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
  b2.onclick=()=>{const l=[...SELV].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!l.length)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");mergeAudio(l,out,t=>note.textContent=t)};
  selUp.push(()=>{b2.textContent="🔊 বাছাই করা আয়াত মার্জ ("+bn2(SELV.size)+")"});
  row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
-function verses(host,refs,fgl){let shown=0;const step=Math.max(refs.length,1);
+function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.length,1);
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
- const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
-  const batch=refs.slice(shown,shown+step).map(r=>r.split(":").map(Number));
-  try{await Promise.all([...new Set(batch.map(x=>x[0]))].map(s=>Promise.all([chunk("a",s),chunk("b",s),chunk("w",s).catch(()=>null)])))}
-  catch(e){more.disabled=false;more.textContent="লোড করা যায়নি — আবার চেষ্টা করতে চাপুন";return}
-  for(const [s,a,w] of batch){shown++;const t=((await chunk("a",s))||[])[a-1];if(t==null)continue;const bn=(await chunk("b",s))||[];
+ const one=async([s,a,w])=>{const t=((await chunk("a",s))||[])[a-1];if(t==null)return null;const bn=(await chunk("b",s))||[];
    const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a));
    const tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb"),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
    wb.type="button";
@@ -142,8 +139,13 @@ function verses(host,refs,fgl){let shown=0;const step=Math.max(refs.length,1);
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
     try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
-   box.append(rf,tx,tb,wb,copyBtn("📋 কপি",()=>vtext(s,a)),playBtn(s,a),selBox(s,a),wh);host.insertBefore(box,more)}
-  more.disabled=false;more.style.display=shown<refs.length?"":"none";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"};
+   box.append(rf,tx,tb,wb,copyBtn("📋 কপি",()=>vtext(s,a)),playBtn(s,a),selBox(s,a),wh);return box};
+ const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
+  const batch=fail.splice(0).concat(refs.slice(shown,shown+step).map(r=>r.split(":").map(Number)));shown=Math.min(refs.length,shown+step);
+  for(const r of batch){let box=null;try{box=await one(r)}catch(e){fail.push(r);continue}if(box)host.insertBefore(box,more)}
+  more.disabled=false;
+  if(fail.length){more.style.display="";more.textContent=bn2(fail.length)+"টি আয়াত লোড হয়নি — আবার চেষ্টা করতে চাপুন"}
+  else more.style.display="none"};
  host.appendChild(more);more.onclick=add;add()}
 const vset=l=>{const u=new Set();let o=0;l.forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))}));return{o,u:u.size}};
 const lst=(it,exact)=>(exact||it.sc>=60||!it.mf)?it.r.forms:it.mf;
