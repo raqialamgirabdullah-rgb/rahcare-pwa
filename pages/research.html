@@ -45,6 +45,13 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-wa{font-size:20px;line-height:1.7}
 .rs-wm{font-size:11.5px;direction:ltr;opacity:.85}
 .rs-more{display:block;margin:8px auto 0;border:1px solid var(--border);background:var(--card-bg);color:var(--primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px}
+.rs-rs{display:none;margin-top:8px;border:1px solid var(--border-light);border-radius:10px;background:var(--card-bg);max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.rs-rs.on{display:block}
+.rs-rs .rs-rh2{position:sticky;top:0;background:var(--card-bg);font-size:12.5px;color:var(--text-muted);padding:8px 12px;border-bottom:1px solid var(--border-light)}
+.rs-rs .rs-ri{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border-light);cursor:pointer;direction:rtl}
+.rs-rs .rs-ri:active,.rs-rs .rs-ri:hover{background:var(--primary);color:#fff}
+.rs-rs .rs-ri b{font-size:22px;font-weight:400;letter-spacing:.35em;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh",serif}
+.rs-rs .rs-ri span{font-size:12px;opacity:.75;direction:ltr;white-space:nowrap}
 </style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-sub"><div><span>আরবি হরফ বা রুট:</span><button class="rs-ex rs-ar" type="button" data-q="كتب">كتب</button><button class="rs-ex rs-ar" type="button" data-q="علم">علم</button></div><div><span>আরবি শব্দ:</span><button class="rs-ex rs-ar" type="button" data-q="الرحمن">الرحمن</button><button class="rs-ex rs-ar" type="button" data-q="الصلاة">الصلاة</button></div><div><span>বাংলা অর্থ:</span><button class="rs-ex bn" type="button" data-q="জ্ঞান">জ্ঞান</button><button class="rs-ex bn" type="button" data-q="দয়া">দয়া</button></div></div><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script type="module">
 import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
@@ -141,11 +148,19 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
 function init(){const q=$("rsQ"),pad=$("rsPad");
- "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ء ة ى أ إ آ ؤ ئ".split(" ").forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value+=ch;go()};pad.appendChild(b)});
- const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);go()};pad.appendChild(bs);
+ "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ء ة ى أ إ آ ؤ ئ".split(" ").forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value+=ch;padGo()};pad.appendChild(b)});
+ const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);padGo()};pad.appendChild(bs);
  $("rsKb").onclick=()=>pad.classList.toggle("on");
- $("rsX").onclick=()=>{q.value="";go();q.focus()};
- q.oninput=()=>{clearTimeout(tm);tm=setTimeout(go,200)};
+ $("rsX").onclick=()=>{q.value="";rs.classList.remove("on");go();q.focus()};
+ q.oninput=()=>{clearTimeout(tm);tm=setTimeout(padGo,200)};
+ const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
+ const padGo=async()=>{const p=nz(q.value);if(!pad.classList.contains("on")||!p||p.length>=3){rs.classList.remove("on");return go()}
+  try{await loadRoots()}catch(e){rs.classList.remove("on");return go()}
+  const l=R.filter(r=>r.rn.length>p.length&&r.rn.startsWith(p));
+  if(!l.length){rs.classList.remove("on");return go()}
+  rs.innerHTML="";rs.classList.add("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
+  const hd=el("div","rs-rh2","“"+[...p].join(" ")+"” দিয়ে শুরু "+bn2(l.length)+"টি রুট — একটি বেছে নিন");rs.appendChild(hd);
+  l.slice().sort((a,b)=>a.rn<b.rn?-1:a.rn>b.rn?1:0).forEach(r=>{const row=el("div","rs-ri"),b=el("b",null,[...r.rn].join(" ")),c=el("span",null,bn2(r.n)+" বার");row.append(b,c);row.onclick=()=>{q.value=r.rn;rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
  const go=()=>run().catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
