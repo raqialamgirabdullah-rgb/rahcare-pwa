@@ -113,7 +113,7 @@ export async function openHijamaPoints(docId, patientName) {
   const status = el("span", "font-size:11px;color:#64748b;white-space:nowrap");
   top.appendChild(status);
   /* WA: বর্তমান ভিউর মার্ক-করা ছবিগুলো এঁকে আপলোড করে লিংকসহ পেশেন্টের হোয়াটসঅ্যাপে পাঠায় */
-  const wa = el("button", "background:#25D366;color:#fff;border:0;border-radius:8px;font-weight:800;font-size:12px;padding:5px 10px;cursor:pointer", "WA");
+  const wa = el("button", "background:#25D366;color:#fff;border:0;border-radius:8px;font-weight:800;font-size:12px;padding:5px 10px;cursor:pointer", "Send WA");
   wa.type = "button";
   wa.title = "Send WhatsApp";
   wa.onclick = async () => {
@@ -141,9 +141,9 @@ export async function openHijamaPoints(docId, patientName) {
         blobs.push(await new Promise(ok => c.toBlob(ok, "image/png")));
       }
       const text = "*" + (patientName || "Patient") + "*\n🩸 *Hijama Points*\nDry Cup: " + d + " • Wet Cup: " + w;
-      await waSend({ phone: appt.phone, text, images: blobs, onStatus: t => { wa.textContent = t || "WA"; } });
+      await waSend({ phone: appt.phone, text, images: blobs, onStatus: t => { wa.textContent = t || "Send WA"; } });
     } catch (e) { console.error(e); alert("WA পাঠানো যায়নি"); }
-    wa.disabled = false; wa.textContent = "WA";
+    wa.disabled = false; wa.textContent = "Send WA";
   };
   top.appendChild(wa);
   const x = el("button", "border:0;background:0 0;font-size:24px;line-height:1;cursor:pointer;color:#64748b;padding:0 4px", "×");

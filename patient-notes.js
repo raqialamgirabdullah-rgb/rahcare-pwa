@@ -50,14 +50,14 @@ export function mountNotePage(kind) {
 
       // WA: এই পেজের তথ্য + ছবি পেশেন্টের হোয়াটসঅ্যাপে
       const waBtn = getText => {
-        const b = el("button", "flex:1;background:#25D366;color:#fff;border:0;border-radius:10px;font-weight:800;padding:10px 0;cursor:pointer", "WA");
+        const b = el("button", "flex:1.4;white-space:nowrap;background:#25D366;color:#fff;border:0;border-radius:10px;font-weight:800;padding:10px 0;cursor:pointer", "Send WA");
         b.type = "button";
         b.title = "Send WhatsApp";
         b.onclick = async () => {
           b.disabled = true;
           const imgs = (Array.isArray(a.uploadedImages) ? a.uploadedImages : []).filter(i => i && i.url && i.page === kind).map(i => i.url);
-          await waSend({ phone: a.phone, text: "*" + (a.name || "Patient") + "*\n" + K.icon + " *" + LB.L(K.key) + "*\n\n" + getText(), images: imgs, onStatus: t => { b.textContent = t || "WA"; } });
-          b.disabled = false; b.textContent = "WA";
+          await waSend({ phone: a.phone, text: "*" + (a.name || "Patient") + "*\n" + K.icon + " *" + LB.L(K.key) + "*\n\n" + getText(), images: imgs, onStatus: t => { b.textContent = t || "Send WA"; } });
+          b.disabled = false; b.textContent = "Send WA";
         };
         return b;
       };
@@ -151,8 +151,8 @@ export function mountNotePage(kind) {
         wa.disabled = true;
         const body = kind === "response" ? await respText() : kind === "symptom" ? [symText(), ta.value.trim()].filter(Boolean).join("\n\n") : (ta.value.trim() || "—");
         const imgs = (Array.isArray(a.uploadedImages) ? a.uploadedImages : []).filter(i => i && i.url && i.page === kind).map(i => i.url);
-        await waSend({ phone: a.phone, text: "*" + (a.name || "Patient") + "*\n" + K.icon + " *" + LB.L(K.key) + "*\n\n" + body, images: imgs, onStatus: t => { wa.textContent = t || "WA"; } });
-        wa.disabled = false; wa.textContent = "WA";
+        await waSend({ phone: a.phone, text: "*" + (a.name || "Patient") + "*\n" + K.icon + " *" + LB.L(K.key) + "*\n\n" + body, images: imgs, onStatus: t => { wa.textContent = t || "Send WA"; } });
+        wa.disabled = false; wa.textContent = "Send WA";
       };
       row.appendChild(wa);
       row.appendChild(save);
