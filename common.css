@@ -263,3 +263,11 @@ html.rc-dark{color-scheme:dark;background:#0a0f0d}
 #rc-bnav .rc-bn-pen:before{content:'';position:absolute;inset:-12px}
 /* ===== চিপ মেনুর নিচের বার (◀ ▶ ✎ ✕) শুধু Edit Mode-এ; নইলে ✕ চাপলে চিপ মুছে যেত ===== */
 body:not(.lb-on) .fc-ft{display:none!important}
+
+/* ===== রুকইয়াহ/হিজামা ক্যাটাগরি মেনু: ২ কলামের গ্রিড (ওপরে দুটি আলাদা, নিচে একটি পূর্ণ-প্রস্থ) ===== */
+#catMenu.rc-cat-grid.open{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px;min-width:230px;white-space:normal}
+#catMenu.rc-cat-grid span{font-size:13px;font-weight:600;padding:12px 14px;text-align:center;color:#33403a;background:#fff;border:1px solid #e3e8e5;border-radius:10px}
+#catMenu.rc-cat-grid span.rc-cat-both{grid-column:1/-1}
+#catMenu.rc-cat-grid span:hover{border-color:var(--primary)}
+#catMenu.rc-cat-grid span.checked,#catMenu.rc-cat-grid span.checked:hover{color:#fff;border-color:transparent;background:linear-gradient(135deg,#0f5132,#1b7a56)}
+#catMenu.rc-cat-grid .fc-ft{grid-column:1/-1}
