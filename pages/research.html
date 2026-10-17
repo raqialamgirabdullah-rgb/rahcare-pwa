@@ -15,14 +15,14 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-pad button{border:1px solid var(--border-light);background:var(--card-bg);color:inherit;border-radius:7px;padding:7px 0;font-size:21px;cursor:pointer;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh","Traditional Arabic",serif!important;font-weight:700;line-height:1.5}
 .rs-pad button:active{background:var(--primary);color:#fff}
 .rs-info{color:var(--text-muted);font-size:12.5px;margin:10px 2px}
-.rs-root{border:1px solid var(--border-light);border-radius:10px;margin-top:8px;overflow:hidden}
-.rs-rh{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
+.rs-root{border:0;border-top:1px solid var(--border-light);border-radius:0;margin-top:6px;overflow:visible}
+.rs-rh{display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer}
 .rs-rl{font-size:28px;color:var(--primary);font-weight:700;min-width:84px;text-align:center;display:flex;justify-content:center;gap:9px;direction:rtl}
 .rs-rl span{display:inline-block;direction:rtl}
 .rs-rm{flex:1;font-size:12.5px;color:var(--text-muted);line-height:1.5}
 .rs-rm b{color:inherit}
 .rs-ch{color:var(--text-muted);font-size:13px}
-.rs-forms{display:none;border-top:1px solid var(--border-light);padding:6px 10px 10px}
+.rs-forms{display:none;border-top:0;padding:0 0 8px}
 .rs-root.open .rs-forms{display:block}
 .rs-f{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 4px;border-bottom:1px dashed var(--border-light);cursor:pointer}
 .rs-fw{font-size:22px;direction:rtl}
@@ -30,7 +30,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-fc{font-size:12px;color:#fff;background:var(--primary);border-radius:999px;padding:2px 9px;white-space:nowrap}
 .rs-v{display:none;padding:4px 2px 8px}
 .rs-f.open+.rs-v{display:block}
-.rs-vi{border-radius:8px;background:var(--bg);padding:8px 10px;margin-top:6px}
+.rs-vi{border-radius:0;background:none;padding:10px 0;margin-top:0;border-top:1px dashed var(--border-light)}
 .rs-vr{font-size:11.5px;color:var(--text-muted);margin-bottom:3px}
 .rs-vt{font-size:22px;line-height:2.1;direction:rtl;text-align:right}
 .rs-vt mark{background:var(--primary);color:#fff;border-radius:5px;padding:0 4px}
@@ -45,7 +45,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-wa{font-size:20px;line-height:1.7}
 .rs-wm{font-size:11.5px;direction:ltr;opacity:.85}
 .rs-more{display:block;margin:8px auto 0;border:1px solid var(--border);background:var(--card-bg);color:var(--primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px}
-.rs-rs{display:none;margin-top:8px;border:1px solid var(--border-light);border-radius:10px;background:var(--card-bg);max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.rs-rs{display:none;margin-top:8px;border:0;border-top:1px solid var(--border-light);border-radius:0;background:none;max-height:52vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .rs-rs.on{display:block}
 .rs-rs .rs-rh2{position:sticky;top:0;background:var(--card-bg);font-size:12.5px;color:var(--text-muted);padding:8px 12px;border-bottom:1px solid var(--border-light)}
 .rs-rs .rs-ri{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border-light);cursor:pointer;direction:rtl}
