@@ -976,7 +976,7 @@ function mtSelectSync(v) {
           ev.preventDefault();
           m.classList.remove("show");
           try {
-            const mod = await import("./hijama-points.js?v=5");
+            const mod = await import("./hijama-points.js?v=6");
             mod.openHijamaPoints(doc, name);
           } catch (er) { console.error(er); alert("Hijama Points খোলা যায়নি"); }
         };
@@ -1680,3 +1680,28 @@ if (!window.__rcDatePick) {
   } catch (e) {}
 })();
 
+
+/* ---- WA: send page info (+ images as links) to the patient's WhatsApp ----
+   WhatsApp URL cannot attach files, so images are uploaded (same host as other uploads)
+   and their links go in the message. images: array of URL strings or Blob/canvas-blob. */
+export async function waSend({ phone, text, images, onStatus }) {
+  var num = toWhatsAppNumber(phone);
+  if (!num) { alert("এই পেশেন্টের হোয়াটসঅ্যাপ নাম্বার নেই"); return false; }
+  var say = onStatus || function () {}, links = [];
+  try {
+    for (var i = 0; i < (images || []).length; i++) {
+      var it = images[i];
+      if (typeof it === "string") { links.push(it); continue; }
+      say("Uploading " + (i + 1) + "/" + images.length + "...");
+      var fd = new FormData(); fd.append("image", it, "img.png");
+      var r = await (await fetch("https://imgbb-proxy.raqialamgirabdullah.workers.dev", { method: "POST", body: fd })).json();
+      if (!r.success) throw new Error((r.error && r.error.message) || "Upload failed");
+      links.push(r.data.url);
+    }
+  } catch (e) { console.error(e); say(""); alert("ছবি আপলোড হয়নি: " + e.message); return false; }
+  var msg = String(text || "").trim();
+  if (links.length) msg += "\n\n" + links.map(function (u, i) { return "🖼 " + (i + 1) + ": " + u; }).join("\n");
+  say("");
+  window.location.href = whatsappLink(phone, msg);
+  return true;
+}

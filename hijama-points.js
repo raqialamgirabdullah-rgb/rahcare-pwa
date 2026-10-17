@@ -7,7 +7,7 @@
    (শেয়ার্ড) এবং অ্যাডমিনের নিজের users ডকুমেন্টের hijamaDiseases ফিল্ডে সেভ হয়। */
 /* দৃশ্যমানতা: প্রতিটি রোগ ডিফল্টে Private (ইউজারের নিজের users/{uid}.hijamaDiseases, শুধু সে দেখে)।
    অ্যাডমিন Public করলে রোগটি hijamaPublic কালেকশনে যায়: পেশেন্ট ম্যানেজ করা সব ইউজার দেখতে পায় (শুধু দেখা), বদলাতে পারে শুধু মালিক। */
-import { db, auth, DO, GD, UP, CO, AD, DL, ON, loadUser } from "./common.js?v=17";
+import { db, auth, DO, GD, UP, CO, AD, DL, ON, loadUser, waSend } from "./common.js?v=17";
 
 const IMAGES = [
   { key: "head", title: "Head", file: "hijama-points/head.gif" },
@@ -112,6 +112,40 @@ export async function openHijamaPoints(docId, patientName) {
   top.appendChild(el("div", "flex:1;min-width:0;font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis", "🩸 " + (patientName || "Patient")));
   const status = el("span", "font-size:11px;color:#64748b;white-space:nowrap");
   top.appendChild(status);
+  /* WA: বর্তমান ভিউর মার্ক-করা ছবিগুলো এঁকে আপলোড করে লিংকসহ পেশেন্টের হোয়াটসঅ্যাপে পাঠায় */
+  const wa = el("button", "background:#25D366;color:#fff;border:0;border-radius:8px;font-weight:800;font-size:12px;padding:5px 10px;cursor:pointer", "WA");
+  wa.type = "button";
+  wa.title = "Send WhatsApp";
+  wa.onclick = async () => {
+    wa.disabled = true;
+    try {
+      const blobs = [];
+      let d = 0, w = 0;
+      for (const im of IMAGES) {
+        const mk = viewMarks[im.key] || [];
+        if (!mk.length) continue;
+        const img = await new Promise((ok, no) => { const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = no; i.src = base + im.file; });
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const g = c.getContext("2d");
+        g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0);
+        const r = Math.max(8, c.width * 0.014);
+        g.globalCompositeOperation = "multiply";
+        mk.forEach(m => {
+          (m.t === "dry" ? d++ : w++);
+          g.beginPath(); g.arc(m.x * c.width, m.y * c.height, r, 0, 7);
+          g.fillStyle = rgba(TYPES[m.t].color, 0.45); g.fill();
+          g.lineWidth = Math.max(2, r / 4); g.strokeStyle = TYPES[m.t].color; g.stroke();
+        });
+        blobs.push(await new Promise(ok => c.toBlob(ok, "image/png")));
+      }
+      const text = "*" + (patientName || "Patient") + "*\n🩸 *Hijama Points*\nDry Cup: " + d + " • Wet Cup: " + w;
+      await waSend({ phone: appt.phone, text, images: blobs, onStatus: t => { wa.textContent = t || "WA"; } });
+    } catch (e) { console.error(e); alert("WA পাঠানো যায়নি"); }
+    wa.disabled = false; wa.textContent = "WA";
+  };
+  top.appendChild(wa);
   const x = el("button", "border:0;background:0 0;font-size:24px;line-height:1;cursor:pointer;color:#64748b;padding:0 4px", "×");
   x.type = "button";
   x.onclick = close;
