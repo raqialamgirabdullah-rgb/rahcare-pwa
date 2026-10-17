@@ -38,7 +38,10 @@ function build(p) {
   // Split into static markup (painted together with Blogger's own header) and scripts (run in original order).
   // Everything shared (menu, sidebar, bottom bar, dark mode, fonts) lives in common.js / common.css - no loader any more.
   const scripts = [];
-  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => { scripts.push(m); return ""; });
+  // Blogger turns non-ASCII characters inside <script> text into &#NNNN; entities (scripts do not decode them, so Bangla/Arabic strings broke).
+  // Fix: write every non-ASCII character inside inline JavaScript as a \uXXXX escape (same meaning in strings, regexes and comments).
+  const jsSafe = m => m.replace(/^(<script\b[^>]*>)([\s\S]*?)(<\/script>)$/i, (all, a, body, z) => /\btype\s*=\s*["'](?!module|text\/javascript)/i.test(a) ? all : a + body.replace(/[\u0080-\uFFFF]/g, c => "\\u" + c.charCodeAt(0).toString(16).padStart(4, "0")) + z);
+  const markup = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, m => { scripts.push(jsSafe(m)); return ""; });
   return `<div id="rc-app">${markup}</div>\n` + EARLY + "\n" + pre(p, html) + "\n" + scripts.join("\n");
 }
 
