@@ -77,7 +77,7 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
 function searchBn(q){const out=[];for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;if(f.m===q)ex.push(f);else if(f.m.includes(q))pt.push(f)}
  if(ex.length)out.push({r,sc:60,mf:ex,bn:1});else if(pt.length)out.push({r,sc:40,mf:pt,bn:1})}
  return out.sort((a,b)=>b.sc-a.sc||b.mf.length-a.mf.length||b.r.n-a.r.n)}
-const BSTOP=new Set(["সহ","ও","এবং","এর","তার","তাদের","যে","এই","সে","কি","কী","না","তো","হয়","করে","থেকে","দ্বারা","জন্য","একটি","এক","তাঁর","তিনি","আর","বা","যারা","তারা"]);
+const BSTOP=new Set(["সহ","ও","এবং","এর","তার","তাদের","যে","এই","সে","কি","কী","না","তো","হয়","করে","থেকে","দ্বারা","জন্য","একটি","এক","তাঁর","তিনি","আর","বা","যারা","তারা","আমার","আমি","আমাকে","আমাদের","আমরা","আমাদেরকে","তোমার","তুমি","তোমাকে","তোমরা","তোমাদের","তাকে","তাঁকে","তাঁদের","তিনি","সে","এটি","ওই","ঐ","সেই","এর","ওর","তা","যা","কে","হে","নিশ্চয়","অবশ্যই","কিন্তু","যদি","তবে","পর","মধ্যে","উপর","প্রতি","সাথে","সঙ্গে","করা","করো","করুন","হবে","হল","হলো","ছিল","আছে","তাহলে","এবং","অথবা"]);
 const bnw=x=>x.replace(/[()\[\],.;:!?"'“”‘’।–—-]/g,"");
 function bnHit(w,toks){w=bnw(w);if(w.length<2)return false;for(const k of toks){if(w===k)return true;let n=0;const L=Math.min(w.length,k.length);while(n<L&&w[n]===k[n])n++;if(n>=3&&n>=Math.ceil(L*0.7))return true}return false}
 function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));
