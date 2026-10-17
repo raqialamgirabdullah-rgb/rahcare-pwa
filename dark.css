@@ -150,6 +150,9 @@ html.rc-dark .rc-np-b button{color:#d6d6d6}
 html.rc-dark .rc-np-b button.on{background:#1b1b1b;color:#e4e4e4}
 html.rc-dark .header-wrapper{box-shadow:0 6px 24px rgba(0,0,0,0.14)}
 html.rc-dark .header-wrapper #rc-burger{background:#2c2c2c}
+html.rc-dark #rc-tag::before,html.rc-dark #rc-tag::after{background:linear-gradient(90deg,transparent,#393939)}
+html.rc-dark .rc-ban-ed{border:1px solid rgba(39,39,39,0.45)}
+html.rc-dark .rc-ban-bt .b-ok{background:#393939}
 html.rc-dark body .Header h1 a,html.rc-dark body .Header h1:not(:has(a)){background:linear-gradient(135deg,#f8f8f8 0%,#e2e2e2 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 html.rc-dark .rc-combo .rc-dd-btn::after{color:#a7a7a7}
 html.rc-dark .rc-combo .rc-dd-btn.rc-dd-input input{color:#d7d7d7}
@@ -159,6 +162,18 @@ html.rc-dark .rc-sd-sl{background:#161616}
 html.rc-dark .rc-sd-sl:before{background:#242424}
 html.rc-dark .rc-sd-sw input:checked+.rc-sd-sl{background:#3e3e3e}
 html.rc-dark #rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-pen{background:#242424 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233a3a3a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E") center/9px 9px no-repeat;border:1px solid rgba(255,255,255,0.14)}
+html.rc-dark #catMenu.rc-cat-grid span{box-shadow:0 2px 8px rgba(0,0,0,0.32)}
+html.rc-dark #catMenu.rc-cat-grid span{color:#cccccc;background:#242424;border:1.5px solid #343434}
+html.rc-dark #catMenu.rc-cat-grid span:hover{border-color:rgba(39,39,39,0.16)}
+html.rc-dark #catMenu.rc-cat-grid span.checked,html.rc-dark #catMenu.rc-cat-grid span.checked:hover{background:linear-gradient(135deg,#3e3e3e,#3e3e3e)}
+html.rc-dark #typeMenu span{box-shadow:0 2px 8px rgba(0,0,0,0.32)}
+html.rc-dark #typeMenu span{color:#cccccc;background:#242424;border:1.5px solid #343434}
+html.rc-dark #typeMenu span:hover{border-color:rgba(39,39,39,0.16)}
+html.rc-dark #typeMenu span.checked,html.rc-dark #typeMenu span.checked:hover{background:linear-gradient(135deg,#3e3e3e,#3e3e3e)}
+html.rc-dark #rc-side .rc-in-o button{border:1px solid #303030;background:#242424;color:#d6d6d6}
+html.rc-dark #rc-side .rc-in-o button:active{background:#3e3e3e}
+html.rc-dark #rc-side #rc-in-n{border:1px solid #303030}
+html.rc-dark #rc-side .rc-in-m{color:#b8b8b8}
 /* monthly-report.css */
 html.rc-dark #rptWrap .hdr h2{color:#e4e4e4}
 html.rc-dark #rptWrap .all-text{color:#e4e4e4}
@@ -259,6 +274,20 @@ html.rc-dark .footer-text a{color:#e4e4e4}
 /* pages/profile.html#1 */
 html.rc-dark .profile-title{color:#e4e4e4}
 html.rc-dark .field-edit-label{color:#e4e4e4}
+/* pages/research.html#1 */
+html.rc-dark .rs-title{color:#e4e4e4}
+html.rc-dark .rs-ex{color:#e4e4e4}
+html.rc-dark .rs-ib{color:#e4e4e4}
+html.rc-dark .rs-pad button:active{background:#393939}
+html.rc-dark .rs-rl{color:#e4e4e4}
+html.rc-dark .rs-fc{background:#393939}
+html.rc-dark .rs-vt mark{background:#393939}
+html.rc-dark .rs-fm{color:#e4e4e4}
+html.rc-dark .rs-vb mark{background:#393939}
+html.rc-dark .rs-wb{color:#e4e4e4}
+html.rc-dark .rs-wc.hl{border-color:rgba(39,39,39,0.16);background:#393939}
+html.rc-dark .rs-more{color:#e4e4e4}
+html.rc-dark .rs-rs .rs-ri:active,html.rc-dark .rs-rs .rs-ri:hover{background:#393939}
 /* pages/signup.html#1 */
 html.rc-dark .signup-title{color:#e4e4e4}
 html.rc-dark .login-link a{color:#e4e4e4}

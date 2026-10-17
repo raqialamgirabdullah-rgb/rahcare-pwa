@@ -271,3 +271,13 @@ body:not(.lb-on) .fc-ft{display:none!important}
 #catMenu.rc-cat-grid span:hover{border-color:var(--primary)}
 #catMenu.rc-cat-grid span.checked,#catMenu.rc-cat-grid span.checked:hover{font-weight:600;color:#fff;border-color:transparent;background:linear-gradient(135deg,#0f5132,#1b7a56)}
 #catMenu.rc-cat-grid .fc-ft{grid-column:1/-1}#typeMenu.open{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0;width:max-content;min-width:0;white-space:nowrap;border-radius:0;background:transparent!important;box-shadow:none!important;border:0!important;overflow:visible}#typeMenu span{box-shadow:0 2px 8px rgba(15,81,50,.16)}#typeMenu span{font-size:12px;font-weight:500;line-height:1.3;padding:7px 10px;text-align:center;color:#33403a;background:#fff;border:1.5px solid #c5d0ca;border-radius:9px}#typeMenu span[data-val="Center"]{grid-column:1/-1}#typeMenu span:hover{border-color:var(--primary)}#typeMenu span.checked,#typeMenu span.checked:hover{font-weight:600;color:#fff;border-color:transparent;background:linear-gradient(135deg,#0f5132,#1b7a56)}#typeMenu .fc-ft{grid-column:1/-1}
+
+/* sidebar: install switch + options */
+#rc-side .rc-in-o{margin:-4px 0 0;display:flex;flex-direction:column;gap:8px}
+#rc-side .rc-in-o[hidden],#rc-side #rc-in-cu[hidden]{display:none}
+#rc-side .rc-in-b{display:flex;gap:8px}
+#rc-side .rc-in-o button{flex:1;border:1px solid #d9dedb;background:#fff;color:#1f2a24;border-radius:10px;padding:9px 6px;font-size:13px;font-weight:600;cursor:pointer}
+#rc-side .rc-in-o button:active{background:#1a4731;color:#fff}
+#rc-side #rc-in-cu{display:flex;flex-direction:column;gap:8px}
+#rc-side #rc-in-n{border:1px solid #d9dedb;border-radius:10px;padding:9px 10px;font-size:14px;width:100%;box-sizing:border-box}
+#rc-side .rc-in-m{font-size:12px;color:#5b6b62;text-align:center;min-height:0}

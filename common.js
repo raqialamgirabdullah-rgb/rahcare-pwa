@@ -1166,7 +1166,7 @@ if (!window.__rcDatePick) {
   var DARK_CSS = "dark.css?v=5";
   var ICONS = {research:'<path d="M9 3h6M10 3v6.2L4.6 18a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.2V3"/><path d="M7.5 15h9"/>',dashboard:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',appointment:'<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>',billing:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>',accounts:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>',profile:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',admin:'<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',"admin-panel":'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',other:'<circle cx="12" cy="12" r="3.2"/>'};
   var BURGER = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>';
-  var ASIDE = '<div class="rc-sd-h"><span class="rc-sd-t">Rah Care</span><button type="button" class="rc-sd-x" aria-label="Close">&times;</button></div><div class="rc-sd-l"></div><div class="rc-sd-f"><div class="rc-sd-r"><span class="rc-sd-ft">🌙 Dark Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-dm"><span class="rc-sd-sl"></span></label></div><div class="rc-sd-r"><span class="rc-sd-ft">✎ Edit Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-em"><span class="rc-sd-sl"></span></label></div></div>';
+  var ASIDE = '<div class="rc-sd-h"><span class="rc-sd-t">Rah Care</span><button type="button" class="rc-sd-x" aria-label="Close">&times;</button></div><div class="rc-sd-l"></div><div class="rc-sd-f"><div class="rc-sd-r"><span class="rc-sd-ft">📲 Install</span><label class="rc-sd-sw"><input type="checkbox" id="rc-in"><span class="rc-sd-sl"></span></label></div><div id="rc-inopt" class="rc-in-o" hidden><div class="rc-in-b"><button type="button" id="rc-in-d">Default Install</button><button type="button" id="rc-in-c">Custom Install</button></div><div id="rc-in-cu" hidden><input id="rc-in-n" type="text" maxlength="40" placeholder="App name" autocomplete="off"><button type="button" id="rc-in-g">Install App</button></div><div id="rc-in-m" class="rc-in-m"></div></div><div class="rc-sd-r"><span class="rc-sd-ft">🌙 Dark Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-dm"><span class="rc-sd-sl"></span></label></div><div class="rc-sd-r"><span class="rc-sd-ft">✎ Edit Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-em"><span class="rc-sd-sl"></span></label></div></div>';
   /* fixed menu (the old top navigation bar is gone, so there is nothing to scrape any more) */
   var NAV = ["dashboard", "appointment", "billing", "accounts", "profile", "admin-panel", "admin"];
   var EDIT_PAGES = ["appointment", "billing", "dashboard"];
@@ -1476,6 +1476,50 @@ if (!window.__rcDatePick) {
       setTimeout(function () { location.reload(); }, 220);
     };
 
+    /* install switch: same Default / Custom install as the admin panel */
+    (function () {
+      var $ = function (i) { return side.querySelector("#" + i); }, tg = $("rc-in"), box = $("rc-inopt"), cu = $("rc-in-cu"), msgEl = $("rc-in-m");
+      var H = "https://rahcare.blogspot.com/", DI = "https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/icon-192.png", DN = "Rah Care", mKey = "", bt = 0, LSK = "rcInstalled";
+      var ud = function () { return window.__rcUD || {}; };
+      var logo = function () { var d = ud(); return d.logoUrl && d.logoActive !== false ? d.logoUrl : DI; };
+      var say = function (t) { clearTimeout(bt); msgEl.textContent = t || ""; };
+      var inst = function () { try { return lsGet(LSK) === "1" || matchMedia("(display-mode:standalone)").matches; } catch (e) { return false; } };
+      var paint = function () {
+        var on = inst() && !window.__bip;
+        ["rc-in-d", "rc-in-c", "rc-in-g"].forEach(function (i) { var b = $(i); b.style.opacity = on ? ".4" : ""; b.style.filter = on ? "grayscale(1)" : ""; b.setAttribute("aria-disabled", on ? "true" : "false"); });
+        if (on) cu.hidden = true;
+      };
+      var busy = function (on) { clearTimeout(bt); msgEl.textContent = on ? "Please wait..." : ""; if (on) bt = setTimeout(function () { msgEl.textContent = ""; }, 4000); };
+      var setManifest = function (name, icon) {
+        var n = name || DN, i = icon || DI, k = n + "|" + i;
+        if (k === mKey) return false;
+        mKey = k;
+        var old = document.querySelector('link[rel="manifest"]'); if (old) old.remove();
+        var a = { name: n, short_name: n, start_url: H, scope: H, display: "standalone", orientation: "portrait", background_color: "#fff", theme_color: "#1a4731", icons: [192, 512].map(function (z) { return { src: i, sizes: z + "x" + z, type: "image/png", purpose: "any maskable" }; }) };
+        var l = document.createElement("link"); l.rel = "manifest";
+        l.href = URL.createObjectURL(new Blob([JSON.stringify(a)], { type: "application/json" }));
+        document.head.appendChild(l);
+        return true;
+      };
+      var install = async function (name, icon) {
+        if (matchMedia("(display-mode:standalone)").matches) return say("✅ অ্যাপ থেকেই চলছে");
+        if (setManifest(name, icon)) return busy(true);
+        var pr = window.__bip;
+        if (!pr) return say(/iphone|ipad|ipod/i.test(navigator.userAgent) ? "📲 Safari: Share → 'Add to Home Screen'" : "📲 ব্রাউজার মেনু (⋮) → 'Install app'");
+        try { pr.prompt(); var r = await pr.userChoice; say(r.outcome === "accepted" ? "✅ ইন্সটল হচ্ছে..." : "ইন্সটল বাতিল করা হয়েছে"); } catch (e) { say("⚠️ আবার চেষ্টা করুন"); }
+        window.__bip = null; mKey = "";
+      };
+      tg.onchange = function () { box.hidden = !tg.checked; if (!tg.checked) { cu.hidden = true; say(""); } else paint(); };
+      $("rc-in-d").onclick = function () { if (inst() && !window.__bip) return; cu.hidden = true; install(DN, DI); };
+      $("rc-in-c").onclick = function () { if (inst() && !window.__bip) return; $("rc-in-n").value = ud().centreName || lsGet("rcSH") || DN; cu.hidden = false; if (setManifest($("rc-in-n").value.trim(), logo())) busy(true); };
+      var dt = 0;
+      $("rc-in-n").oninput = function () { clearTimeout(dt); busy(true); dt = setTimeout(function () { if (!setManifest($("rc-in-n").value.trim(), logo())) busy(false); }, 600); };
+      $("rc-in-g").onclick = function () { if (inst() && !window.__bip) return; install($("rc-in-n").value.trim() || DN, logo()); };
+      addEventListener("bip", function () { try { localStorage.removeItem(LSK); } catch (e) {} paint(); busy(false); });
+      addEventListener("appinstalled", function () { window.__bip = null; try { localStorage.setItem(LSK, "1"); } catch (e) {} paint(); say("✅ ইন্সটল হয়েছে"); });
+      paint();
+    })();
+
     function closeSide() {
       document.body.classList.remove("rc-side-open");
       side.setAttribute("aria-hidden", "true");
@@ -1688,7 +1732,7 @@ if (!window.__rcDatePick) {
       if (!u) return;
       loadUserBase(u).then(function (res) {
         if (!res || !res.d) return;
-        userRef = res.ref;
+        userRef = res.ref; window.__rcUD = res.d;
         ls("rcCT", String(res.d.centreType || ""));
         var bs = res.d.banners || {};
         Object.keys(LB_PRESETS).forEach(function (k) { ls("rcBannerImg:" + k, typeof bs[k] === "string" && bs[k] ? bs[k] : null); });
