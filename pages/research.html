@@ -148,7 +148,7 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
 function init(){const q=$("rsQ"),pad=$("rsPad");
- "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي ء ة ى أ إ آ ؤ ئ".split(" ").forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value+=ch;padGo()};pad.appendChild(b)});
+ "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" ").forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value+=ch;padGo()};pad.appendChild(b)});
  const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);padGo()};pad.appendChild(bs);
  $("rsKb").onclick=()=>pad.classList.toggle("on");
  $("rsX").onclick=()=>{q.value="";rs.classList.remove("on");go();q.focus()};
