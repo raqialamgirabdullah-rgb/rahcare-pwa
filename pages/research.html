@@ -1,0 +1,7 @@
+<link href="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.css?v=39" rel="stylesheet"><script>addEventListener("pageshow",e=>e.persisted&&location.reload())</script><style>body{background:var(--bg);margin:0;padding:10px;font-family:var(--font-main)}.rs-box{background:var(--card-bg);border-radius:8px;max-width:600px;margin:auto;padding:20px;box-shadow:var(--shadow-card)}.rs-title{color:var(--primary);border-bottom:2px solid var(--border-light);margin:0 0 16px;padding-bottom:10px}.rs-note{color:var(--text-muted);font-size:14px;text-align:center;margin:30px 0}</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-note">এই পেজটি শুধুমাত্র ম্যানেজমেন্ট ইউজারদের জন্য। কনটেন্ট শীঘ্রই যুক্ত হবে।</div></div>
+<script type="module">
+import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
+import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+/* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
+requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");document.getElementById("rsBox").style.visibility="visible"});
+</script>

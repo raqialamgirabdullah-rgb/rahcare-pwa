@@ -73,6 +73,12 @@
       "page": "symptom",
       "id": "5104552236406426510",
       "enabled": true
+    },
+    {
+      "slug": "research",
+      "page": "research",
+      "title": "Research",
+      "enabled": true
     }
   ]
 }

@@ -1164,7 +1164,7 @@ if (!window.__rcDatePick) {
   var SITE = "https://rahcare.blogspot.com/p/";
   var FONT_URL = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..800&family=Noto+Serif+Bengali:wght@400..800&family=Noto+Sans+Bengali:wght@400;500;700&family=Roboto:wght@400;500;700&family=Inter:wght@400..700&family=Hind+Siliguri:wght@400;500;600;700&display=swap";
   var DARK_CSS = "dark.css?v=5";
-  var ICONS = {dashboard:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',appointment:'<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>',billing:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>',accounts:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>',profile:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',admin:'<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',"admin-panel":'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',other:'<circle cx="12" cy="12" r="3.2"/>'};
+  var ICONS = {research:'<path d="M9 3h6M10 3v6.2L4.6 18a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.2V3"/><path d="M7.5 15h9"/>',dashboard:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',appointment:'<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>',billing:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>',accounts:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>',profile:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',admin:'<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',"admin-panel":'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',other:'<circle cx="12" cy="12" r="3.2"/>'};
   var BURGER = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>';
   var ASIDE = '<div class="rc-sd-h"><span class="rc-sd-t">Rah Care</span><button type="button" class="rc-sd-x" aria-label="Close">&times;</button></div><div class="rc-sd-l"></div><div class="rc-sd-f"><div class="rc-sd-r"><span class="rc-sd-ft">🌙 Dark Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-dm"><span class="rc-sd-sl"></span></label></div><div class="rc-sd-r"><span class="rc-sd-ft">✎ Edit Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-em"><span class="rc-sd-sl"></span></label></div></div>';
   /* fixed menu (the old top navigation bar is gone, so there is nothing to scrape any more) */
@@ -1347,6 +1347,21 @@ if (!window.__rcDatePick) {
     hasSession().then(function (v) { ok = v; v && reveal(); });
   })();
 
+  /* ---------- management-user check for the sidebar (workers have no users/{uid} document) ---------- */
+  function checkMgmt() {
+    if (window.__rcMgmt !== undefined) return Promise.resolve(window.__rcMgmt);
+    return (async function () {
+      try {
+        await auth.authStateReady();
+        var u = auth.currentUser;
+        if (!u) return false;
+        var ok = (await GD(DO(db, "users", u.uid))).exists();
+        lsSet("rcMgmtUser", ok ? "1" : "0");
+        return ok;
+      } catch (e) { return false; }
+    })();
+  }
+
   /* ---------- admin check for the sidebar ---------- */
   function checkAdmin() {
     if (window.__rcAdm !== undefined) return Promise.resolve(window.__rcAdm);
@@ -1470,11 +1485,12 @@ if (!window.__rcDatePick) {
       if (a) location.href = a.dataset.u;
     };
     /* sidebar entries: Billing for everybody, Admin only for admins */
-    function renderList(isAdmin) {
+    function renderList(isAdmin, isMgmt) {
       list.innerHTML = "";
       var here = location.pathname.replace(/\/$/, "") || "/", cfg = navCfg();
-      ["admin-panel", "profile", "admin", "appointment", "accounts", "billing"].map(item).filter(function (it) {
+      ["admin-panel", "profile", "admin", "appointment", "accounts", "billing", "research"].map(item).filter(function (it) {
         if (it.slug === "billing") return true;
+        if (it.slug === "research") return isMgmt === true;
         if (it.slug === cfg.l || it.slug === cfg.r) return false;
         return it.slug !== "admin" || isAdmin;
       }).forEach(function (it) {
@@ -1490,8 +1506,10 @@ if (!window.__rcDatePick) {
       });
     }
     burger.onclick = function () {
-      renderList(window.__rcAdm === true);
-      if (window.__rcAdm === undefined) checkAdmin().then(function (z) { window.__rcAdm = z; z && renderList(true); });
+      var mg = window.__rcMgmt === undefined ? lsGet("rcMgmtUser") === "1" : window.__rcMgmt === true;
+      renderList(window.__rcAdm === true, mg);
+      if (window.__rcAdm === undefined) checkAdmin().then(function (z) { window.__rcAdm = z; z && renderList(true, window.__rcMgmt === true); });
+      if (window.__rcMgmt === undefined) checkMgmt().then(function (z) { window.__rcMgmt = z; renderList(window.__rcAdm === true, z); });
       document.body.classList.add("rc-side-open");
       side.setAttribute("aria-hidden", "false");
     };

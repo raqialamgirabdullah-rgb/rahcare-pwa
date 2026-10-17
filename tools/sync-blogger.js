@@ -65,6 +65,19 @@ async function token() {
   if (dry) return console.log("dry run: built", list.map(p => p.slug).join(", "));
   const at = await token(), H = { Authorization: "Bearer " + at };
   fs.mkdirSync(path.join(root, "backup"), { recursive: true });
+  // pages without an "id" are looked up by their address (/p/<slug>.html); if the Blogger page does not exist yet it is created first
+  if (list.some(p => !p.id)) {
+    const pl = await (await fetch(`https://www.googleapis.com/blogger/v3/blogs/${cfg.blogId}/pages?maxResults=500&fetchBodies=false&status=live&status=draft`, { headers: H })).json();
+    if (pl.error) throw new Error("page list: " + JSON.stringify(pl.error));
+    for (const p of list.filter(x => !x.id)) {
+      const found = (pl.items || []).find(i => (i.url || "").endsWith("/p/" + p.slug + ".html"));
+      if (found) { p.id = found.id; console.log(p.slug, "found on Blogger:", found.id); continue; }
+      const cr = await (await fetch(`https://www.googleapis.com/blogger/v3/blogs/${cfg.blogId}/pages`, { method: "POST", headers: { ...H, "Content-Type": "application/json" }, body: JSON.stringify({ title: p.title || p.slug, content: "<p>…</p>" }) })).json();
+      if (cr.error) throw new Error(p.slug + " create: " + JSON.stringify(cr.error));
+      p.id = cr.id; console.log(p.slug, "created on Blogger:", cr.id, cr.url);
+      if (!(cr.url || "").endsWith("/p/" + p.slug + ".html")) console.warn("WARNING: Blogger address is", cr.url, "- expected /p/" + p.slug + ".html (rename the page / change its permalink)");
+    }
+  }
   for (const p of list) {
     const url = `https://www.googleapis.com/blogger/v3/blogs/${cfg.blogId}/pages/${p.id}`;
     const cur = await (await fetch(url, { headers: H })).json();
