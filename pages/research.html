@@ -99,10 +99,10 @@ function allCopy(info,forms){const set=new Set();forms.forEach(f=>f.refs.forEach
  const b=copyBtn("📋 সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
  b.style.cssText+=";display:block;margin:6px 0 0";info.appendChild(b);audioBar(info,all)}
 const AYN=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
-const RECS=[["ar.alafasy","মিশারি আলাফাসি"],["ar.mahermuaiqly","মাহের আল-মুআইকলি"],["ar.abdurrahmaansudais","আব্দুর রহমান আস-সুদাইস"],["ar.saoodshuraym","সাউদ আশ-শুরাইম"],["ar.hudhaify","আল-হুযাইফি"],["ar.abdullahbasfar","আব্দুল্লাহ বাসফার"],["ar.husary","মাহমুদ খলিল আল-হুসারি"]];
+const RECS=[["ar.alafasy","মিশারি আলাফাসি","Alafasy_128kbps"],["ar.mahermuaiqly","মাহের আল-মুআইকলি","MaherAlMuaiqly128kbps"],["ar.abdurrahmaansudais","আব্দুর রহমান আস-সুদাইস","Abdurrahmaan_As-Sudais_192kbps"],["ar.saoodshuraym","সাউদ আশ-শুরাইম","Saood_ash-Shuraym_128kbps"],["ar.hudhaify","আল-হুযাইফি","Hudhaify_128kbps"],["ar.abdullahbasfar","আব্দুল্লাহ বাসফার","Abdullah_Basfar_192kbps"],["ar.husary","মাহমুদ খলিল আল-হুসারি","Husary_128kbps"]];
 const gNum=(s,a)=>AYN.slice(0,s-1).reduce((x,y)=>x+y,0)+a;
 const recId=()=>{try{const v=localStorage.getItem("rsRec");if(RECS.some(r=>r[0]===v))return v}catch(e){}return RECS[0][0]};
-const audUrls=(s,a)=>[128,64,192].map(b=>"https://cdn.islamic.network/quran/audio/"+b+"/"+recId()+"/"+gNum(s,a)+".mp3");
+const audUrls=(s,a)=>{const r=RECS.find(x=>x[0]===recId())||RECS[0],p3=n=>String(n).padStart(3,"0");return[...[128,64,192].map(b=>"https://cdn.islamic.network/quran/audio/"+b+"/"+r[0]+"/"+gNum(s,a)+".mp3"),"https://everyayah.com/data/"+r[2]+"/"+p3(s)+p3(a)+".mp3"]};
 const els=(t,css,x)=>{const e=el(t,null,x);e.style.cssText=css;return e};
 const SELV=new Set(),selUp=[];
 const selChange=()=>selUp.forEach(f=>{try{f()}catch(e){}});
@@ -115,10 +115,15 @@ async function fetchAud(s,a){let e;for(const u of audUrls(s,a)){try{const r=awai
 function wavOf(parts,sr){let n=0;parts.forEach(p=>n+=p.length);const buf=new ArrayBuffer(44+n*2),v=new DataView(buf),w=(o,t)=>[...t].forEach((c,i)=>v.setUint8(o+i,c.charCodeAt(0)));
  w(0,"RIFF");v.setUint32(4,36+n*2,true);w(8,"WAVEfmt ");v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,"data");v.setUint32(40,n*2,true);
  let o=44;for(const p of parts)for(let i=0;i<p.length;i++){const x=Math.max(-1,Math.min(1,p[i]));v.setInt16(o,x<0?x*32768:x*32767,true);o+=2}return new Blob([buf],{type:"audio/wav"})}
+function playList(list,out){const w=els("div","margin-top:8px"),lab=els("div","font-size:12.5px;color:var(--primary);margin-bottom:4px"),au=document.createElement("audio");au.controls=true;au.autoplay=true;au.style.cssText="display:block;width:100%";
+ const nx=els("button","margin-top:6px","⏭ পরের আয়াত");nx.className="rs-wb";nx.type="button";let i=0,u=[],k=0;
+ const go=n=>{i=n;if(i>=list.length){lab.textContent="✅ সব আয়াত শেষ";return}lab.textContent="আয়াত "+bn2(i+1)+"/"+bn2(list.length)+" — সূরা "+SN[list[i][0]-1]+" "+bn2(list[i][0])+":"+bn2(list[i][1]);u=audUrls(list[i][0],list[i][1]);k=0;au.src=u[0];au.play().catch(()=>{})};
+ au.onended=()=>go(i+1);au.onerror=()=>{if(++k<u.length){au.src=u[k];au.play().catch(()=>{})}else go(i+1)};nx.onclick=()=>go(i+1);
+ w.append(lab,au,nx);out.appendChild(w);go(0)}
 async function mergeAudio(list,out,note){const MAX=150;if(!list.length)return;if(list.length>MAX){alert("একসাথে সর্বোচ্চ "+bn2(MAX)+"টি আয়াতের অডিও মার্জ করা যায়। টিক দিয়ে কম আয়াত বেছে নিন।");return}
  out.textContent="";const sr=22050,AC=window.AudioContext||window.webkitAudioContext,ctx=new AC({sampleRate:sr}),parts=[],gap=new Float32Array(Math.round(sr*0.5));
  try{for(let i=0;i<list.length;i++){note("অডিও নামানো হচ্ছে "+bn2(i+1)+"/"+bn2(list.length)+"…");const ab=await fetchAud(list[i][0],list[i][1]),d=await ctx.decodeAudioData(ab),ch=d.getChannelData(0);parts.push(new Float32Array(ch),gap)}}
- catch(e){console.error(e);note("মার্জ করা যায়নি — অডিও সার্ভার থেকে ফাইল আনা যায়নি");try{ctx.close()}catch(x){}return}
+ catch(e){console.error(e);note("একটা ফাইলে জোড়া লাগানো যায়নি (অডিও সার্ভার ফাইল দিতে দেয়নি), তাই আয়াতগুলো ক্রমানুসারে একটার পর একটা চলছে");try{ctx.close()}catch(x){}out.textContent="";playList(list,out);return}
  try{ctx.close()}catch(x){}
  const blob=wavOf(parts,sr),url=URL.createObjectURL(blob),au=document.createElement("audio");au.controls=true;au.src=url;au.style.cssText="display:block;width:100%;margin-top:8px";
  const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ অডিও ফাইল ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");dl.href=url;dl.download="quran-audio.wav";out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");au.play().catch(()=>{})}
