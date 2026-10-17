@@ -1,20 +1,24 @@
-<link href="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.css?v=39" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet"><script>addEventListener("pageshow",e=>e.persisted&&location.reload())</script><style>
+<link href="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.css?v=39" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap" rel="stylesheet"><script>addEventListener("pageshow",e=>e.persisted&&location.reload())</script><style>
 body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font-main)}
 .rs-box{background:var(--card-bg);border-radius:8px;max-width:640px;margin:auto;padding:16px;box-shadow:var(--shadow-card)}
 .rs-title{color:var(--primary);border-bottom:2px solid var(--border-light);margin:0 0 6px;padding-bottom:10px}
-.rs-sub{color:var(--text-muted);font-size:12.5px;margin:0 0 12px}
-.rs-ar{font-family:"Amiri","Noto Naskh Arabic","Scheherazade New",serif;direction:rtl}
+.rs-sub{color:var(--text-muted);font-size:13px;margin:0 0 12px;line-height:1.9}
+.rs-sub div{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.rs-ex{border:1px solid var(--border-light);background:var(--card-bg);color:var(--primary);border-radius:999px;padding:1px 12px;font-size:19px;line-height:1.7;cursor:pointer}
+.rs-ex.bn{font-size:13px;padding:3px 12px;line-height:1.5}
+.rs-ar{unicode-bidi:isolate;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh","Traditional Arabic",serif;direction:rtl}
 .rs-bar{display:flex;gap:6px;align-items:center}
 #rsQ{flex:1;box-sizing:border-box;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:22px;text-align:right;direction:rtl;background:var(--card-bg);color:inherit;min-width:0}
 .rs-ib{border:1px solid var(--border);background:var(--card-bg);color:var(--primary);border-radius:8px;padding:0 11px;height:46px;font-size:18px;cursor:pointer}
 .rs-pad{display:none;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:8px;direction:rtl}
 .rs-pad.on{display:grid}
-.rs-pad button{border:1px solid var(--border-light);background:var(--card-bg);color:inherit;border-radius:7px;padding:7px 0;font-size:21px;cursor:pointer;font-family:"Amiri","Noto Naskh Arabic",serif}
+.rs-pad button{border:1px solid var(--border-light);background:var(--card-bg);color:inherit;border-radius:7px;padding:7px 0;font-size:21px;cursor:pointer;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh",serif}
 .rs-pad button:active{background:var(--primary);color:#fff}
 .rs-info{color:var(--text-muted);font-size:12.5px;margin:10px 2px}
 .rs-root{border:1px solid var(--border-light);border-radius:10px;margin-top:8px;overflow:hidden}
 .rs-rh{display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer}
-.rs-rl{font-size:28px;color:var(--primary);font-weight:700;letter-spacing:4px;min-width:84px;text-align:center}
+.rs-rl{font-size:28px;color:var(--primary);font-weight:700;min-width:84px;text-align:center;display:flex;justify-content:center;gap:9px;direction:ltr}
+.rs-rl span{display:inline-block;direction:rtl}
 .rs-rm{flex:1;font-size:12.5px;color:var(--text-muted);line-height:1.5}
 .rs-rm b{color:inherit}
 .rs-ch{color:var(--text-muted);font-size:13px}
@@ -40,8 +44,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-wa{font-size:20px;line-height:1.7}
 .rs-wm{font-size:11.5px;direction:ltr;opacity:.85}
 .rs-more{display:block;margin:8px auto 0;border:1px solid var(--border);background:var(--card-bg);color:var(--primary);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:13px}
-.rs-foot{color:var(--text-muted);font-size:11px;margin-top:14px;text-align:center;line-height:1.6}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><p class="rs-sub">কুরআনের রুট ওয়ার্ড সার্চ — যেকোনো আরবি হরফ, রুট বা শব্দ লিখুন (যেমন: كتب, علم, الصلاة); বাংলা অর্থ লিখেও খুঁজতে পারবেন (যেমন: জ্ঞান)</p><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo">ডেটা লোড হচ্ছে…</div><div id="rsOut"></div><div class="rs-foot">রুট ডেটা: Quranic Arabic Corpus (Kais Dukes) — mustafa0x/quran-morphology, GNU GPL<br>শব্দার্থ: SadaqaWorks/Word-By-Word-Quran-Android (MIT) · আয়াতের বাংলা অনুবাদ: মুহিউদ্দীন খান (tanzil.net), quran-json, CC BY-SA 4.0<br>রুট নির্ণয় মেশিন-ভিত্তিক গবেষণা-ডেটা; গুরুত্বপূর্ণ সিদ্ধান্তের আগে আলেম/কিতাব দেখে যাচাই করুন।</div></div>
+</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-sub"><div><span>আরবি হরফ বা রুট:</span><button class="rs-ex rs-ar" type="button" data-q="كتب">كتب</button><button class="rs-ex rs-ar" type="button" data-q="علم">علم</button></div><div><span>আরবি শব্দ:</span><button class="rs-ex rs-ar" type="button" data-q="الرحمن">الرحمن</button><button class="rs-ex rs-ar" type="button" data-q="الصلاة">الصلاة</button></div><div><span>বাংলা অর্থ:</span><button class="rs-ex bn" type="button" data-q="জ্ঞান">জ্ঞান</button><button class="rs-ex bn" type="button" data-q="দয়া">দয়া</button></div></div><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script type="module">
 import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
 import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -78,7 +81,7 @@ function verses(host,refs){let shown=0;const step=15;
  const more=el("button","rs-more","আরও আয়াত দেখান");more.type="button";
  const add=async()=>{const[ay,bn]=await Promise.all([loadAyat(),loadBn()]);const end=Math.min(refs.length,shown+step);
   for(;shown<end;shown++){const [s,a,w]=refs[shown].split(":").map(Number),t=(ay[s-1]||[])[a-1];if(t==null)continue;
-   const box=el("div","rs-vi"),rf=el("div","rs-vr","সূরা "+SN[s-1]+" — "+bn2(s)+":"+bn2(a)),tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb",(bn[s-1]||[])[a-1]||""),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
+   const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a)),tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb",(bn[s-1]||[])[a-1]||""),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
    wb.type="button";
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
@@ -87,10 +90,10 @@ function verses(host,refs){let shown=0;const step=15;
   more.style.display=shown<refs.length?"":"none";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"};
  host.appendChild(more);more.onclick=add;add()}
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
- l=el("div","rs-rl rs-ar",r.r.split("").join(" ")),
+ l=el("div","rs-rl rs-ar"),
  m=el("div","rs-rm"),ch=el("div","rs-ch","▾");
  m.innerHTML="<b>"+bn2(r.n)+"</b> বার এসেছে · <b>"+bn2(r.forms.length)+"</b>টি রূপ";
- h.append(l,m,ch);const fb=el("div","rs-forms");c.append(h,fb);let built=false;
+ [...r.r].forEach(x=>l.appendChild(el("span",null,x)));h.append(l,m,ch);const fb=el("div","rs-forms");c.append(h,fb);let built=false;
  const list=(exact||it.sc>=60||!it.mf)?r.forms:it.mf;
  h.onclick=()=>{c.classList.toggle("open");if(built)return;built=true;
   [...list].sort((a,b)=>b.refs.length-a.refs.length).forEach(f=>{const row=el("div","rs-f"),w=el("div"),fw=el("div","rs-fw rs-ar",f.t),fm=el("div","rs-fm",f.m||""),fl=el("div","rs-fl rs-ar",f.l||""),ct=el("div","rs-fc",bn2(f.refs.length)),vh=el("div","rs-v");
@@ -106,7 +109,7 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
   await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
   info.textContent="বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে"+(rb.length>40?" (প্রথম ৪০টি)":"");
   rb.slice(0,40).forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);if(rb.length<=3)c.querySelector(".rs-rh").click()});return}
- if(!q){info.textContent="আরবি হরফ বা বাংলা অর্থ লিখুন (⌨ চেপে আরবি কীবোর্ড)";return}
+ if(!q){info.textContent="";return}
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
@@ -119,7 +122,8 @@ function init(){const q=$("rsQ"),pad=$("rsPad");
  $("rsX").onclick=()=>{q.value="";go();q.focus()};
  q.oninput=()=>{clearTimeout(tm);tm=setTimeout(go,200)};
  const go=()=>run().catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
- go();loadRoots().then(()=>{if(!q.value)$("rsInfo").textContent="আরবি হরফ বা বাংলা অর্থ লিখুন ("+bn2(R.length)+"টি রুট)"}).catch(()=>{})}
+ document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
+ go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
 requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");$("rsBox").style.visibility="visible";init()});
 </script>
