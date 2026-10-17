@@ -111,7 +111,7 @@ function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
    w.append(fw,fm,fl);row.append(w,ct);let vb=false;
    row.onclick=()=>{row.classList.toggle("open");if(vb)return;vb=true;verses(vh,f.refs,f.m)};
    fb.append(row,vh)});
-  {const f0=fb.querySelector(".rs-f");f0&&f0.click()}
+  {const fs=[...fb.querySelectorAll(".rs-f")];fs.slice(0,fs.length<=12?12:3).forEach(f=>f.click())}
   if(it.mf&&it.sc<60&&list.length<r.forms.length){const all=el("button","rs-more","এই রুটের সব রূপ দেখান ("+bn2(r.forms.length)+")");all.type="button";all.onclick=()=>{fb.innerHTML="";built=false;it.sc=100;c.classList.remove("open");h.onclick()};fb.append(all)}};
  return c}
 let tm=0;
