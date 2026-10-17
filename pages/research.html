@@ -83,8 +83,10 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
   if(r.r3===q3)sc=50;else{const p=r.forms.filter(f=>f.k3.includes(q3));if(p.length){sc=35;mf=p}}
   if(sc)out.push({r,sc,mf,loose:1})}}
  return out.sort((a,b)=>b.sc-a.sc||b.r.n-a.r.n)}
-function searchBn(q){const out=[];for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;if(f.m===q)ex.push(f);else if(f.m.includes(q))pt.push(f)}
- if(ex.length)out.push({r,sc:60,mf:ex,bn:1});else if(pt.length)out.push({r,sc:40,mf:pt,bn:1})}
+let ALLF=false;
+function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.includes(q)){qs=g.slice();break}
+ for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;if(qs.some(k=>f.m===k))ex.push(f);else if(qs.some(k=>f.m.includes(k)))pt.push(f)}
+  if(ex.length||pt.length)out.push({r,sc:ex.length?60:40,mf:ex.concat(pt),bn:1})}
  return out.sort((a,b)=>b.sc-a.sc||b.mf.length-a.mf.length||b.r.n-a.r.n)}
 const BSTOP=new Set(["সহ","ও","এবং","এর","তার","তাদের","যে","এই","সে","কি","কী","না","তো","হয়","করে","থেকে","দ্বারা","জন্য","একটি","এক","তাঁর","তিনি","আর","বা","যারা","তারা","আমার","আমি","আমাকে","আমাদের","আমরা","আমাদেরকে","তোমার","তুমি","তোমাকে","তোমরা","তোমাদের","তাকে","তাঁকে","তাঁদের","তিনি","সে","এটি","ওই","ঐ","সেই","এর","ওর","তা","যা","কে","হে","নিশ্চয়","অবশ্যই","কিন্তু","যদি","তবে","পর","মধ্যে","উপর","প্রতি","সাথে","সঙ্গে","করা","করো","করুন","হবে","হল","হলো","ছিল","আছে","তাহলে","এবং","অথবা"]);
 const bnw=x=>x.replace(/[()\[\],.;:!?"'“”‘’।–—-]/g,"");
@@ -155,14 +157,14 @@ function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.leng
   else more.style.display="none"};
  host.appendChild(more);more.onclick=add;add()}
 const vset=l=>{const u=new Set();let o=0;l.forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))}));return{o,u:u.size}};
-const lst=(it,exact)=>(exact||it.sc>=60||!it.mf)?it.r.forms:it.mf;
+const lst=(it,exact)=>it.bn?(ALLF?it.r.forms:it.mf):((exact||it.sc>=60||!it.mf)?it.r.forms:it.mf);
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  l=el("div","rs-rl rs-ar"),
  m=el("div","rs-rm"),ch=el("div","rs-ch","▾");
- m.innerHTML="<b>"+bn2(r.n)+"</b> বার এসেছে · <b>"+bn2(r.forms.length)+"</b>টি রূপ";
- {const v=vset(lst(it,exact));m.innerHTML+=" · <b>"+bn2(v.u)+"</b>টি আয়াত"+(v.o>v.u?" (ডুপ্লিকেট "+bn2(v.o-v.u)+"টি বাদে)":"")}
+ m.innerHTML="রুটে মোট <b>"+bn2(r.n)+"</b> বার · <b>"+bn2(r.forms.length)+"</b>টি রূপ";
+ {const L=lst(it,exact),v=vset(L);m.innerHTML+=(it.bn?"<br>"+(ALLF?"দেখানো হচ্ছে":"“"+(window.__bq||"")+"” অর্থে মিলেছে")+": <b>"+bn2(L.length)+"</b>টি রূপ, ":" · ")+"<b>"+bn2(v.u)+"</b>টি আয়াত"+(v.o>v.u?" (ডুপ্লিকেট "+bn2(v.o-v.u)+"টি বাদে)":"")}
  [...r.r].forEach(x=>l.appendChild(el("span",null,x)));h.append(l,m,ch);const fb=el("div","rs-forms");c.append(h,fb);let built=false;
- const list=(exact||it.sc>=60||!it.mf)?r.forms:it.mf;
+ const list=lst(it,exact);
  h.onclick=()=>{c.classList.toggle("open");if(built)return;built=true;
   {const set=new Set();list.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
    const cb=copyBtn("📋 এই শব্দের সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
@@ -179,7 +181,12 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  const bq=raw.trim();
  if(!q&&/[\u0980-\u09FF]/.test(bq)){if(bq.length<2){info.textContent="কমপক্ষে ২টি অক্ষর লিখুন";return}
   await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
-  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে"+"";allCopy(info,rb.flatMap(it=>lst(it,!1)));
+  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে";
+  {const cnt=f=>{const u=new Set();rb.forEach(it=>f(it).forEach(x=>x.refs.forEach(r=>u.add(r.split(":").slice(0,2).join(":")))));return u.size};
+   const n1=cnt(it=>it.mf),n2=cnt(it=>it.r.forms),row=els("div","display:flex;flex-wrap:wrap;gap:6px;margin-top:8px");
+   [[false,"“"+bq+"” অর্থের আয়াত ("+bn2(n1)+")"],[true,"রুটগুলোর সব আয়াত ("+bn2(n2)+")"]].forEach(([v,t])=>{const b=el("button","rs-wb",t);b.type="button";b.style.margin="0";if(ALLF===v){b.style.background="var(--primary)";b.style.color="#fff"}b.onclick=()=>{if(ALLF===v)return;ALLF=v;run().catch(e=>console.error(e))};row.appendChild(b)});
+   info.appendChild(row)}
+  window.__bq=bq;allCopy(info,rb.flatMap(it=>lst(it,!1)));
   rb.forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);c.querySelector(".rs-rh").click()});return}
  if(!q){info.textContent="রুটে চাপ দিন — রূপ ও বাংলা অর্থসহ আয়াত দেখাবে";return}
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
@@ -201,7 +208,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");
   rs.innerHTML="";rs.classList.add("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   const hd=el("div","rs-rh2","“"+[...p].join(" ")+"” দিয়ে শুরু "+bn2(l.length)+"টি রুট — একটি বেছে নিন");rs.appendChild(hd);
   l.slice().sort((a,b)=>a.rn<b.rn?-1:a.rn>b.rn?1:0).forEach(r=>{const row=el("div","rs-ri"),b=el("b",null,[...r.rn].join(" ")),c=el("span",null,bn2(r.n)+" বার");row.append(b,c);row.onclick=()=>{q.value=r.rn;rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
- const go=()=>run().catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
+ const go=()=>(ALLF=false,run()).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
