@@ -265,7 +265,7 @@ html.rc-dark{color-scheme:dark;background:#0a0f0d}
 body:not(.lb-on) .fc-ft{display:none!important}
 
 /* ===== রুকইয়াহ/হিজামা ক্যাটাগরি মেনু: ২ কলামের গ্রিড (ওপরে দুটি আলাদা, নিচে একটি পূর্ণ-প্রস্থ) ===== */
-#catMenu.rc-cat-grid.open{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:5px;width:max-content;min-width:0;white-space:nowrap;border-radius:12px}
+#catMenu.rc-cat-grid.open{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:0;width:max-content;min-width:0;white-space:nowrap;border-radius:0;background:transparent!important;box-shadow:none!important;border:0!important;overflow:visible}#catMenu.rc-cat-grid span{box-shadow:0 2px 8px rgba(15,81,50,.16)}
 #catMenu.rc-cat-grid span{font-size:12px;font-weight:500;line-height:1.3;padding:7px 10px;text-align:center;color:#33403a;background:#fff;border:1.5px solid #c5d0ca;border-radius:9px}
 #catMenu.rc-cat-grid span.rc-cat-both{grid-column:1/-1}
 #catMenu.rc-cat-grid span:hover{border-color:var(--primary)}
