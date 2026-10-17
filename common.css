@@ -261,3 +261,5 @@ html.rc-dark{color-scheme:dark;background:#0a0f0d}
 #rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-p:after{content:none!important}
 #rc-bnav.ed .rc-bn-i:not(.rc-home) .rc-bn-pen{display:block;position:absolute;top:-5px;right:2px;width:18px;height:18px;box-sizing:border-box;border-radius:50%;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%230f5132' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M17 3a2.83 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z'/%3E%3C/svg%3E") center/9px 9px no-repeat;border:1px solid rgba(15,81,50,.22);box-shadow:0 1px 3px rgba(0,0,0,.14);cursor:pointer}
 #rc-bnav .rc-bn-pen:before{content:'';position:absolute;inset:-12px}
+/* ===== চিপ মেনুর নিচের বার (◀ ▶ ✎ ✕) শুধু Edit Mode-এ; নইলে ✕ চাপলে চিপ মুছে যেত ===== */
+body:not(.lb-on) .fc-ft{display:none!important}
