@@ -52,6 +52,29 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-rs .rs-ri:active,.rs-rs .rs-ri:hover{background:var(--primary);color:#fff}
 .rs-rs .rs-ri b{font-size:22px;font-weight:400;letter-spacing:.35em;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh",serif}
 .rs-rs .rs-ri span{font-size:12px;opacity:.75;direction:ltr;white-space:nowrap}
+
+.rs-sum{font-size:14px;margin:4px 0 8px}
+.rs-sum .rs-ar{font-size:19px;color:var(--primary);unicode-bidi:isolate}
+.rs-f{justify-content:flex-start;flex-wrap:wrap;gap:4px 8px;padding:10px 2px;border-bottom:1px solid var(--border-light)}
+.rs-fa{color:var(--primary);font-size:15px;line-height:1;transition:transform .2s}
+.rs-f:not(.open) .rs-fa{transform:rotate(-90deg)}
+.rs-fc{background:none;color:var(--text-main);border-radius:0;padding:0;font-size:13.5px;font-weight:700}
+.rs-fd{color:var(--text-muted)}
+.rs-fw{font-size:22px;color:var(--primary)}
+.rs-fm{font-size:13px;color:var(--text-muted);font-weight:600;margin:0}
+.rs-v{padding:0;margin:4px 0 14px;border:2px solid var(--primary);border-radius:8px;overflow:hidden;background:var(--card-bg)}
+.rs-vi{padding:0;border-top:1px dotted var(--border)}
+.rs-v>.rs-vi:first-child{border-top:0}
+.rs-vt{font-size:24px;line-height:2.2;text-align:center;padding:14px 12px 4px}
+.rs-vt mark{background:none;color:#d40000;border-radius:0;padding:0}
+.rs-vb{padding:0 14px 10px}
+.rs-vf{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:4px 12px;padding:9px 12px;background:var(--primary-light,#e7f2ec);font-size:12.5px}
+.rs-vf .rs-vr{margin:0;font-size:12.5px;color:var(--text-main);font-weight:700}
+.rs-vw{font-size:19px;color:var(--primary);direction:rtl}
+.rs-vm{font-weight:600;color:var(--text-main)}
+.rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
+.rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
+.rs-ww{margin:0 10px 10px}
 </style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-sub"><div><span>আরবি হরফ বা রুট:</span><button class="rs-ex rs-ar" type="button" data-q="كتب">كتب</button><button class="rs-ex rs-ar" type="button" data-q="علم">علم</button></div><div><span>আরবি শব্দ:</span><button class="rs-ex rs-ar" type="button" data-q="الرحمن">الرحمن</button><button class="rs-ex rs-ar" type="button" data-q="الصلاة">الصلاة</button></div><div><span>বাংলা অর্থ:</span><button class="rs-ex bn" type="button" data-q="জ্ঞান">জ্ঞান</button><button class="rs-ex bn" type="button" data-q="দয়া">দয়া</button></div></div><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script type="module">
 import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
@@ -65,9 +88,10 @@ const lessAl=s=>s.length>3&&s.startsWith("ال")?s.slice(2):s;
 let R=null,AY=null,ayP=null,BN=null,WB=null;
 const el=(t,c,x)=>{const e=document.createElement(t);c&&(e.className=c);x!=null&&(e.textContent=x);return e};
 const bn2=n=>String(n).replace(/\d/g,d=>"০১২৩৪৫৬৭৮৯"[d]);
+const POSBN={N:"বিশেষ্য",ADJ:"বিশেষণ",PN:"নামবাচক বিশেষ্য",V:"ক্রিয়া"};
 const rsFetch=async u=>{let c=null;try{c=window.caches&&await caches.open("rs-"+DV);const m=c&&await c.match(u);if(m)return await m.json()}catch(e){c=null}const r=await fetch(u);if(!r.ok)throw new Error(r.status);try{c&&await c.put(u,r.clone())}catch(e){}return await r.json()};
-async function loadRoots(){if(R)return R;const j=await rsFetch(BASE+"quran-roots.json?v="+DV);
-R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m])=>({t,l,m:m||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
+async function loadRoots(){if(R)return R;const j=await rsFetch(BASE+"quran-roots.json?v="+DV+"p");
+R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m,p])=>({t,l,m:m||"",p:p||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
 const CH={a:{},b:{},w:{}};
 let actN=0;const qN=[],qL=[];const lim=(f,low)=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift()||qL.shift();n&&n()})};if(actN<5&&(!low||!qN.length))run();else(low?qL:qN).push(run)});
@@ -148,7 +172,7 @@ function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.leng
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
     try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
-   box.append(rf,tx,tb,wb,copyBtn("📋 কপি",()=>vtext(s,a)),playBtn(s,a),selBox(s,a),wh);return box};
+   const ft=el("div","rs-vf"),va=el("div","rs-va");ft.append(rf,el("span","rs-vw rs-ar",t.split(" ")[w-1]||""),el("span","rs-vm",fgl||""));va.append(wb,copyBtn("📋 কপি",()=>vtext(s,a)),playBtn(s,a),selBox(s,a));box.append(tx,tb,ft,va,wh);return box};
  const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
   const batch=fail.splice(0).concat(refs.slice(shown,shown+step).map(r=>r.split(":").map(Number)));shown=Math.min(refs.length,shown+step);
   for(const r of batch){let box=null;try{box=await one(r)}catch(e){fail.push(r);continue}if(box)host.insertBefore(box,more)}
@@ -161,16 +185,16 @@ const lst=(it,exact)=>it.bn?(ALLF?it.r.forms:it.mf):((exact||it.sc>=60||!it.mf)?
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  l=el("div","rs-rl rs-ar"),
  m=el("div","rs-rm"),ch=el("div","rs-ch","▾");
- m.innerHTML="রুটে মোট <b>"+bn2(r.n)+"</b> বার · <b>"+bn2(r.forms.length)+"</b>টি রূপ";
- {const L=lst(it,exact),v=vset(L);m.innerHTML+=(it.bn?"<br>"+(ALLF?"দেখানো হচ্ছে":"“"+(window.__bq||"")+"” অর্থে মিলেছে")+": <b>"+bn2(L.length)+"</b>টি রূপ, ":" · ")+"<b>"+bn2(v.u)+"</b>টি আয়াত"+(v.o>v.u?" (ডুপ্লিকেট "+bn2(v.o-v.u)+"টি বাদে)":"")}
+ {const L=lst(it,exact),v=vset(L);m.innerHTML="<b>"+bn2(v.o)+"</b>টি ফলাফল · <b>"+bn2(L.length)+"</b>টি রূপ"+(v.o!==r.n?"<br><small>(রুটে মোট "+bn2(r.n)+"টি"+(it.bn&&!ALLF?" — “"+(window.__bq||"")+"” অর্থে মিলেছে":"")+")</small>":"")}
  [...r.r].forEach(x=>l.appendChild(el("span",null,x)));h.append(l,m,ch);const fb=el("div","rs-forms");c.append(h,fb);let built=false;
  const list=lst(it,exact);
  h.onclick=()=>{c.classList.toggle("open");if(built)return;built=true;
+  {const L=lst(it,exact),v=vset(L),sm=el("div","rs-sum"),b=el("b",null,bn2(v.o)+"টি ফলাফল");sm.append(b," — ",el("span","rs-ar",[...r.r].join(" ")));if(v.o!==r.n)sm.append(" (রুটে মোট "+bn2(r.n)+"টি)");fb.append(sm)}
   {const set=new Set();list.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
    const cb=copyBtn("📋 এই শব্দের সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
    cb.style.margin="6px 0";fb.append(cb)}
-  [...list].sort((a,b)=>b.refs.length-a.refs.length).forEach(f=>{const row=el("div","rs-f"),w=el("div"),fw=el("div","rs-fw rs-ar",f.t),fm=el("div","rs-fm",f.m||""),fl=el("div","rs-fl rs-ar",f.l||""),ct=el("div","rs-fc",bn2(f.refs.length)),vh=el("div","rs-v");
-   w.append(fw,fm,fl);row.append(w,ct);let vb=false;
+  [...list].sort((a,b)=>b.refs.length-a.refs.length).forEach(f=>{const row=el("div","rs-f"),w=el("div"),fw=el("div","rs-fw rs-ar",f.t),fm=el("div","rs-fm",f.m||""),fl=el("div","rs-fl rs-ar",f.l||""),ct=el("div","rs-fc",bn2(f.refs.length)+" বার"+(f.p&&POSBN[f.p]?" · "+POSBN[f.p]:"")),vh=el("div","rs-v");
+   row.append(el("span","rs-fa","▾"),ct,el("span","rs-fd","—"),fw,fm);let vb=false;
    row.onclick=()=>{row.classList.toggle("open");if(vb)return;vb=true;verses(vh,f.refs,f.m)};
    fb.append(row,vh)});
   {const fs=[...fb.querySelectorAll(".rs-f")];fs.forEach(f=>f.click())}
@@ -181,7 +205,7 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  const bq=raw.trim();
  if(!q&&/[\u0980-\u09FF]/.test(bq)){if(bq.length<2){info.textContent="কমপক্ষে ২টি অক্ষর লিখুন";return}
   await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
-  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে";
+  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে";
   {const cnt=f=>{const u=new Set();rb.forEach(it=>f(it).forEach(x=>x.refs.forEach(r=>u.add(r.split(":").slice(0,2).join(":")))));return u.size};
    const n1=cnt(it=>it.mf),n2=cnt(it=>it.r.forms),row=els("div","display:flex;flex-wrap:wrap;gap:6px;margin-top:8px");
    [[false,"“"+bq+"” অর্থের আয়াত ("+bn2(n1)+")"],[true,"রুটগুলোর সব আয়াত ("+bn2(n2)+")"]].forEach(([v,t])=>{const b=el("button","rs-wb",t);b.type="button";b.style.margin="0";if(ALLF===v){b.style.background="var(--primary)";b.style.color="#fff"}b.onclick=()=>{if(ALLF===v)return;ALLF=v;run().catch(e=>console.error(e))};row.appendChild(b)});
@@ -192,7 +216,7 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
- const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.u)+"টি আয়াত"+(tv.o>tv.u?" (ডুপ্লিকেট "+bn2(tv.o-tv.u)+"টি বাদ দিয়ে, মোট শব্দ "+bn2(tv.o)+"টি) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
+ const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
 function init(){const q=$("rsQ"),pad=$("rsPad");
  "ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" ").forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value+=ch;padGo()};pad.appendChild(b)});
