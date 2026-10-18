@@ -16,6 +16,10 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-ib:hover{background:color-mix(in srgb,var(--primary) 18%,transparent)}
 .rs-ib:active{transform:scale(.94);background:var(--primary);color:#fff}
 #rsX{background:transparent;color:var(--text-muted);font-size:16px}
+.rs-tr{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;align-items:center}
+.rs-tr button{border:1px solid var(--border-light);background:var(--card-bg);color:var(--primary);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:12.5px}
+.rs-tr button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
+.rs-tr small{flex-basis:100%;color:var(--text-muted);font-size:11.5px;line-height:1.5}
 .rs-pad{display:none;grid-template-columns:repeat(7,1fr);gap:5px;margin-top:8px;direction:rtl}
 .rs-pad.on{display:grid}
 .rs-pad.bn{direction:ltr}
@@ -88,7 +92,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
 .rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
 .rs-ww{margin:0 10px 10px}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
+</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-tr" id="rsTr"></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script type="module">
 import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
 import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -106,9 +110,10 @@ const rsFetch=async u=>{let c=null;try{c=window.caches&&await caches.open("rs-"+
 async function loadRoots(){if(R)return R;const j=await rsFetch(BASE+"quran-roots.json?v="+DV+"p");
 R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m,p])=>({t,l,m:m||"",p:p||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
-const CH={a:{},b:{},w:{}};
+const CH={c:{},a:{},b:{},w:{}};
 let actN=0;const qN=[],qL=[];const lim=(f,low)=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift()||qL.shift();n&&n()})};if(actN<5&&(!low||!qN.length))run();else(low?qL:qN).push(run)});
-const chunk=(k,s,low)=>CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}},low).catch(e=>{delete CH[k][s];throw e}));
+const CS=new Set([6,11,15,17,21,24,29,31,44,48,114]);let TR="b";try{if(localStorage.getItem("rsTr")==="c")TR="c"}catch(e){}
+const chunk=(k,s,low)=>k==="c"&&!CS.has(s)?chunk("b",s,low):CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}},low).catch(e=>{delete CH[k][s];throw e}));
 function search(q){const out=[];for(const r of R){let sc=0,mf=null;
  if(r.rn===q)sc=100;
  else{const ex=r.forms.filter(f=>f.k1===q||f.k2===q||lessAl(f.k1)===q||lessAl(f.k2)===q);
@@ -134,11 +139,11 @@ const BSYN=[["চুল","কেশ","কেশগুচ্ছ","কেশরা
 function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));for(const g of BSYN)if(toks.some(k=>bnHit(g[0],[k])||g.some(x=>fb(x)===fb(k))))for(const x of g)toks.push(x);
  const ws=String(text||"").split(" "),hit=ws.map(w=>toks.length&&bnHit(w,toks));let i=0;
  while(i<ws.length){if(i)box.appendChild(document.createTextNode(" "));if(hit[i]){let j=i;while(j+1<ws.length&&hit[j+1])j++;box.appendChild(el("mark",null,ws.slice(i,j+1).join(" ")));i=j+1}else{box.appendChild(document.createTextNode(ws[i]));i++}}}
-async function vtext(s,a){const t=((await chunk("a",s))||[])[a-1],b=((await chunk("b",s))||[])[a-1];return t==null?"":"সূরা "+SN[s-1]+" — "+s+":"+a+"\n"+t+"\n"+(b||"")}
+async function vtext(s,a){const t=((await chunk("a",s))||[])[a-1],b=((await chunk(TR,s))||[])[a-1];return t==null?"":"সূরা "+SN[s-1]+" — "+s+":"+a+"\n"+t+"\n"+(b||"")}
 async function copyTxt(x){try{await navigator.clipboard.writeText(x);return true}catch(e){try{const t=document.createElement("textarea");t.value=x;t.style.cssText="position:fixed;opacity:0";document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();return ok}catch(e2){return false}}}
 function copyBtn(label,get){const b=el("button","rs-wb",label);b.type="button";b.onclick=async()=>{b.disabled=true;const o=b.textContent;b.textContent="কপি হচ্ছে…";let ok=false;try{ok=await copyTxt(await get())}catch(e){}b.textContent=ok?"✅ কপি হয়েছে":"কপি করা যায়নি";setTimeout(()=>{b.textContent=o;b.disabled=false},1500)};return b}
 function allCopy(info,forms){const set=new Set();forms.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!all.length)return;
- const b=copyBtn("📋 সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
+ const b=copyBtn("📋 সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk(TR,z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
  b.style.cssText+=";display:block;margin:6px 0 0";info.appendChild(b);audioBar(info,all)}
 const AYN=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
 const RECS=[["ar.alafasy","মিশারি আলাফাসি","Alafasy_128kbps"],["ar.mahermuaiqly","মাহের আল-মুআইকলি","MaherAlMuaiqly128kbps"],["ar.abdurrahmaansudais","আব্দুর রহমান আস-সুদাইস","Abdurrahmaan_As-Sudais_192kbps"],["ar.saoodshuraym","সাউদ আশ-শুরাইম","Saood_ash-Shuraym_128kbps"],["ar.hudhaify","আল-হুযাইফি","Hudhaify_128kbps"],["ar.abdullahbasfar","আব্দুল্লাহ বাসফার","Abdullah_Basfar_192kbps"],["ar.husary","মাহমুদ খলিল আল-হুসারি","Husary_128kbps"]];
@@ -178,7 +183,7 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
  row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
 function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.length,1);
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
- const one=async([s,a,w])=>{const[A,B]=await Promise.all([chunk("a",s),chunk("b",s)]);const t=(A||[])[a-1];if(t==null)return null;const bn=B||[];
+ const one=async([s,a,w])=>{const[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)]);const t=(A||[])[a-1];if(t==null)return null;const bn=B||[];
    const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a));
    const tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb"),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
    wb.type="button";
@@ -206,7 +211,7 @@ function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  h.onclick=()=>{c.classList.toggle("open");if(built)return;built=true;
   {const L=lst(it,exact),v=vset(L),sm=el("div","rs-sum"),b=el("b",null,bn2(v.o)+"টি ফলাফল");sm.append(b," — ",el("span","rs-ar",[...r.r].join(" ")));if(v.o!==r.n&&!(it.bn&&!ALLF))sm.append(" (রুটে মোট "+bn2(r.n)+"টি)");fb.append(sm)}
   {const set=new Set();list.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
-   const cb=copyBtn("📋 এই শব্দের সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk("b",z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
+   const cb=copyBtn("📋 এই শব্দের সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk(TR,z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
    cb.style.margin="6px 0";fb.append(cb)}
   [...list].sort((a,b)=>b.refs.length-a.refs.length).forEach(f=>{const row=el("div","rs-f"),w=el("div"),fw=el("div","rs-fw rs-ar",f.t),fm=el("div","rs-fm",f.m||""),fl=el("div","rs-fl rs-ar",f.l||""),ct=el("div","rs-fc",bn2(f.refs.length)+" বার"+(f.p&&POSBN[f.p]?" · "+POSBN[f.p]:"")),vh=el("div","rs-v");
    row.append(el("span","rs-fa","▾"),ct,el("span","rs-fd","—"),fw,fm);let vb=false;
@@ -219,7 +224,7 @@ let tm=0;
 async function refView(s,a,e){const out=$("rsOut"),info=$("rsInfo");
  if(s<1||s>114){info.textContent="সূরা নম্বর ১ থেকে ১১৪-এর মধ্যে হতে হবে";return}
  info.textContent="⏳ আয়াত লোড হচ্ছে…";let A,B;
- try{[A,B]=await Promise.all([chunk("a",s),chunk("b",s)])}catch(x){info.textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন";return}
+ try{[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)])}catch(x){info.textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন";return}
  A=A||[];B=B||[];
  if(a<1||a>A.length){info.textContent="সূরা "+SN[s-1]+"-এ মোট "+bn2(A.length)+"টি আয়াত — "+bn2(a)+" নম্বর আয়াত নেই";return}
  e=Math.min(Math.max(e,a),A.length,a+29);
@@ -261,6 +266,8 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir();clearTimeout(tm);tm=setTimeout(padGo,200)};
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
  drawPad();
+ const trBox=$("rsTr"),drawTr=()=>{trBox.innerHTML="";[["b","মুহিউদ্দীন খানের অনুবাদ (মূল)"],["c","সহজ চলিত রূপ"]].forEach(([k,t])=>{const b=el("button",TR===k?"on":null,t);b.type="button";b.onclick=()=>{if(TR===k)return;TR=k;try{localStorage.setItem("rsTr",k)}catch(e){}drawTr();go()};trBox.appendChild(b)});
+  if(TR==="c")trBox.appendChild(el("small",null,"মুহিউদ্দীন খানের অনুবাদের (ইসলামিক ফাউন্ডেশন প্রকাশিত) সাধু রূপ ও বানান-ভুল সংশোধন করা রূপ — মূল অনুবাদকের নামেই; এটি সরকারি/প্রকাশকের অনুমোদিত সংস্করণ নয়।"))};drawTr();
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
   if(!p||!/^[\u0980-\u09FF]+$/.test(p)){rs.classList.remove("on");return go()}
   try{BW=BW||(await rsFetch(BASE+"quran-bn-words.json?v="+DV+"w")).w}catch(e){rs.classList.remove("on");return go()}
