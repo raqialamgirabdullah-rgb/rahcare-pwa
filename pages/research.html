@@ -121,15 +121,17 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
   if(sc)out.push({r,sc,mf,loose:1})}}
  return out.sort((a,b)=>b.sc-a.sc||b.r.n-a.r.n)}
 let ALLF=false;
-function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.includes(q)){qs=g.slice();break}
- for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;if(qs.some(k=>f.m===k))ex.push(f);else if(qs.some(k=>f.m.includes(k)))pt.push(f)}
+function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.some(x=>fb(x)===fb(q))){qs=g.slice();break}
+ const fq=qs.map(fb);
+ for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;const fm=f._b||(f._b=fb(f.m));if(fq.some(k=>fm===k))ex.push(f);else if(fq.some(k=>fm.includes(k)))pt.push(f)}
   if(ex.length||pt.length)out.push({r,sc:ex.length?60:40,mf:ex.concat(pt),bn:1})}
  return out.sort((a,b)=>b.sc-a.sc||b.mf.length-a.mf.length||b.r.n-a.r.n)}
 const BSTOP=new Set(["সহ","ও","এবং","এর","তার","তাদের","যে","এই","সে","কি","কী","না","তো","হয়","করে","থেকে","দ্বারা","জন্য","একটি","এক","তাঁর","তিনি","আর","বা","যারা","তারা","আমার","আমি","আমাকে","আমাদের","আমরা","আমাদেরকে","তোমার","তুমি","তোমাকে","তোমরা","তোমাদের","তাকে","তাঁকে","তাঁদের","তিনি","সে","এটি","ওই","ঐ","সেই","এর","ওর","তা","যা","কে","হে","নিশ্চয়","অবশ্যই","কিন্তু","যদি","তবে","পর","মধ্যে","উপর","প্রতি","সাথে","সঙ্গে","করা","করো","করুন","হবে","হল","হলো","ছিল","আছে","তাহলে","এবং","অথবা"]);
+const fb=s=>String(s||"").replace(/[\u200c\u200d\u0981]/g,"").replace(/\u09df|য\u09bc/g,"য").replace(/ী/g,"ি").replace(/ূ/g,"ু").replace(/ঈ/g,"ই").replace(/ঊ/g,"উ").replace(/ণ/g,"ন").replace(/য/g,"জ").replace(/জ্দু/g,"জাদু");
 const bnw=x=>x.replace(/[()\[\],.;:!?"'“”‘’।–—-]/g,"");
-function bnHit(w,toks){w=bnw(w);if(w.length<2)return false;for(const k of toks){if(w===k)return true;let n=0;const L=Math.min(w.length,k.length);while(n<L&&w[n]===k[n])n++;if(n>=3&&n>=Math.ceil(L*0.7))return true}return false}
+function bnHit(w,toks){w=fb(bnw(w));if(w.length<2)return false;for(let k of toks){k=fb(k);if(w===k)return true;let n=0;const L=Math.min(w.length,k.length);while(n<L&&w[n]===k[n])n++;if(n>=3&&n>=Math.ceil(L*0.7))return true}return false}
 const BSYN=[["চুল","কেশ","কেশগুচ্ছ","কেশরাজি","কেশদাম","ঝুঁটি"],["মাথা","মস্তক","শির","শিরোদেশ"],["চোখ","নয়ন","চক্ষু","আঁখি"],["হাত","কর","হস্ত"],["পা","পদ","চরণ","পায়ে"],["মুখ","চেহারা","মুখমণ্ডল","বদন","আনন"],["কান","কর্ণ","শ্রবণ"],["পেট","উদর","জঠর"],["পিঠ","পৃষ্ঠ","পৃষ্ঠদেশ"],["বুক","বক্ষ","সিনা","ছাতি"],["ঘাড়","গর্দান","গ্রীবা","কণ্ঠ"],["অন্তর","হৃদয়","মন","কলব","দিল"],["রক্ত","খুন","শোণিত"],["কপাল","ললাট","ভ্রূ"],["জিহ্বা","জিভ","জবান","রসনা"],["দাঁত","দন্ত"],["নাক","নাসিকা","নাসারন্ধ্র"],["আঙুল","অঙ্গুলি","আঙ্গুল"]];
-function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));for(const g of BSYN)if(toks.some(k=>bnHit(g[0],[k])||g.some(x=>x===k)))for(const x of g)toks.push(x);
+function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));for(const g of BSYN)if(toks.some(k=>bnHit(g[0],[k])||g.some(x=>fb(x)===fb(k))))for(const x of g)toks.push(x);
  const ws=String(text||"").split(" "),hit=ws.map(w=>toks.length&&bnHit(w,toks));let i=0;
  while(i<ws.length){if(i)box.appendChild(document.createTextNode(" "));if(hit[i]){let j=i;while(j+1<ws.length&&hit[j+1])j++;box.appendChild(el("mark",null,ws.slice(i,j+1).join(" ")));i=j+1}else{box.appendChild(document.createTextNode(ws[i]));i++}}}
 async function vtext(s,a){const t=((await chunk("a",s))||[])[a-1],b=((await chunk("b",s))||[])[a-1];return t==null?"":"সূরা "+SN[s-1]+" — "+s+":"+a+"\n"+t+"\n"+(b||"")}
@@ -246,11 +248,11 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null;
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
   if(!p||!/^[\u0980-\u09FF]+$/.test(p)){rs.classList.remove("on");return go()}
   try{BW=BW||(await rsFetch(BASE+"quran-bn-words.json?v="+DV+"w")).w}catch(e){rs.classList.remove("on");return go()}
-  const l=BW.filter(x=>x[0].startsWith(p));
+  const fp=fb(p),l=BW.filter(x=>fb(x[0]).startsWith(fp));
   if(!l.length){rs.classList.remove("on");return go()}
   rs.innerHTML="";rs.classList.add("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   rs.appendChild(el("div","rs-rh2","“"+p+"” দিয়ে শুরু "+bn2(l.length)+"টি শব্দ — একটি বেছে নিন"));
-  l.forEach(x=>{const row=el("div","rs-ri"),b=el("b",null,x[0]),c=el("span",null,bn2(x[1])+" রুট · "+bn2(x[2])+" আয়াত");row.append(b,c);row.onclick=()=>{q.value=x[0];setDir();rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})}; const padGo=async()=>{rs.classList.toggle("bn",mode==="bn");if(pad.classList.contains("on")&&mode==="bn")return bnList();const p=nz(q.value);if(!pad.classList.contains("on")||!p||p.length>=3){rs.classList.remove("on");return go()}
+  l.forEach(x=>{const row=el("div","rs-ri"),b=el("b",null,x[0]+(x[3]&&x[3].length?" ("+x[3].join(", ")+")":"")),c=el("span",null,bn2(x[1])+" রুট · "+bn2(x[2])+" আয়াত");row.append(b,c);row.onclick=()=>{q.value=x[0];setDir();rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})}; const padGo=async()=>{rs.classList.toggle("bn",mode==="bn");if(pad.classList.contains("on")&&mode==="bn")return bnList();const p=nz(q.value);if(!pad.classList.contains("on")||!p||p.length>=3){rs.classList.remove("on");return go()}
   try{await loadRoots()}catch(e){rs.classList.remove("on");return go()}
   const l=R.filter(r=>r.rn.length>p.length&&r.rn.startsWith(p));
   if(!l.length){rs.classList.remove("on");return go()}
