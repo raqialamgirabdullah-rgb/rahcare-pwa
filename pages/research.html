@@ -94,7 +94,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
 .rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
 .rs-ww{margin:0 10px 10px}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" type="text" dir="auto" enterkeyhint="search" style="text-align:center" placeholder="হরফ দিয়ে খুঁজুন…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
+</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" type="text" dir="auto" enterkeyhint="search" style="text-align:center" placeholder="শব্দ দিয়ে খুঁজুন…" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script>
 (()=>{"use strict";
 const BASE="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/",DV="2",$=i=>document.getElementById(i);
@@ -256,7 +256,7 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
 function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
- const setDir=()=>{q.placeholder=mode==="bn"?"বাংলা শব্দ লিখুন…":"হরফ দিয়ে খুঁজুন…"};
+ const setDir=()=>{q.placeholder=mode==="bn"?"বাংলা শব্দ লিখুন…":"শব্দ দিয়ে খুঁজুন…"};
  const AR="ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" "),BNL="অ আ ই ঈ উ ঊ ঋ এ ঐ ও ঔ ক খ গ ঘ ঙ চ ছ জ ঝ ঞ ট ঠ ড ঢ ণ ত থ দ ধ ন প ফ ব ভ ম য র ল শ ষ স হ ড় ঢ় য় ৎ ং ঃ ঁ".split(" ");
  const drawPad=()=>{pad.innerHTML="";pad.classList.toggle("bn",mode==="bn");
   const lg=el("div","rs-lg");[["ar","আরবি"],["bn","বাংলা"]].forEach(([m,t])=>{const b=el("button",m===mode?"on":null,t);b.type="button";b.onclick=()=>{if(mode===m)return;mode=m;q.value="";rs.classList.remove("on");drawPad();setDir();$("rsOut").innerHTML="";$("rsInfo").textContent=""};lg.appendChild(b)});pad.appendChild(lg);
