@@ -32,6 +32,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-pad button{border:1px solid var(--border-light);background:var(--card-bg);color:inherit;border-radius:7px;padding:7px 0;font-size:21px;cursor:pointer;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh","Traditional Arabic",serif!important;font-weight:700;line-height:1.5}
 .rs-pad button:active{background:var(--primary);color:#fff}
 .rs-info{color:var(--text-muted);font-size:12.5px;margin:10px 2px}
+.rs-info:empty{display:none}
 .rs-root{border:0;border-top:1px solid var(--border-light);border-radius:0;margin-top:6px;overflow:visible}
 .rs-rh{display:flex;align-items:center;gap:10px;padding:10px 0;cursor:pointer}
 .rs-rl{font-size:28px;color:var(--primary);font-weight:700;min-width:84px;text-align:center;display:flex;justify-content:center;gap:9px;direction:rtl}
@@ -92,7 +93,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
 .rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
 .rs-ww{margin:0 10px 10px}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" placeholder="ابحث بالحروف…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-tr" id="rsTr"></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
+</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" style="text-align:left" placeholder="হরফ দিয়ে খুঁজুন…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-tr" id="rsTr" style="display:none"></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script type="module">
 import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
 import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -112,7 +113,7 @@ R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m,p])=>({t,l,m:m||"",p:p|
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
 const CH={c:{},a:{},b:{},w:{}};
 let actN=0;const qN=[],qL=[];const lim=(f,low)=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift()||qL.shift();n&&n()})};if(actN<5&&(!low||!qN.length))run();else(low?qL:qN).push(run)});
-const CS=new Set([6,11,15,17,21,24,29,31,44,48,114]);let TR="b";try{if(localStorage.getItem("rsTr")==="c")TR="c"}catch(e){}
+const CS=new Set([6,11,15,17,21,24,29,31,44,48,114]);let TR="b";
 const chunk=(k,s,low)=>k==="c"&&!CS.has(s)?chunk("b",s,low):CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}},low).catch(e=>{delete CH[k][s];throw e}));
 function search(q){const out=[];for(const r of R){let sc=0,mf=null;
  if(r.rn===q)sc=100;
@@ -248,14 +249,14 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
    info.appendChild(row)}
   window.__bq=bq;allCopy(info,rb.flatMap(it=>lst(it,!1)));
   rb.forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);c.querySelector(".rs-rh").click()});return}
- if(!q){info.textContent="রুটে চাপ দিন — রূপ ও বাংলা অর্থসহ আয়াত দেখাবে";return}
+ if(!q){info.textContent="";return}
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
  const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
 function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
- const setDir=()=>{const b=/[\u0980-\u09FF]/.test(q.value)||/^[\d:.\-\/\s]+$/.test(q.value)||(mode==="bn"&&!q.value);q.dir=b?"ltr":"rtl";q.lang=b?"bn":"ar";q.style.textAlign=b?"left":"right";q.placeholder=mode==="bn"?"বাংলা শব্দ লিখুন…":"ابحث بالحروف…"};
+ const setDir=()=>{const b=/[\u0980-\u09FF]/.test(q.value)||/^[\d:.\-\/\s]+$/.test(q.value)||(mode==="bn"&&!q.value);q.dir=b?"ltr":"rtl";q.lang=b?"bn":"ar";q.style.textAlign=b||!q.value?"left":"right";q.placeholder=mode==="bn"?"বাংলা শব্দ লিখুন…":"হরফ দিয়ে খুঁজুন…"};
  const AR="ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" "),BNL="অ আ ই ঈ উ ঊ ঋ এ ঐ ও ঔ ক খ গ ঘ ঙ চ ছ জ ঝ ঞ ট ঠ ড ঢ ণ ত থ দ ধ ন প ফ ব ভ ম য র ল শ ষ স হ ড় ঢ় য় ৎ ং ঃ ঁ".split(" ");
  const drawPad=()=>{pad.innerHTML="";pad.classList.toggle("bn",mode==="bn");
   const lg=el("div","rs-lg");[["ar","আরবি"],["bn","বাংলা"]].forEach(([m,t])=>{const b=el("button",m===mode?"on":null,t);b.type="button";b.onclick=()=>{if(mode===m)return;mode=m;q.value="";rs.classList.remove("on");drawPad();setDir();$("rsOut").innerHTML="";$("rsInfo").textContent=""};lg.appendChild(b)});pad.appendChild(lg);
@@ -266,7 +267,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir();clearTimeout(tm);tm=setTimeout(padGo,200)};
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
  drawPad();
- const trBox=$("rsTr"),drawTr=()=>{trBox.innerHTML="";[["b","মুহিউদ্দীন খানের অনুবাদ (মূল)"],["c","সহজ চলিত রূপ"]].forEach(([k,t])=>{const b=el("button",TR===k?"on":null,t);b.type="button";b.onclick=()=>{if(TR===k)return;TR=k;try{localStorage.setItem("rsTr",k)}catch(e){}drawTr();go()};trBox.appendChild(b)});
+ const trBox=$("rsTr"),drawTr=()=>{trBox.innerHTML="";[].forEach(([k,t])=>{const b=el("button",TR===k?"on":null,t);b.type="button";b.onclick=()=>{if(TR===k)return;TR=k;try{localStorage.setItem("rsTr",k)}catch(e){}drawTr();go()};trBox.appendChild(b)});
   if(TR==="c")trBox.appendChild(el("small",null,"মুহিউদ্দীন খানের অনুবাদ (উৎস: tanzil.net, CC BY-SA 4.0) থেকে সাধু রূপ ও বানান-ভুল আমরা সহজ চলিত ভাষায় সংশোধন করেছি; অনুবাদ মূলত তাঁরই।"))};drawTr();
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
   if(!p||!/^[\u0980-\u09FF]+$/.test(p)){rs.classList.remove("on");return go()}
