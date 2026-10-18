@@ -233,14 +233,14 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
  const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
-function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null;
+function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  const setDir=()=>{const b=/[\u0980-\u09FF]/.test(q.value)||(mode==="bn"&&!q.value);q.dir=b?"ltr":"rtl";q.lang=b?"bn":"ar";q.style.textAlign=b?"left":"right";q.placeholder=mode==="bn"?"বাংলা শব্দ লিখুন…":"ابحث بالحروف…"};
  const AR="ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" "),BNL="অ আ ই ঈ উ ঊ ঋ এ ঐ ও ঔ ক খ গ ঘ ঙ চ ছ জ ঝ ঞ ট ঠ ড ঢ ণ ত থ দ ধ ন প ফ ব ভ ম য র ল শ ষ স হ ড় ঢ় য় ৎ ং ঃ ঁ".split(" ");
  const drawPad=()=>{pad.innerHTML="";pad.classList.toggle("bn",mode==="bn");
   const lg=el("div","rs-lg");[["ar","আরবি"],["bn","বাংলা"]].forEach(([m,t])=>{const b=el("button",m===mode?"on":null,t);b.type="button";b.onclick=()=>{if(mode===m)return;mode=m;q.value="";rs.classList.remove("on");drawPad();setDir();$("rsOut").innerHTML="";$("rsInfo").textContent=""};lg.appendChild(b)});pad.appendChild(lg);
-  (mode==="bn"?BNL:AR).forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value=mode==="bn"?ch:q.value+ch;setDir();padGo()};pad.appendChild(b)});
+  (mode==="bn"?BNL:AR).forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value=mode==="bn"?ch:q.value+ch;setDir();pad.classList.remove("on");padGo()};pad.appendChild(b)});
   const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);setDir();padGo()};pad.appendChild(bs)};
- $("rsKb").onclick=()=>{pad.classList.toggle("on");if(pad.classList.contains("on"))padGo()};
+ $("rsKb").onclick=()=>{pad.classList.toggle("on");kb=true;if(pad.classList.contains("on"))padGo()};
  $("rsX").onclick=()=>{q.value="";rs.classList.remove("on");setDir();go();q.focus()};
  q.oninput=()=>{setDir();clearTimeout(tm);tm=setTimeout(padGo,200)};
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
@@ -252,7 +252,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null;
   if(!l.length){rs.classList.remove("on");return go()}
   rs.innerHTML="";rs.classList.add("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   rs.appendChild(el("div","rs-rh2","“"+p+"” দিয়ে শুরু "+bn2(l.length)+"টি শব্দ — একটি বেছে নিন"));
-  l.forEach(x=>{const row=el("div","rs-ri"),b=el("b",null,x[0]+(x[3]&&x[3].length?" ("+x[3].join(", ")+")":"")),c=el("span",null,bn2(x[1])+" রুট · "+bn2(x[2])+" আয়াত");row.append(b,c);row.onclick=()=>{q.value=x[0];setDir();rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})}; const padGo=async()=>{rs.classList.toggle("bn",mode==="bn");if(pad.classList.contains("on")&&mode==="bn")return bnList();const p=nz(q.value);if(!pad.classList.contains("on")||!p||p.length>=3){rs.classList.remove("on");return go()}
+  l.forEach(x=>{const row=el("div","rs-ri"),b=el("b",null,x[0]+(x[3]&&x[3].length?" ("+x[3].join(", ")+")":"")),c=el("span",null,bn2(x[1])+" রুট · "+bn2(x[2])+" আয়াত");row.append(b,c);row.onclick=()=>{q.value=x[0];setDir();rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})}; const padGo=async()=>{rs.classList.toggle("bn",mode==="bn");if(kb&&mode==="bn")return bnList();const p=nz(q.value);if(!kb||!p||p.length>=3){rs.classList.remove("on");return go()}
   try{await loadRoots()}catch(e){rs.classList.remove("on");return go()}
   const l=R.filter(r=>r.rn.length>p.length&&r.rn.startsWith(p));
   if(!l.length){rs.classList.remove("on");return go()}
