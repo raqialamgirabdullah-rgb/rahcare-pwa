@@ -225,8 +225,10 @@ async function refView(s,a,e){const out=$("rsOut"),info=$("rsInfo");
  e=Math.min(Math.max(e,a),A.length,a+29);
  info.textContent="সূরা "+SN[s-1]+" — "+bn2(s)+":"+bn2(a)+(e>a?" থেকে "+bn2(e):"");out.innerHTML="";
  for(let i=a;i<=e;i++){const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(i));
-  const tx=el("div","rs-vt rs-ar",A[i-1]),tb=el("div","rs-vb",B[i-1]||""),va=el("div","rs-va");
-  va.append(copyBtn("📋 কপি",()=>vtext(s,i)),playBtn(s,i),selBox(s,i));box.append(rf,tx,tb,va);out.appendChild(box)}}
+  const tx=el("div","rs-vt rs-ar",A[i-1]),tb=el("div","rs-vb",B[i-1]||""),va=el("div","rs-va"),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");wb.type="button";
+  let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
+   try{const m=((await chunk("w",s))||[])[i-1].split("|");wh.textContent="";A[i-1].split(" ").forEach((x,k)=>{const c=el("div","rs-wc"),ar=el("div","rs-wa rs-ar",x),bm=el("div","rs-wm",m[k]||"");c.append(ar,bm);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
+  va.append(wb,copyBtn("📋 কপি",()=>vtext(s,i)),playBtn(s,i),selBox(s,i));box.append(rf,tx,tb,va,wh);out.appendChild(box)}}
 async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
  const bq=raw.trim();
  {const dg=bq.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)),mr=dg.match(/^(\d{1,3})\s*[:.\/]\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$/);
