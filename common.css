@@ -67,9 +67,6 @@ body:not(.lb-on) .ac,body:not(.lb-on) .edit-ic,body:not(.lb-on) .item-add-row{di
 :root{--primary-color:#4f46e5;--text-color:#1f2937;--bg-color:#f3f4f6;--line:#e2e8f0;--bg-soft:#f8fafc;--muted-2:#94a3b8;--line-soft:#cbd5e1;--text-slate:#334155;--text-dark:#1e293b;--text-mid:#475569;--green-dark:#166534}
 #imgBox{display:flex;flex-wrap:wrap;gap:10px}
 #instCancel{background:var(--text-muted)}
-#instCustom{display:none;border-top:1px solid var(--border-light);margin-top:12px;padding-top:12px}
-#instCustom .opt-btn{width:100%;margin-top:5px;padding:10px}
-#instCustom input{width:100%;box-sizing:border-box;border:1px solid var(--line-soft);border-radius:4px;padding:10px;margin:8px 0}
 #pwErr{color:#dc2626;font-size:12px;margin-top:8px;min-height:14px}
 #pwGate{display:none;position:fixed;inset:0;background:var(--bg-color);z-index:9999;align-items:center;justify-content:center;padding:16px}
 #pwGate .box{background:#fff;padding:20px;border-radius:12px;box-shadow:0 2px 8px #0000001a;width:100%;max-width:320px;text-align:center}

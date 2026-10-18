@@ -1047,44 +1047,7 @@ initImg=async uid=>{const s=await GD(Q(C(db,"users"),W("uid","==",uid)));if(s.em
 imgBox.innerHTML=Object.entries(IMG).map(([k,[,,t]])=>`<div class="img-row" id="row-${k}"><div><div class="lbl-row"><div class="lbl">${t}</div><span class="edit-link map-link" data-a="map" data-k="${k}">Mapping</span></div><div class="val">Not uploaded (using default)</div><img id="pv-${k}" class="img-preview" alt="${t}"></div><div class="img-actions"><div class="toggle-wrap"><label class="toggle-switch"><input type="checkbox" id="tg-${k}" data-k="${k}"><span class="toggle-slider"></span></label><span class="toggle-status-text" id="ts-${k}">Default</span></div><span class="edit-link" id="up-${k}" data-a="up" data-k="${k}">Upload</span><span class="edit-link delete-link" data-a="del" data-k="${k}">Delete</span></div><input type="file" id="fl-${k}" data-k="${k}" accept="image/*" hidden></div>`).join("");
 imgBox.addEventListener("click",async e=>{const t=e.target.closest("[data-a]");if(!t)return;const k=t.dataset.k,[f,a]=IMG[k];if(t.dataset.a==="map")return dispatchEvent(new CustomEvent("mapping",{detail:k}));if(t.dataset.a==="up")return v("fl-"+k).click();if(!confirm("Delete this image?"))return;if(!uDoc)return alert(UNF);try{await updU({[f]:"",[a]:!1});setImg(k,"",!1);alert("Deleted!")}catch(x){alert("Error: "+x.message)}});
 imgBox.addEventListener("change",async e=>{const t=e.target,k=t.dataset.k;if(!k)return;if(t.type==="file")return upload(k,t.files[0]);if(!uDoc){t.checked=!t.checked;return alert(UNF)}try{await updU({[IMG[k][1]]:t.checked});v("ts-"+k).innerText=t.checked?"Custom":"Default"}catch(x){alert("Error: "+x.message);t.checked=!t.checked}});
-const H="https://rahcare.blogspot.com/",DEF_ICO="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/icon-192.png",DEF_NAME="Rah Care",instBox=v("instCustom");
-let prmpt=window.__bip,uData=null,mKey="",bt=0;
-const msg=t=>{clearTimeout(bt);v("instMsg").textContent=t},
-busy=on=>{clearTimeout(bt);["instDef","instCus","instGo"].forEach(i=>v(i).disabled=on);v("instMsg").textContent=on?"Please wait...":"";on&&(bt=setTimeout(()=>busy(!1),4e3))},
-logo=()=>uData?.logoUrl&&uData.logoActive!==!1?uData.logoUrl:DEF_ICO,
-setManifest=(name,icon)=>{const n=name||DEF_NAME,i=icon||DEF_ICO,k=n+"|"+i;if(k===mKey)return!1;mKey=k;document.querySelector('link[rel="manifest"]')?.remove();const a={name:n,short_name:n,start_url:H,scope:H,display:"standalone",orientation:"portrait",background_color:"#fff",theme_color:"#1a4731",icons:[192,512].map(s=>({src:i,sizes:`${s}x${s}`,type:"image/png",purpose:"any maskable"}))},l=document.createElement("link");l.rel="manifest";l.href=URL.createObjectURL(new Blob([JSON.stringify(a)],{type:"application/json"}));document.head.appendChild(l);return!0},
-refreshManifest=()=>setManifest(uData?.centreName,logo())&&busy(!0),
-gotPrompt=()=>{prmpt=window.__bip;busy(!1)},
-install=async(name,icon)=>{
-if(matchMedia("(display-mode:standalone)").matches)return msg("✅ অ্যাপ থেকেই চলছে");
-if(setManifest(name,icon))return busy(!0);
-if(!prmpt)return msg(/iphone|ipad|ipod/i.test(navigator.userAgent)?"📲 Safari: Share → 'Add to Home Screen'":"📲 ব্রাউজার মেনু (⋮) → 'Install app'");
-try{prmpt.prompt();const r=await prmpt.userChoice;msg(r.outcome=="accepted"?"✅ ইন্সটল হচ্ছে...":"ইন্সটল বাতিল করা হয়েছে");instBox.style.display="none"}catch{msg("⚠️ আবার চেষ্টা করুন")}
-prmpt=window.__bip=null;mKey="";refreshManifest()};
-prmpt&&gotPrompt();
-addEventListener("bip",gotPrompt);
-addEventListener("appinstalled",()=>{prmpt=window.__bip=null;instBox.style.display="none";msg("✅ ইন্সটল হয়েছে")});
-v("instDef").onclick=()=>setManifest(DEF_NAME,DEF_ICO)?busy(!0):install(DEF_NAME,DEF_ICO);
-v("instCus").onclick=()=>{v("instName").value=uData?.centreName||DEF_NAME;instBox.style.display="block";refreshManifest()};
-let dt=0;v("instName").oninput=()=>{clearTimeout(dt);busy(!0);dt=setTimeout(()=>setManifest(v("instName").value.trim(),logo())?busy(!0):busy(!1),600)};
-v("instGo").onclick=()=>install(v("instName").value.trim()||DEF_NAME,logo());
-v("instCancel").onclick=()=>instBox.style.display="none";
-/* ইন্সটল থাকলে দুই Install বাটনই ধূসর (নিষ্ক্রিয়) দেখায়; লেখা "Install"-ই থাকে */
-const LSK="rcInstalled",
-lsg=()=>{try{return localStorage.getItem(LSK)}catch{}},
-lss=x=>{try{x?localStorage.setItem(LSK,"1"):localStorage.removeItem(LSK)}catch{}};
-let installed=lsg()==="1"||matchMedia("(display-mode:standalone)").matches;
-if(window.__bip)installed=false;
-const paintInst=()=>{["instDef","instCus"].forEach(i=>{const b=v(i);b.textContent="Install";b.style.opacity=installed?".4":"";b.style.filter=installed?"grayscale(1)":"";b.style.cursor=installed?"not-allowed":"";b.setAttribute("aria-disabled",installed?"true":"false")});installed&&(instBox.style.display="none")},
-setInst=x=>{installed=x;lss(x);paintInst()};
-{const od=v("instDef").onclick,oc=v("instCus").onclick;
-v("instDef").onclick=()=>installed?0:od();
-v("instCus").onclick=()=>installed?0:oc()}
-addEventListener("appinstalled",()=>setInst(!0));
-addEventListener("bip",()=>setInst(!1));
-try{navigator.getInstalledRelatedApps&&navigator.getInstalledRelatedApps().then(a=>a&&a.length&&setInst(!0)).catch(()=>{})}catch{}
-setTimeout(()=>{!window.__bip&&!installed&&"onbeforeinstallprompt" in window&&!/iphone|ipad|ipod/i.test(navigator.userAgent)&&setInst(!0)},5e3);
-paintInst();
+let uData=null;const refreshManifest=()=>{};
 return{ask,initImg,updU,UNF,get uDoc(){return uDoc},get uData(){return uData}}}
 
 /* ===== Shared: মাসিক রিপোর্ট — monthly-report.js ও myreport.js এখান থেকে ডাকে ===== */
@@ -1286,7 +1249,7 @@ if (!window.__rcDatePick) {
     } catch (e) {}
   })();
 
-  /* ---------- PWA install prompt (kept for the install button in the admin panel) ---------- */
+  /* ---------- PWA install prompt (used by the sidebar Install switch) ---------- */
   try {
     addEventListener("beforeinstallprompt", function (e) {
       e.preventDefault();
