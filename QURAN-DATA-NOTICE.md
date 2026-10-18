@@ -11,3 +11,6 @@ Root assignments are research data, not a fatwa/tafsir source; verify against cl
   [SadaqaWorks/Word-By-Word-Quran-Android](https://github.com/SadaqaWorks/Word-By-Word-Quran-Android) (MIT), `wordbyword.db`.
 - `quran-bn.json`: Bangla verse translation by Muhiuddin Khan, taken from [tanzil.net](https://tanzil.net) through
   [risan/quran-json](https://github.com/risan/quran-json) (CC BY-SA 4.0). Built by `tools/build-quran-bn.py`.
+
+- `quran-chunks/c/`: easy colloquial form of the Muhiuddin Khan translation above (sadhu words and spelling errors corrected in 19 verses);
+  a derivative of a CC BY-SA 4.0 work, therefore shared under CC BY-SA 4.0 with the same attribution.

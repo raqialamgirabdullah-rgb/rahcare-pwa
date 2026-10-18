@@ -267,7 +267,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
  drawPad();
  const trBox=$("rsTr"),drawTr=()=>{trBox.innerHTML="";[["b","মুহিউদ্দীন খানের অনুবাদ (মূল)"],["c","সহজ চলিত রূপ"]].forEach(([k,t])=>{const b=el("button",TR===k?"on":null,t);b.type="button";b.onclick=()=>{if(TR===k)return;TR=k;try{localStorage.setItem("rsTr",k)}catch(e){}drawTr();go()};trBox.appendChild(b)});
-  if(TR==="c")trBox.appendChild(el("small",null,"মুহিউদ্দীন খানের অনুবাদের (ইসলামিক ফাউন্ডেশন প্রকাশিত) সাধু রূপ ও বানান-ভুল সংশোধন করা রূপ — মূল অনুবাদকের নামেই; এটি সরকারি/প্রকাশকের অনুমোদিত সংস্করণ নয়।"))};drawTr();
+  if(TR==="c")trBox.appendChild(el("small",null,"মুহিউদ্দীন খানের অনুবাদ (উৎস: tanzil.net, CC BY-SA 4.0) থেকে সাধু রূপ ও বানান-ভুল আমরা সহজ চলিত ভাষায় সংশোধন করেছি; অনুবাদ মূলত তাঁরই।"))};drawTr();
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
   if(!p||!/^[\u0980-\u09FF]+$/.test(p)){rs.classList.remove("on");return go()}
   try{BW=BW||(await rsFetch(BASE+"quran-bn-words.json?v="+DV+"w")).w}catch(e){rs.classList.remove("on");return go()}
