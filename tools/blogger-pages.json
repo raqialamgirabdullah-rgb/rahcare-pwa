@@ -79,6 +79,12 @@
       "page": "research",
       "title": "Research",
       "enabled": true
+    },
+    {
+      "slug": "gemini-test",
+      "page": "gemini-test",
+      "title": "Gemini Test",
+      "enabled": true
     }
   ]
 }

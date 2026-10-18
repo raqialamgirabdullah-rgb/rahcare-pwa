@@ -1127,7 +1127,7 @@ if (!window.__rcDatePick) {
   var SITE = "https://rahcare.blogspot.com/p/";
   var FONT_URL = "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400..800&family=Noto+Serif+Bengali:wght@400..800&family=Noto+Sans+Bengali:wght@400;500;700&family=Roboto:wght@400;500;700&family=Inter:wght@400..700&family=Hind+Siliguri:wght@400;500;600;700&display=swap";
   var DARK_CSS = "dark.css?v=5";
-  var ICONS = {research:'<path d="M9 3h6M10 3v6.2L4.6 18a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.2V3"/><path d="M7.5 15h9"/>',dashboard:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',appointment:'<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>',billing:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>',accounts:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>',profile:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',admin:'<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',"admin-panel":'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',other:'<circle cx="12" cy="12" r="3.2"/>'};
+  var ICONS = {"gemini-test":'<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M18.5 15.5l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"/>',research:'<path d="M9 3h6M10 3v6.2L4.6 18a2 2 0 0 0 1.7 3h11.4a2 2 0 0 0 1.7-3L14 9.2V3"/><path d="M7.5 15h9"/>',dashboard:'<rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/>',appointment:'<circle cx="10" cy="8" r="3.6"/><path d="M3.5 20c.6-3.6 3.2-5.6 6.5-5.6s5.9 2 6.5 5.6"/><path d="M19 8v6M16 11h6"/>',billing:'<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9.5 8.5h5M9.5 12h5"/>',accounts:'<path d="M4 7.5A2.5 2.5 0 0 1 6.5 5H19v14H6.5A2.5 2.5 0 0 1 4 16.5z"/><path d="M19 9.5h-4a2 2 0 0 0 0 4h4"/>',profile:'<circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c.8-4 3.8-6 7.5-6s6.7 2 7.5 6"/>',admin:'<path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',"admin-panel":'<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',other:'<circle cx="12" cy="12" r="3.2"/>'};
   var BURGER = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></svg>';
   var ASIDE = '<div class="rc-sd-h"><span class="rc-sd-t">Rah Care</span><button type="button" class="rc-sd-x" aria-label="Close">&times;</button></div><div class="rc-sd-l"></div><div class="rc-sd-f"><div class="rc-sd-r"><span class="rc-sd-ft">📲 Install</span><label class="rc-sd-sw"><input type="checkbox" id="rc-in"><span class="rc-sd-sl"></span></label></div><div id="rc-inopt" class="rc-in-o" hidden><div class="rc-in-b"><button type="button" id="rc-in-d">Default Install</button><button type="button" id="rc-in-c">Custom Install</button></div><div id="rc-in-cu" hidden><input id="rc-in-n" type="text" maxlength="40" placeholder="App name" autocomplete="off"><button type="button" id="rc-in-g">Install App</button></div><div id="rc-in-m" class="rc-in-m"></div></div><div class="rc-sd-r"><span class="rc-sd-ft">🌙 Dark Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-dm"><span class="rc-sd-sl"></span></label></div><div class="rc-sd-r"><span class="rc-sd-ft">✎ Edit Mode</span><label class="rc-sd-sw"><input type="checkbox" id="rc-em"><span class="rc-sd-sl"></span></label></div></div>';
   /* fixed menu (the old top navigation bar is gone, so there is nothing to scrape any more) */
@@ -1170,6 +1170,7 @@ if (!window.__rcDatePick) {
   }
   /* label of a menu item (custom label cache first, then management type, then the slug) */
   function label(slug) {
+    if (slug === "gemini-test") return "API Key Test";
     var custom = "", add = "";
     try {
       custom = JSON.parse(lsGet("rcNL") || "{}")[slug] || "";
@@ -1495,9 +1496,9 @@ if (!window.__rcDatePick) {
     function renderList(isAdmin, isMgmt) {
       list.innerHTML = "";
       var here = location.pathname.replace(/\/$/, "") || "/", cfg = navCfg();
-      ["admin-panel", "profile", "admin", "appointment", "accounts", "billing", "research"].map(item).filter(function (it) {
+      ["admin-panel", "profile", "admin", "appointment", "accounts", "billing", "research", "gemini-test"].map(item).filter(function (it) {
         if (it.slug === "billing") return true;
-        if (it.slug === "research") return isMgmt === true;
+        if (it.slug === "research" || it.slug === "gemini-test") return isMgmt === true;
         if (it.slug === cfg.l || it.slug === cfg.r) return false;
         return it.slug !== "admin" || isAdmin;
       }).forEach(function (it) {
