@@ -16,6 +16,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-ib:hover{background:color-mix(in srgb,var(--primary) 18%,transparent)}
 .rs-ib:active{transform:scale(.94);background:var(--primary);color:#fff}
 #rsX{background:transparent;color:var(--text-muted);font-size:16px}
+.rs-tn{margin-top:18px;padding-top:10px;border-top:1px solid var(--border-light);font-size:11.5px;line-height:1.6;color:var(--text-muted)}
 .rs-tr{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;align-items:center}
 .rs-tr button{border:1px solid var(--border-light);background:var(--card-bg);color:var(--primary);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:12.5px}
 .rs-tr button.on{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -93,7 +94,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
 .rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
 .rs-ww{margin:0 10px 10px}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" style="text-align:left" placeholder="হরফ দিয়ে খুঁজুন…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-tr" id="rsTr" style="display:none"></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
+</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" class="rs-ar" type="search" dir="rtl" lang="ar" style="text-align:left" placeholder="হরফ দিয়ে খুঁজুন…" autocomplete="off" autocapitalize="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div><div class="rs-tn">বাংলা অনুবাদ: মুহিউদ্দীন খান (উৎস: tanzil.net, CC BY-SA 4.0) — সাধু রূপ ও বানান-ভুল আমরা সহজ চলিত ভাষায় সংশোধন করেছি; অনুবাদ মূলত তাঁরই।</div></div>
 <script type="module">
 import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
 import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
@@ -113,7 +114,7 @@ R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m,p])=>({t,l,m:m||"",p:p|
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
 const CH={c:{},a:{},b:{},w:{}};
 let actN=0;const qN=[],qL=[];const lim=(f,low)=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift()||qL.shift();n&&n()})};if(actN<5&&(!low||!qN.length))run();else(low?qL:qN).push(run)});
-const CS=new Set([6,11,15,17,21,24,29,31,44,48,114]);let TR="b";
+const CS=new Set([6,11,15,17,21,24,29,31,44,48,114]);const TR="c";
 const chunk=(k,s,low)=>k==="c"&&!CS.has(s)?chunk("b",s,low):CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}},low).catch(e=>{delete CH[k][s];throw e}));
 function search(q){const out=[];for(const r of R){let sc=0,mf=null;
  if(r.rn===q)sc=100;
@@ -267,8 +268,6 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir();clearTimeout(tm);tm=setTimeout(padGo,200)};
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
  drawPad();
- const trBox=$("rsTr"),drawTr=()=>{trBox.innerHTML="";[].forEach(([k,t])=>{const b=el("button",TR===k?"on":null,t);b.type="button";b.onclick=()=>{if(TR===k)return;TR=k;try{localStorage.setItem("rsTr",k)}catch(e){}drawTr();go()};trBox.appendChild(b)});
-  if(TR==="c")trBox.appendChild(el("small",null,"মুহিউদ্দীন খানের অনুবাদ (উৎস: tanzil.net, CC BY-SA 4.0) থেকে সাধু রূপ ও বানান-ভুল আমরা সহজ চলিত ভাষায় সংশোধন করেছি; অনুবাদ মূলত তাঁরই।"))};drawTr();
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
   if(!p||!/^[\u0980-\u09FF]+$/.test(p)){rs.classList.remove("on");return go()}
   try{BW=BW||(await rsFetch(BASE+"quran-bn-words.json?v="+DV+"w")).w}catch(e){rs.classList.remove("on");return go()}
