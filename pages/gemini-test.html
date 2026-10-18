@@ -21,7 +21,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 <div class="gt-h">১. API Key</div>
 <div class="gt-row"><input class="gt-in" id="gtKey" type="password" placeholder="Gemini API key বসান" autocomplete="off" spellcheck="false"><button class="gt-b" id="gtShow" type="button">দেখুন</button></div>
 <div class="gt-h">২. মডেল</div>
-<div class="gt-row"><input class="gt-in" id="gtModel" placeholder="যেমন gemini-2.5-flash" autocomplete="off" spellcheck="false"><button class="gt-b" id="gtList" type="button">মডেল তালিকা</button></div>
+<div class="gt-row"><input class="gt-in" id="gtModel" placeholder="খালি রাখলে gemini-flash-latest" autocomplete="off" spellcheck="false"><button class="gt-b" id="gtList" type="button">মডেল তালিকা</button></div>
 <div class="gt-row"><button class="gt-b p" id="gtSave" type="button" style="flex:1">সেভ ও চাবি পরীক্ষা করুন</button><button class="gt-b" id="gtDel" type="button">চাবি মুছুন</button></div>
 <div class="gt-st" id="gtSt"></div>
 <div class="gt-h">৩. পরীক্ষামূলক চ্যাট</div>
@@ -36,7 +36,7 @@ const $=i=>document.getElementById(i),API="https://generativelanguage.googleapis
 const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
 let hist=[],busy=!1;
 const st=(t,c)=>{const e=$("gtSt");e.textContent=t;e.className="gt-st"+(c?" "+c:"")};
-const key=()=>$("gtKey").value.trim(),model=()=>($("gtModel").value.trim()||"gemini-2.5-flash").replace(/^models\//,"");
+const key=()=>$("gtKey").value.trim(),model=()=>($("gtModel").value.trim()||"gemini-flash-latest").replace(/^models\//,"");
 function add(role,text){const m=document.createElement("div");m.className="gt-m "+role;m.textContent=text;$("gtChat").appendChild(m);$("gtChat").scrollTop=1e9;return m}
 async function call(path,body){
   const r=await fetch(API+path,{method:body?"POST":"GET",headers:Object.assign({"x-goog-api-key":key()},body?{"Content-Type":"application/json"}:{}),body:body?JSON.stringify(body):void 0});
