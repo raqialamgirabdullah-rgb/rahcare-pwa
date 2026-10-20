@@ -1326,6 +1326,24 @@ if (!window.__rcDatePick) {
     })();
   }
 
+  /* ---------- "API Key Test" visibility: admins always see it; everybody else only if an admin switched it to public (appSettings/apiKeyTest) ---------- */
+  function checkApiPub() {
+    if (window.__rcApiPub !== undefined) return Promise.resolve(window.__rcApiPub);
+    return (async function () {
+      try {
+        await auth.authStateReady();
+        if (!auth.currentUser) return false;
+        var s = await GD(DO(db, "appSettings", "apiKeyTest"));
+        var v = s.exists() && s.data().public === true;
+        lsSet("rcApiPub", v ? "1" : "0");
+        return v;
+      } catch (e) { return false; }
+    })();
+  }
+  function setApiPub(v) {
+    return FSN.setDoc(DO(db, "appSettings", "apiKeyTest"), { public: v === true, by: auth.currentUser.uid, at: Date.now() }, { merge: true });
+  }
+
   /* ---------- admin check for the sidebar ---------- */
   function checkAdmin() {
     if (window.__rcAdm !== undefined) return Promise.resolve(window.__rcAdm);
@@ -1489,16 +1507,29 @@ if (!window.__rcDatePick) {
       side.setAttribute("aria-hidden", "true");
     }
     list.onclick = function (ev) {
+      var pb = ev.target.closest(".rc-sd-pub");
+      if (pb) {
+        ev.stopPropagation();
+        var to = !(window.__rcApiPub === true);
+        if (!confirm(to ? "\"API Key Test\" সব ম্যানেজমেন্ট ইউজারকে দেখাবেন?" : "\"API Key Test\" আবার শুধু এডমিনের জন্য করবেন?")) return;
+        setApiPub(to).then(function () {
+          window.__rcApiPub = to; lsSet("rcApiPub", to ? "1" : "0"); redraw();
+        }).catch(function (e) {
+          alert("সেভ হয়নি। Firebase Rules-এ appSettings যোগ করা আছে কি না দেখুন।\n" + (e && e.message ? e.message : e));
+        });
+        return;
+      }
       var a = ev.target.closest("a[data-u]");
       if (a) location.href = a.dataset.u;
     };
     /* sidebar entries: Billing for everybody, Admin only for admins */
-    function renderList(isAdmin, isMgmt) {
+    function renderList(isAdmin, isMgmt, apiPub) {
       list.innerHTML = "";
       var here = location.pathname.replace(/\/$/, "") || "/", cfg = navCfg();
       ["admin-panel", "profile", "admin", "appointment", "accounts", "billing", "research", "gemini-test"].map(item).filter(function (it) {
         if (it.slug === "billing") return true;
-        if (it.slug === "research" || it.slug === "gemini-test") return isMgmt === true;
+        if (it.slug === "research") return isMgmt === true;
+        if (it.slug === "gemini-test") return isAdmin === true || (isMgmt === true && apiPub === true);
         if (it.slug === cfg.l || it.slug === cfg.r) return false;
         return it.slug !== "admin" || isAdmin;
       }).forEach(function (it) {
@@ -1510,14 +1541,27 @@ if (!window.__rcDatePick) {
         ic.className = "rc-sd-ic"; ic.innerHTML = icon(ICONS[it.slug] || ICONS.other, 22);
         var tx = document.createElement("span");
         tx.className = "rc-sd-tx"; tx.textContent = it.text;
-        a.appendChild(ic); a.appendChild(tx); list.appendChild(a);
+        a.appendChild(ic); a.appendChild(tx);
+        if (it.slug === "gemini-test" && isAdmin === true) {
+          var pb = document.createElement("button");
+          pb.type = "button"; pb.className = "rc-sd-pub";
+          pb.textContent = apiPub === true ? "🌐" : "🔒";
+          pb.title = apiPub === true ? "সবাই দেখে — চাপলে শুধু এডমিন" : "শুধু এডমিন — চাপলে সবাই দেখবে";
+          a.appendChild(pb);
+        }
+        list.appendChild(a);
       });
     }
-    burger.onclick = function () {
+    function redraw() {
       var mg = window.__rcMgmt === undefined ? lsGet("rcMgmtUser") === "1" : window.__rcMgmt === true;
-      renderList(window.__rcAdm === true, mg);
-      if (window.__rcAdm === undefined) checkAdmin().then(function (z) { window.__rcAdm = z; z && renderList(true, window.__rcMgmt === true); });
-      if (window.__rcMgmt === undefined) checkMgmt().then(function (z) { window.__rcMgmt = z; renderList(window.__rcAdm === true, z); });
+      var pub = window.__rcApiPub === undefined ? lsGet("rcApiPub") === "1" : window.__rcApiPub === true;
+      renderList(window.__rcAdm === true, mg, pub);
+    }
+    burger.onclick = function () {
+      redraw();
+      if (window.__rcAdm === undefined) checkAdmin().then(function (z) { window.__rcAdm = z; redraw(); });
+      if (window.__rcMgmt === undefined) checkMgmt().then(function (z) { window.__rcMgmt = z; redraw(); });
+      if (window.__rcApiPub === undefined) checkApiPub().then(function (z) { window.__rcApiPub = z; redraw(); });
       document.body.classList.add("rc-side-open");
       side.setAttribute("aria-hidden", "false");
     };
