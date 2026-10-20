@@ -278,5 +278,3 @@ body:not(.lb-on) .fc-ft{display:none!important}
 #rc-side #rc-in-cu{display:flex;flex-direction:column;gap:8px}
 #rc-side #rc-in-n{border:1px solid #d9dedb;border-radius:10px;padding:9px 10px;font-size:14px;width:100%;box-sizing:border-box}
 #rc-side .rc-in-m{font-size:12px;color:#5b6b62;text-align:center;min-height:0}
-
-.rc-sd-pub{margin-left:auto;border:0;background:transparent;font-size:17px;line-height:1;padding:6px 4px 6px 10px;cursor:pointer;color:inherit}
