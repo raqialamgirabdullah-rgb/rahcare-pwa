@@ -1,4 +1,4 @@
-<link href="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.css?v=39" rel="stylesheet"><style>
+<link href="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.css?v=41" rel="stylesheet"><style>
 body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font-main)}
 .gt-box{background:var(--card-bg);border-radius:8px;max-width:640px;margin:auto;padding:16px;box-shadow:var(--shadow-card)}
 .gt-title{color:var(--primary);border-bottom:2px solid var(--border-light);margin:0 0 10px;padding-bottom:10px}
@@ -17,7 +17,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .gt-m.e{background:transparent;border:1px solid #c0392b;color:#c0392b;font-size:13px}
 .gt-h{font-weight:700;color:var(--primary);margin:12px 0 4px;font-size:14px}
 </style><div class="gt-box" id="gtBox" style="visibility:hidden"><h3 class="gt-title">🧪 Gemini API Key Test</h3>
-<p class="gt-sub">চাবিটি শুধু এই ডিভাইসের ব্রাউজারে সেভ থাকবে, অন্য কোথাও পাঠানো হয় না (শুধু Google-এর Gemini সার্ভারে প্রশ্নের সঙ্গে যায়)।</p>
+<p class="gt-sub">প্রত্যেকে নিজের API চাবি বসাবেন। চাবিটি শুধু আপনার অ্যাকাউন্টের নামে এই ডিভাইসের ব্রাউজারে সেভ থাকে — অন্য কেউ দেখতে পায় না, অন্য কোথাও পাঠানো হয় না (শুধু Google-এর Gemini সার্ভারে প্রশ্নের সঙ্গে যায়)।</p>
 <div class="gt-h">১. API Key</div>
 <div class="gt-row"><input class="gt-in" id="gtKey" type="password" placeholder="Gemini API key বসান" autocomplete="off" spellcheck="false"><button class="gt-b" id="gtShow" type="button">দেখুন</button></div>
 <div class="gt-h">২. মডেল</div>
@@ -30,10 +30,11 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 <div class="gt-row"><button class="gt-b" id="gtClr" type="button">চ্যাট পরিষ্কার</button></div>
 </div>
 <script type="module">
-import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=30";
+import{db,auth,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=32";
 import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 const $=i=>document.getElementById(i),API="https://generativelanguage.googleapis.com/v1beta/";
-const ls={get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}},del:k=>{try{localStorage.removeItem(k)}catch(e){}}};
+const K=k=>k+":"+((auth.currentUser&&auth.currentUser.uid)||"-");
+const ls={get:k=>{try{return localStorage.getItem(K(k))}catch(e){return null}},set:(k,v)=>{try{localStorage.setItem(K(k),v)}catch(e){}},del:k=>{try{localStorage.removeItem(K(k))}catch(e){}}};
 let hist=[],busy=!1;
 const st=(t,c)=>{const e=$("gtSt");e.textContent=t;e.className="gt-st"+(c?" "+c:"")};
 const key=()=>$("gtKey").value.trim(),model=()=>($("gtModel").value.trim()||"gemini-flash-latest").replace(/^models\//,"");
@@ -70,5 +71,5 @@ function init(){
   $("gtMsg").addEventListener("keydown",e=>{if(e.key==="Enter"&&(e.ctrlKey||e.metaKey)){e.preventDefault();send()}});
   $("gtClr").onclick=()=>{hist=[];$("gtChat").textContent=""};
 }
-requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");$("gtBox").style.visibility="visible";init()});
+requireAuth(u=>{try{const o=localStorage.getItem("rcGeminiKey");if(o){if(!ls.get("rcGeminiKey"))ls.set("rcGeminiKey",o);localStorage.removeItem("rcGeminiKey")}const m=localStorage.getItem("rcGeminiModel");if(m){if(!ls.get("rcGeminiModel"))ls.set("rcGeminiModel",m);localStorage.removeItem("rcGeminiModel")}}catch(e){}$("gtBox").style.visibility="visible";init()});
 </script>

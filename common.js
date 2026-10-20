@@ -1498,7 +1498,8 @@ if (!window.__rcDatePick) {
       var here = location.pathname.replace(/\/$/, "") || "/", cfg = navCfg();
       ["admin-panel", "profile", "admin", "appointment", "accounts", "billing", "research", "gemini-test"].map(item).filter(function (it) {
         if (it.slug === "billing") return true;
-        if (it.slug === "research" || it.slug === "gemini-test") return isMgmt === true;
+        if (it.slug === "research") return isMgmt === true;
+        if (it.slug === "gemini-test") return true; // everybody sees it; each person uses their own API key
         if (it.slug === cfg.l || it.slug === cfg.r) return false;
         return it.slug !== "admin" || isAdmin;
       }).forEach(function (it) {
