@@ -1228,14 +1228,31 @@ if (!window.__rcDatePick) {
   (function () {
     function wrap(f) {
       if (typeof f !== "function" || f.__rcw) return f;
+      var FF = ["400 12px Roboto", "500 12px Roboto", "700 13px Roboto", "400 12px 'Noto Sans Bengali'", "700 13px 'Noto Sans Bengali'", "400 12px 'Hind Siliguri'", "700 13px 'Hind Siliguri'"];
+      /* wait until every web font used by slips/invoices is really loaded, so text is measured and drawn with the same font (otherwise words glue together) */
+      function fontsReady(d) {
+        try {
+          var fs = (d || document).fonts;
+          if (!fs || !fs.load) return Promise.resolve();
+          var all = Promise.all(FF.map(function (x) { return fs.load(x, "Aa অআ").catch(function () {}); }))
+            .then(function () { return fs.ready; });
+          return Promise.race([all, new Promise(function (r) { setTimeout(r, 4000); })]);
+        } catch (e) { return Promise.resolve(); }
+      }
       var w = function (el, o) {
+        var self = this;
         o = o || {};
         var oc = o.onclone;
         o.onclone = function (d) {
+          var args = arguments;
           try { d.documentElement.classList.remove("rc-dark"); } catch (e) {}
-          return oc ? oc.apply(this, arguments) : void 0;
+          return fontsReady(d).then(function () {
+            return oc ? oc.apply(self, args) : void 0;
+          });
         };
-        return f.call(this, el, o);
+        return fontsReady(document).then(function () {
+          return f.call(self, el, o);
+        });
       };
       w.__rcw = 1;
       return w;
