@@ -190,10 +190,10 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
  b2.onclick=()=>{const l=[...SELV].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!l.length)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");mergeAudio(l,out,t=>note.textContent=t)};
  selUp.push(()=>{b2.textContent="🔊 বাছাই করা আয়াত মার্জ ("+bn2(SELV.size)+")"});
  row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
-const SB={n:0,t:0};
+const SB={n:0,t:0,m:new Map,set(u){this.t=u.size;this.m=new Map([...u].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]).map((r,i)=>[r[0]+":"+r[1],i+1]))}};
 function verses(host,refs,fgl,off){let shown=0,fail=[];const step=15,g=GEN;
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
- const one=async([s,a,w,n])=>{const[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)]);const t=(A||[])[a-1];if(t==null)return null;const bn=B||[];
+ const one=async([s,a,w])=>{const n=SB.m.get(s+":"+a);const[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)]);const t=(A||[])[a-1];if(t==null)return null;const bn=B||[];
    const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a));
    if(n){const nb=els("span","display:inline-block;margin:0 0 4px;padding:1px 9px;border-radius:10px;background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary);font-size:12px;font-weight:700","ক্রমিক "+bn2(n)+" / "+bn2(SB.t));rf.prepend(nb,document.createElement("br"))}
    const tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb"),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
@@ -215,7 +215,7 @@ function verses(host,refs,fgl,off){let shown=0,fail=[];const step=15,g=GEN;
  host.appendChild(more);more.onclick=add;
  if("IntersectionObserver"in window){io=new IntersectionObserver(es=>{vis=es[es.length-1].isIntersecting;if(g!==GEN){io.disconnect();return}if(vis&&!fail.length&&shown<refs.length)add()},{rootMargin:"800px 0px"});io.observe(more)}
  add()}
-const vset=l=>{const u=new Set();let o=0;l.forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))}));return{o,u:u.size}};
+const vset=l=>{const u=new Set();let o=0;l.forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))}));return{o,u:u.size,s:u}};
 const lst=(it,exact)=>it.bn?(ALLF?it.r.forms:it.mf):((exact||it.sc===60||!it.mf)?it.r.forms:it.mf);
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
  l=el("div","rs-rl rs-ar"),
@@ -257,7 +257,7 @@ async function run(){GEN++;const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),inf
   if(/^\d{1,3}$/.test(dg)){info.textContent="আয়াত খুঁজতে সূরা:আয়াত লিখুন — যেমন 10:49 বা 2:255-257";return}}
  if(!q&&/[\u0980-\u09FF]/.test(bq)){if(bq.length<2){info.textContent="কমপক্ষে ২টি অক্ষর লিখুন";return}
   await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
-  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();SB.n=0;SB.t=tv.o;info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে";
+  const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>lst(it,!1).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size,s:u}})();SB.set(tv.s);info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে";
   {const cnt=f=>{const u=new Set();rb.forEach(it=>f(it).forEach(x=>x.refs.forEach(r=>u.add(r.split(":").slice(0,2).join(":")))));return u.size};
    const n1=cnt(it=>it.mf),n2=cnt(it=>it.r.forms),row=els("div","display:flex;flex-wrap:wrap;gap:6px;margin-top:8px");
    [[false,"“"+bq+"” অর্থের আয়াত ("+bn2(n1)+")"],[true,"রুটগুলোর সব আয়াত ("+bn2(n2)+")"]].forEach(([v,t])=>{const b=el("button","rs-wb",t);b.type="button";b.style.margin="0";if(ALLF===v){b.style.background="var(--primary)";b.style.color="#fff"}b.onclick=()=>{if(ALLF===v)return;ALLF=v;run().catch(e=>console.error(e))};row.appendChild(b)});
@@ -268,7 +268,7 @@ async function run(){GEN++;const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),inf
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
- const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();SB.n=0;SB.t=tv.o;info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
+ const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size,s:u}})();SB.set(tv.s);info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
  {let bud=60;res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,it.sc===100)).o,24)}})}}
 function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  const setDir=()=>{q.placeholder=mode==="bn"?"সার্চ করুন":"সার্চ করুন"};
