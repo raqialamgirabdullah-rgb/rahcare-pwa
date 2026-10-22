@@ -126,7 +126,7 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
   if(r.r3===q3)sc=50;else{const p=r.forms.filter(f=>f.k3.includes(q3));if(p.length){sc=35;mf=p}}
   if(sc)out.push({r,sc,mf,loose:1})}}
  return out.sort((a,b)=>b.sc-a.sc||b.r.n-a.r.n)}
-let ALLF=false;
+let ALLF=false,GEN=0;
 function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.some(x=>fb(x)===fb(q))){qs=g.slice();break}
  const fq=qs.map(fb);
  for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;const fm=f._b||(f._b=fb(f.m));if(fq.some(k=>fm===k))ex.push(f);else if(fq.some(k=>fm.includes(k)))pt.push(f)}
@@ -190,7 +190,7 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
  b2.onclick=()=>{const l=[...SELV].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!l.length)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");mergeAudio(l,out,t=>note.textContent=t)};
  selUp.push(()=>{b2.textContent="🔊 বাছাই করা আয়াত মার্জ ("+bn2(SELV.size)+")"});
  row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
-function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.length,1);
+function verses(host,refs,fgl){let shown=0,fail=[];const step=15,g=GEN;
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
  const one=async([s,a,w])=>{const[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)]);const t=(A||[])[a-1];if(t==null)return null;const bn=B||[];
    const box=el("div","rs-vi"),rf=el("div","rs-vr");rf.append("সূরা ",el("span","rs-ar",SN[s-1])," — "+bn2(s)+":"+bn2(a));
@@ -204,9 +204,10 @@ function verses(host,refs,fgl){let shown=0,fail=[];const step=Math.max(refs.leng
    const ft=el("div","rs-vf"),va=el("div","rs-va");ft.append(rf,el("span","rs-vw rs-ar",t.split(" ")[w-1]||""),el("span","rs-vm",fgl||""));va.append(wb,copyBtn("📋 কপি",()=>vtext(s,a)),playBtn(s,a),selBox(s,a));box.append(tx,tb,ft,va,wh);return box};
  const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
   const batch=fail.splice(0).concat(refs.slice(shown,shown+step).map(r=>r.split(":").map(Number)));shown=Math.min(refs.length,shown+step);
-  for(const r of batch){let box=null;try{box=await one(r)}catch(e){fail.push(r);continue}if(box)host.insertBefore(box,more)}
+  for(const r of batch){if(g!==GEN)return;let box=null;try{box=await one(r)}catch(e){fail.push(r);continue}if(g!==GEN)return;if(box)host.insertBefore(box,more)}
   more.disabled=false;
   if(fail.length){more.style.display="";more.textContent=bn2(fail.length)+"টি আয়াত লোড হয়নি — আবার চেষ্টা করতে চাপুন"}
+  else if(shown<refs.length){more.style.display="";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"}
   else more.style.display="none"};
  host.appendChild(more);more.onclick=add;add()}
 const vset=l=>{const u=new Set();let o=0;l.forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))}));return{o,u:u.size}};
@@ -226,11 +227,11 @@ function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
    row.append(el("span","rs-fa","▾"),ct,el("span","rs-fd","—"),fw,fm);let vb=false;
    row.onclick=()=>{row.classList.toggle("open");if(vb)return;vb=true;verses(vh,f.refs,f.m)};
    fb.append(row,vh)});
-  {const fs=[...fb.querySelectorAll(".rs-f")];fs.forEach(f=>f.click())}
+  {let bud=24;const fs=[...fb.querySelectorAll(".rs-f")],srt=[...list].sort((a,b)=>b.refs.length-a.refs.length);fs.forEach((f,i)=>{if(bud>0){f.click();bud-=Math.min(srt[i].refs.length,15)}})}
   if(it.mf&&it.sc!==60&&list.length<r.forms.length){const all=el("button","rs-more","এই রুটের সব রূপ দেখান ("+bn2(r.forms.length)+")");all.type="button";all.onclick=()=>{fb.innerHTML="";built=false;it.sc=100;c.classList.remove("open");h.onclick()};fb.append(all)}};
  return c}
 let tm=0;
-async function refView(s,a,e){const out=$("rsOut"),info=$("rsInfo");
+async function refView(s,a,e){GEN++;const out=$("rsOut"),info=$("rsInfo");
  if(s<1||s>114){info.textContent="সূরা নম্বর ১ থেকে ১১৪-এর মধ্যে হতে হবে";return}
  info.textContent="⏳ আয়াত লোড হচ্ছে…";let A,B;
  try{[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)])}catch(x){info.textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন";return}
@@ -243,7 +244,7 @@ async function refView(s,a,e){const out=$("rsOut"),info=$("rsInfo");
   let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
    try{const m=((await chunk("w",s))||[])[i-1].split("|");wh.textContent="";A[i-1].split(" ").forEach((x,k)=>{const c=el("div","rs-wc"),ar=el("div","rs-wa rs-ar",x),bm=el("div","rs-wm",m[k]||"");c.append(ar,bm);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
   va.append(wb,copyBtn("📋 কপি",()=>vtext(s,i)),playBtn(s,i),selBox(s,i));box.append(rf,tx,tb,va,wh);out.appendChild(box)}}
-async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
+async function run(){GEN++;const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
  const bq=raw.trim();
  {const dg=bq.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)),mr=dg.match(/^(\d{1,3})\s*[:.\/]\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$/);
   if(mr)return refView(+mr[1],+mr[2],+(mr[3]||mr[2]));
@@ -256,13 +257,13 @@ async function run(){const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("r
    [[false,"“"+bq+"” অর্থের আয়াত ("+bn2(n1)+")"],[true,"রুটগুলোর সব আয়াত ("+bn2(n2)+")"]].forEach(([v,t])=>{const b=el("button","rs-wb",t);b.type="button";b.style.margin="0";if(ALLF===v){b.style.background="var(--primary)";b.style.color="#fff"}b.onclick=()=>{if(ALLF===v)return;ALLF=v;run().catch(e=>console.error(e))};row.appendChild(b)});
    info.appendChild(row)}
   window.__bq=bq;allCopy(info,rb.flatMap(it=>lst(it,!1)));
-  rb.forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);c.querySelector(".rs-rh").click()});return}
+  {let bud=60;rb.forEach((it,i)=>{const c=card(it,!1);out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,!1)).o,24)}})};return}
  if(!q){info.textContent="";return}
  if(q.length<2){info.textContent="কমপক্ষে ২টি হরফ লিখুন";return}
  await loadRoots();const res=search(q);
  if(!res.length){info.textContent="কিছু পাওয়া যায়নি — হরফ বদলে বা কম লিখে দেখুন";return}
  const LIM=Infinity;const tv=(()=>{const u=new Set();let o=0;res.slice(0,LIM).forEach(it=>lst(it,it.sc===100).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size}})();info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+bn2(res.length)+"টি রুট পাওয়া গেছে"+(res[0].loose?" (হুবহু মেলেনি, কাছাকাছি বানান ধরে খোঁজা হয়েছে)":"")+(res.length>LIM?" (প্রথম "+bn2(LIM)+"টি দেখানো হচ্ছে; আরও হরফ লিখে সংকীর্ণ করুন)":"");allCopy(info,res.slice(0,LIM).flatMap(it=>lst(it,it.sc===100)));
- res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);c.querySelector(".rs-rh").click()})}
+ {let bud=60;res.slice(0,LIM).forEach((it,i)=>{const c=card(it,it.sc===100);out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,it.sc===100)).o,24)}})}}
 function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  const setDir=()=>{q.placeholder=mode==="bn"?"সার্চ করুন":"সার্চ করুন"};
  const AR="ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" "),BNL="অ আ ই ঈ উ ঊ ঋ এ ঐ ও ঔ ক খ গ ঘ ঙ চ ছ জ ঝ ঞ ট ঠ ড ঢ ণ ত থ দ ধ ন প ফ ব ভ ম য র ল শ ষ স হ ড় ঢ় য় ৎ ং ঃ ঁ".split(" ");
@@ -273,7 +274,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  $("rsKb").onclick=()=>{pad.classList.toggle("on");kb=true;if(pad.classList.contains("on"))padGo()};
  $("rsX").onpointerdown=e=>e.preventDefault();
  $("rsX").onclick=()=>{q.value="";rs.classList.remove("on");setDir();go();q.focus()};
- q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir();clearTimeout(tm);tm=setTimeout(padGo,200)};
+ q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir();clearTimeout(tm);tm=setTimeout(padGo,350)};
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
  drawPad();
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
@@ -295,7 +296,12 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
 loadRoots().catch(()=>{});
-setTimeout(async()=>{try{if(navigator.connection&&navigator.connection.saveData)return;for(let z=1;z<=114;z++){for(const k of["a","b"]){try{await chunk(k,z,1)}catch(e){}}}}catch(e){}},2500);
+let dlDone=false,dlLast="";try{dlDone=localStorage.getItem("rsAll")===DV}catch(e){}
+const dlNote=t=>{const i=$("rsInfo");if(!i)return;if(t){if(!i.textContent||i.textContent===dlLast){i.textContent=t;dlLast=t}}else if(i.textContent===dlLast){i.textContent="";dlLast=""}};
+if(!dlDone)setTimeout(async()=>{try{if(navigator.connection&&navigator.connection.saveData)return;
+ const ks=["a","c","w"],tot=114*ks.length;let done=0,bad=0;
+ for(let z=1;z<=114;z+=3){await Promise.all([0,1,2].filter(d=>z+d<=114).flatMap(d=>ks.map(k=>chunk(k,z+d,1).then(()=>{done++},()=>{done++;bad++}))));dlNote("⬇ ডেটা সেভ হচ্ছে "+bn2(Math.round(done/tot*100))+"%…")}
+ dlNote("");if(!bad)try{localStorage.setItem("rsAll",DV)}catch(e){}}catch(e){}},1200);
 try{if(localStorage.getItem("rcMgmtUser")==="1")$("rsBox").style.visibility="visible"}catch(e){}
 init();
 })();
