@@ -94,7 +94,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
 .rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
 .rs-ww{margin:0 10px 10px}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" type="text" dir="auto" enterkeyhint="search" style="text-align:center" placeholder="সার্চ করুন" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
+</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" type="text" dir="auto" enterkeyhint="search" style="text-align:center" placeholder="সার্চ করুন" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button><button class="rs-ib" id="rsGo" type="button" title="সার্চ">🔍</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script>
 (()=>{"use strict";
 const BASE="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/",DV="2",$=i=>document.getElementById(i);
@@ -202,14 +202,17 @@ function verses(host,refs,fgl){let shown=0,fail=[];const step=15,g=GEN;
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
     try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
    const ft=el("div","rs-vf"),va=el("div","rs-va");ft.append(rf,el("span","rs-vw rs-ar",t.split(" ")[w-1]||""),el("span","rs-vm",fgl||""));va.append(wb,copyBtn("📋 কপি",()=>vtext(s,a)),playBtn(s,a),selBox(s,a));box.append(tx,tb,ft,va,wh);return box};
- const add=async()=>{more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
+ let busy=false,vis=false,io=null;
+ const add=async()=>{if(busy)return;busy=true;more.disabled=true;more.style.display="";more.textContent="আয়াত লোড হচ্ছে…";
   const batch=fail.splice(0).concat(refs.slice(shown,shown+step).map(r=>r.split(":").map(Number)));shown=Math.min(refs.length,shown+step);
-  for(const r of batch){if(g!==GEN)return;let box=null;try{box=await one(r)}catch(e){fail.push(r);continue}if(g!==GEN)return;if(box)host.insertBefore(box,more)}
-  more.disabled=false;
+  for(const r of batch){if(g!==GEN){busy=false;io&&io.disconnect();return}let box=null;try{box=await one(r)}catch(e){fail.push(r);continue}if(g!==GEN){busy=false;io&&io.disconnect();return}if(box)host.insertBefore(box,more);await new Promise(z=>setTimeout(z))}
+  busy=false;more.disabled=false;
   if(fail.length){more.style.display="";more.textContent=bn2(fail.length)+"টি আয়াত লোড হয়নি — আবার চেষ্টা করতে চাপুন"}
-  else if(shown<refs.length){more.style.display="";more.textContent="আরও আয়াত দেখান ("+bn2(refs.length-shown)+" বাকি)"}
-  else more.style.display="none"};
- host.appendChild(more);more.onclick=add;add()}
+  else if(shown<refs.length){more.style.display="";more.textContent="⏳ আরও আয়াত আসছে… ("+bn2(refs.length-shown)+" বাকি)";if(vis)add()}
+  else{more.style.display="none";io&&io.disconnect()}};
+ host.appendChild(more);more.onclick=add;
+ if("IntersectionObserver"in window){io=new IntersectionObserver(es=>{vis=es[es.length-1].isIntersecting;if(g!==GEN){io.disconnect();return}if(vis&&!fail.length&&shown<refs.length)add()},{rootMargin:"800px 0px"});io.observe(more)}
+ add()}
 const vset=l=>{const u=new Set();let o=0;l.forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))}));return{o,u:u.size}};
 const lst=(it,exact)=>it.bn?(ALLF?it.r.forms:it.mf):((exact||it.sc===60||!it.mf)?it.r.forms:it.mf);
 function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
@@ -269,12 +272,15 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  const AR="ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي".split(" "),BNL="অ আ ই ঈ উ ঊ ঋ এ ঐ ও ঔ ক খ গ ঘ ঙ চ ছ জ ঝ ঞ ট ঠ ড ঢ ণ ত থ দ ধ ন প ফ ব ভ ম য র ল শ ষ স হ ড় ঢ় য় ৎ ং ঃ ঁ".split(" ");
  const drawPad=()=>{pad.innerHTML="";pad.classList.toggle("bn",mode==="bn");
   const lg=el("div","rs-lg");[["ar","আরবি"],["bn","বাংলা"]].forEach(([m,t])=>{const b=el("button",m===mode?"on":null,t);b.type="button";b.onclick=()=>{if(mode===m)return;mode=m;q.value="";rs.classList.remove("on");drawPad();setDir();$("rsOut").innerHTML="";$("rsInfo").textContent=""};lg.appendChild(b)});pad.appendChild(lg);
-  (mode==="bn"?BNL:AR).forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value=mode==="bn"?ch:q.value+ch;setDir();pad.classList.remove("on");padGo()};pad.appendChild(b)});
-  const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);setDir();padGo()};pad.appendChild(bs)};
- $("rsKb").onclick=()=>{pad.classList.toggle("on");kb=true;if(pad.classList.contains("on"))padGo()};
+  (mode==="bn"?BNL:AR).forEach(ch=>{const b=el("button",null,ch);b.type="button";b.onclick=()=>{q.value=mode==="bn"?ch:q.value+ch;setDir()};pad.appendChild(b)});
+  const bs=el("button",null,"⌫");bs.type="button";bs.onclick=()=>{q.value=q.value.slice(0,-1);setDir()};pad.appendChild(bs)};
+ $("rsKb").onclick=()=>{pad.classList.toggle("on");kb=true};
  $("rsX").onpointerdown=e=>e.preventDefault();
  $("rsX").onclick=()=>{q.value="";rs.classList.remove("on");setDir();go();q.focus()};
- q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir();clearTimeout(tm);tm=setTimeout(padGo,350)};
+ q.oninput=()=>{{const v=q.value,n=v.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d));if(n!==v)q.value=n}setDir()};
+ q.onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();q.blur();padGo()}};
+ $("rsGo").onpointerdown=e=>e.preventDefault();
+ $("rsGo").onclick=()=>{q.blur();padGo()};
  const rs=el("div","rs-rs");rs.id="rsRs";pad.insertAdjacentElement("afterend",rs);
  drawPad();
  const bnList=async()=>{const p=q.value.trim();rs.classList.toggle("bn",true);
