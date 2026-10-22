@@ -168,13 +168,21 @@ function playList(list,out){const w=els("div","margin-top:8px"),lab=els("div","f
  const go=n=>{i=n;if(i>=list.length){lab.textContent="✅ সব আয়াত শেষ";return}lab.textContent="আয়াত "+bn2(i+1)+"/"+bn2(list.length)+" — সূরা "+SN[list[i][0]-1]+" "+bn2(list[i][0])+":"+bn2(list[i][1]);u=audUrls(list[i][0],list[i][1]);k=0;au.src=u[0];au.play().catch(()=>{})};
  au.onended=()=>go(i+1);au.onerror=()=>{if(++k<u.length){au.src=u[k];au.play().catch(()=>{})}else go(i+1)};nx.onclick=()=>go(i+1);
  w.append(lab,au,nx);out.appendChild(w);go(0)}
+let LAMEP=null;
+const loadLame=()=>LAMEP||(LAMEP=new Promise((ok,no)=>{if(window.lamejs)return ok(window.lamejs);const t=document.createElement("script");t.src=BASE+"lame.min.js?v=1";t.onload=()=>window.lamejs?ok(window.lamejs):no(new Error("lamejs"));t.onerror=()=>no(new Error("lamejs load"));document.head.appendChild(t)}).catch(e=>{LAMEP=null;throw e}));
+async function mp3Of(parts,sr,note){const L=await loadLame();let n=0;parts.forEach(p=>n+=p.length);const pcm=new Int16Array(n);let o=0;
+ for(const p of parts)for(let i=0;i<p.length;i++){const x=Math.max(-1,Math.min(1,p[i]));pcm[o++]=x<0?x*32768:x*32767}
+ const enc=new L.Mp3Encoder(1,sr,64),out=[],B=1152;let t=0;
+ for(let i=0;i<n;i+=B){const m=enc.encodeBuffer(pcm.subarray(i,i+B));if(m.length)out.push(m);if(++t%300===0){note("MP3 বানানো হচ্ছে "+bn2(Math.round(i/n*100))+"%…");await new Promise(r=>setTimeout(r))}}
+ const f=enc.flush();if(f.length)out.push(f);return new Blob(out,{type:"audio/mpeg"})}
 async function mergeAudio(list,out,note){const MAX=150;if(!list.length)return;if(list.length>MAX){alert("একসাথে সর্বোচ্চ "+bn2(MAX)+"টি আয়াতের অডিও মার্জ করা যায়। টিক দিয়ে কম আয়াত বেছে নিন।");return}
  out.textContent="";const sr=22050,AC=window.AudioContext||window.webkitAudioContext,ctx=new AC({sampleRate:sr}),parts=[],gap=new Float32Array(Math.round(sr*0.5));
  try{for(let i=0;i<list.length;i++){note("অডিও নামানো হচ্ছে "+bn2(i+1)+"/"+bn2(list.length)+"…");const ab=await fetchAud(list[i][0],list[i][1]),d=await ctx.decodeAudioData(ab),ch=d.getChannelData(0);parts.push(new Float32Array(ch),gap)}}
  catch(e){console.error(e);note("একটা ফাইলে জোড়া লাগানো যায়নি (অডিও সার্ভার ফাইল দিতে দেয়নি), তাই আয়াতগুলো ক্রমানুসারে একটার পর একটা চলছে");try{ctx.close()}catch(x){}out.textContent="";playList(list,out);return}
  try{ctx.close()}catch(x){}
- const blob=wavOf(parts,sr),url=URL.createObjectURL(blob),au=document.createElement("audio");au.controls=true;au.src=url;au.style.cssText="display:block;width:100%;margin-top:8px";
- const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ অডিও ফাইল ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");dl.href=url;dl.download="quran-audio.wav";out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");au.play().catch(()=>{})}
+ note("MP3 বানানো হচ্ছে…");let blob,ext="mp3";try{blob=await mp3Of(parts,sr,note)}catch(e){console.error(e);blob=wavOf(parts,sr);ext="wav";note("MP3 বানানো যায়নি (ইন্টারনেট দেখুন), তাই WAV ফাইল দেওয়া হচ্ছে")}
+ const url=URL.createObjectURL(blob),au=document.createElement("audio");au.controls=true;au.src=url;au.style.cssText="display:block;width:100%;margin-top:8px";
+ const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ "+ext.toUpperCase()+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");dl.href=url;dl.download="quran-audio."+ext;out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");au.play().catch(()=>{})}
 function audioBar(info,all){if(!all.length)return;const box=els("div","margin-top:8px"),note=els("div","font-size:12px;color:var(--text-muted);margin-top:4px"),out=el("div"),row=els("div","display:flex;flex-wrap:wrap;gap:6px;align-items:center");
  const sel=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");RECS.forEach(r=>{const o=document.createElement("option");o.value=r[0];o.textContent=r[1];sel.appendChild(o)});sel.value=recId();sel.onchange=()=>{try{localStorage.setItem("rsRec",sel.value)}catch(e){}};
  const b1=el("button","rs-wb","🔊 সব আয়াত মার্জ অডিও ("+bn2(all.length)+")"),b2=el("button","rs-wb","🔊 বাছাই করা আয়াত মার্জ (০)");b1.type=b2.type="button";b1.style.margin=b2.style.margin="0";
