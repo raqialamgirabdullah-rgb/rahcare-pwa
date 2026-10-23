@@ -189,7 +189,7 @@ async function mergeAudio(list,out,note){const MAX=150;if(!list.length)return;if
  try{ctx.close()}catch(x){}
  note("MP3 বানানো হচ্ছে…");let blob,ext="mp3";try{blob=await mp3Of(parts,sr,note)}catch(e){console.error(e);blob=wavOf(parts,sr);ext="wav";note("MP3 বানানো যায়নি (ইন্টারনেট দেখুন), তাই WAV ফাইল দেওয়া হচ্ছে")}
  const url=URL.createObjectURL(blob),au=document.createElement("audio");au.controls=true;au.src=url;au.style.cssText="display:block;width:100%;margin-top:8px";
- const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ "+ext.toUpperCase()+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");dl.href=url;dl.download="quran-audio."+ext;out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");au.play().catch(()=>{})}
+ const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ "+ext.toUpperCase()+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");dl.href=url;dl.download=(String(window.__sq||"").trim().replace(/\s*[,،，、]\s*/g,"-").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g,"-").replace(/\s+/g,"_").replace(/^[-_.]+|[-_.]+$/g,"").slice(0,60)||"quran-audio")+"."+ext;out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");au.play().catch(()=>{})}
 function audioBar(info,all){if(!all.length)return;const box=els("div","margin-top:8px"),note=els("div","font-size:12px;color:var(--text-muted);margin-top:4px"),out=el("div"),row=els("div","display:flex;flex-wrap:wrap;gap:6px;align-items:center");
  const sel=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");RECS.forEach(r=>{const o=document.createElement("option");o.value=r[0];o.textContent=r[1];sel.appendChild(o)});sel.value=recId();sel.onchange=()=>{try{localStorage.setItem("rsRec",sel.value)}catch(e){}};
  const b1=el("button","rs-wb","🔊 সব আয়াত মার্জ অডিও ("+bn2(all.length)+")"),b2=el("button","rs-wb","🔊 বাছাই করা আয়াত মার্জ (০)");b1.type=b2.type="button";b1.style.margin=b2.style.margin="0";
@@ -277,7 +277,7 @@ async function runMulti(parts,out,info){
  G.forEach(g=>{
   out.appendChild(els("div","margin:16px 0 6px;padding:6px 12px;border-radius:10px;font-weight:700;background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary)","“"+g.t+"” — "+(g.u?bn2(g.u)+"টি আয়াত":(g.note||"কিছু পাওয়া যায়নি"))));
   g.items.forEach(it=>{const c=card(it,ex(it));out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,ex(it))).o,24)}})})}
-async function run(){GEN++;const raw=$("rsQ").value,q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
+async function run(){GEN++;const raw=$("rsQ").value;window.__sq=raw;const q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
  {const parts=raw.split(/[,،，、]/).map(x=>x.trim()).filter(Boolean);if(parts.length>1)return runMulti(parts,out,info)}
  const bq=raw.trim();
  {const dg=bq.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)),mr=dg.match(/^(\d{1,3})\s*[:.\/]\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$/);
