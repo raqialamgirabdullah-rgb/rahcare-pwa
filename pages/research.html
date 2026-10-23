@@ -133,7 +133,10 @@ const SUFRE=new RegExp("^(?:"+["দেরকে","েরকে","গুলোক
 const wordHas=(fm,k)=>fm.split(/[\s,()।;:\-–—'"‘’“”]+/).filter(Boolean).some(w=>w===k||(w.startsWith(k)&&SUFRE.test(w.slice(k.length))));
 /* এই শব্দ লিখলে নির্দিষ্ট আরবি রুটের সব আয়াত আসবে (অর্থে ঠিক ওই শব্দ না থাকলেও) */
 const BROOT=[[["জিনা","জেনা","যিনা","যেনা"],"زني"]];
+// একমুখী সংযোজন: প্রথম তালিকার যেকোনো শব্দ লিখলে দ্বিতীয় তালিকার শব্দগুলোর আয়াতও আসে (উল্টোটা হয় না)। যেমন "চোখ" লিখলে "অন্ধ"-ও, কিন্তু "অন্ধ" লিখলে সব চোখের আয়াত নয়
+const BEXT=[[["চোখ","নয়ন","চক্ষু","আঁখি","দৃষ্টি"],["অন্ধ"]]];
 function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.some(x=>fb(x)===fb(q))){qs=g.slice();break}
+ for(const[k,ex]of BEXT)if(k.some(x=>fb(x)===fb(q)))qs=qs.concat(ex.filter(x=>!qs.includes(x)));
  const fq=qs.map(fb);
  const rt=[];for(const[g,rr]of BROOT)if(g.some(x=>fb(x)===fb(q)))rt.push(rr);
  for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;const fm=f._b||(f._b=fb(f.m));if(fq.some(k=>fm===k))ex.push(f);else if(fq.some(k=>wordHas(fm,k)))pt.push(f)}
