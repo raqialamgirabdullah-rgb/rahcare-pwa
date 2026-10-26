@@ -111,7 +111,7 @@ const rsFetch=async u=>{let c=null;try{c=window.caches&&await caches.open("rs-"+
 async function loadRoots(){if(R)return R;const j=await rsFetch(BASE+"quran-roots.json?v="+DV+"p");
 R=j.roots.map(([r,fs])=>{const forms=fs.map(([t,l,refs,m,p])=>({t,l,m:m||"",p:p||"",refs:refs.split(","),k1:nz(t,1),k2:nz(t),k3:lk(t),kl:nz(l)}));return{r,rn:nz(r),r3:lk(r),forms,n:forms.reduce((a,f)=>a+f.refs.length,0)}});return R}
 const jf=n=>fetch(BASE+n+"?v="+DV).then(r=>r.json());
-const CH={c:{},a:{},b:{},w:{}};
+const CH={c:{},a:{},b:{},w:{},m:{}};
 let actN=0;const qN=[],qL=[];const lim=(f,low)=>new Promise((ok,no)=>{const run=()=>{actN++;f().then(ok,no).finally(()=>{actN--;const n=qN.shift()||qL.shift();n&&n()})};if(actN<5&&(!low||!qN.length))run();else(low?qL:qN).push(run)});
 const CS=new Set([6,11,15,17,21,24,29,31,44,48,114]);const TR="c";
 const chunk=(k,s,low)=>k==="c"&&!CS.has(s)?chunk("b",s,low):CH[k][s]||(CH[k][s]=lim(async()=>{for(let i=0;;i++){try{return await rsFetch(BASE+"quran-chunks/"+k+"/"+s+".json?v="+DV)}catch(e){if(i>=3)throw e;await new Promise(z=>setTimeout(z,500*(i+1)))}}},low).catch(e=>{delete CH[k][s];throw e}));
@@ -157,6 +157,9 @@ const BSTOP=new Set(["সহ","ও","এবং","এর","তার","তাদ�
 const bnw=x=>x.replace(/[()\[\],.;:!?"'“”‘’।–—-]/g,"");
 function bnHit(w,toks){w=fb(bnw(w));if(w.length<2)return false;for(let k of toks){k=fb(k);if(w===k)return true;let n=0;const L=Math.min(w.length,k.length);while(n<L&&w[n]===k[n])n++;if(n>=3&&n>=Math.ceil(L*0.7))return true}return false}
 const BSYN=[["জিনা","জেনা","যিনা","যেনা"],["চুল","কেশ","কেশগুচ্ছ","কেশরাজি","কেশদাম","ঝুঁটি"],["মাথা","মস্তক","শির","শিরোদেশ"],["চোখ","নয়ন","চক্ষু","আঁখি","দৃষ্টি"],["হাত","হস্ত"],["পা","চরণ"],["মুখ","চেহারা","মুখমণ্ডল","বদন","আনন"],["কান","কর্ণ","শ্রবণ"],["পেট","উদর","জঠর"],["পিঠ","পৃষ্ঠ","পৃষ্ঠদেশ"],["বুক","বক্ষ","সিনা","ছাতি"],["ঘাড়","গর্দান","গ্রীবা","গলা"],["কণ্ঠ","কণ্ঠদেশ","কণ্ঠনালী"],["অন্তর","হৃদয়","মন","কলব"],["রক্ত","খুন","শোণিত"],["কপাল","ললাট","ভ্রূ"],["জিহ্বা","জিভ","জবান","রসনা"],["দাঁত","দন্ত"],["নাক","নাসিকা","নাসারন্ধ্র"],["আঙুল","অঙ্গুলি","আঙ্গুল"]];
+/* আরবির মতো সরাসরি অবস্থান: quran-chunks/m — প্রতিটা আয়াতে "আরবি শব্দ নং:অনুবাদের শব্দ-শুরু-শেষ"। না থাকলে নিচের আন্দাজ-পদ্ধতি (markBn) কাজ করে */
+function alRange(str,w){for(const it of String(str||"").split(",")){const p=it.split(":");if(+p[0]===w&&p[1]){const r=p[1].split("-").map(Number);if(r.length===2&&r[0]>=0&&r[1]>=r[0])return r}}return null}
+function markRange(box,text,r){box.textContent="";const ws=String(text||"").split(" ");if(r[0]>=ws.length)return false;const b=r[0],e=Math.min(r[1],ws.length-1);for(let i=0;i<ws.length;i++){if(i)box.appendChild(document.createTextNode(" "));if(i===b){box.appendChild(el("mark",null,ws.slice(b,e+1).join(" ")));i=e}else box.appendChild(document.createTextNode(ws[i]))}return true}
 function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));for(const g of BSYN)if(toks.some(k=>bnHit(g[0],[k])||g.some(x=>fb(x)===fb(k))))for(const x of g)toks.push(x);
  const ws=String(text||"").split(" "),hit=ws.map(w=>toks.length&&bnHit(w,toks));let i=0;
  while(i<ws.length){if(i)box.appendChild(document.createTextNode(" "));if(hit[i]){let j=i;while(j+1<ws.length&&hit[j+1])j++;box.appendChild(el("mark",null,ws.slice(i,j+1).join(" ")));i=j+1}else{box.appendChild(document.createTextNode(ws[i]));i++}}}
@@ -219,7 +222,7 @@ function verses(host,refs,fgl,off){let shown=0,fail=[];const step=15,g=GEN;
    const tx=el("div","rs-vt rs-ar"),tb=el("div","rs-vb"),wb=el("button","rs-wb","শব্দে শব্দে অর্থ"),wh=el("div","rs-ww");
    wb.type="button";
    markBn(tb,bn[a-1]||"",fgl);
-   chunk("w",s,1).then(W=>{const m=(W[a-1]||"").split("|")[w-1];if(m&&m!==fgl)markBn(tb,bn[a-1]||"",m)}).catch(()=>{});
+   chunk("w",s,1).then(async W=>{const m=(W[a-1]||"").split("|")[w-1];let ok=false;try{const M=await chunk("m",s,1);const r=alRange((M||[])[a-1],w);if(r)ok=markRange(tb,bn[a-1]||"",r)}catch(e){}if(!ok&&m&&m!==fgl)markBn(tb,bn[a-1]||"",m)}).catch(()=>{});
    t.split(" ").forEach((x,i)=>{if(i)tx.appendChild(document.createTextNode(" "));if(i===w-1){const m=el("mark",null,x);tx.appendChild(m)}else tx.appendChild(document.createTextNode(x))});
    let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
     try{const m=((await chunk("w",s))||[])[a-1].split("|");wh.textContent="";t.split(" ").forEach((x,i)=>{const c=el("div","rs-wc"+(i===w-1?" hl":"")),ar=el("div","rs-wa rs-ar",x),b=el("div","rs-wm",m[i]||"");c.append(ar,b);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
