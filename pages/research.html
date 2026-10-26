@@ -51,6 +51,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-f.open+.rs-v{display:block}
 .rs-vi{border-radius:0;background:none;padding:10px 0;margin-top:0;border-top:1px dashed var(--border-light)}
 .rs-vr{font-size:11.5px;color:var(--text-muted);margin-bottom:3px}
+.rs-wq{font-size:.62em;color:var(--primary);margin:0 .1em;user-select:none}
 .rs-vt{font-size:22px;line-height:2.1;direction:rtl;text-align:right}
 .rs-vt mark{background:var(--primary);color:#fff;border-radius:5px;padding:0 4px}
 .rs-fm{font-size:14px;color:var(--primary);font-weight:600;margin-top:1px}
@@ -240,7 +241,9 @@ function wordBounds(x,sr,W){
 let WQ=null;const wqLoad=async()=>{if(WQ)return WQ;try{WQ=await rsFetch(BASE+"quran-waqf.json?v="+DV)}catch(e){WQ={}}return WQ};
 // আয়াতের শব্দ-নম্বর → ওয়াক্ফ চিহ্ন (শব্দের গায়ে লাগিয়ে দেখানো হয়)
 const wqMarks=(s,a)=>{const v=WQ&&WQ[s+":"+a],m={};if(v)v.split(",").forEach(x=>{const r=/^(\d+)(.+)$/.exec(x);if(r)m[+r[1]]=r[2]});return m};
-const arFill=(box,s,a,t,hl)=>{const m=wqMarks(s,a);t.split(" ").forEach((x,i)=>{if(i)box.appendChild(document.createTextNode(" "));const w=x+(m[i+1]||"");if(i===hl-1)box.appendChild(el("mark",null,w));else box.appendChild(document.createTextNode(w))})};
+const WQL={"ۖ":"صلى","ۗ":"قلى","ۘ":"م","ۙ":"لا","ۚ":"ج","ۛ":"∴","ۜ":"س"};
+// চিহ্ন শব্দের গায়ে না লাগিয়ে মুদ্রিত কুরআনের মতো শব্দের মাঝে আলাদা ছোট অক্ষর (ج, قلى, صلى, م, ∴…) হিসেবে বসে
+const arFill=(box,s,a,t,hl)=>{const m=wqMarks(s,a);t.split(" ").forEach((x,i)=>{if(i)box.appendChild(document.createTextNode(" "));if(i===hl-1)box.appendChild(el("mark",null,x));else box.appendChild(document.createTextNode(x));const k=m[i+1];if(k){box.appendChild(document.createTextNode(" "));box.appendChild(el("span","rs-wq",[...k].map(c=>WQL[c]||"").filter(Boolean).join(" ")))}})};
 const wqStops=(s,a)=>{const v=WQ&&WQ[s+":"+a];if(!v)return[];return v.split(",").map(x=>{const m=/^(\d+)(.+)$/.exec(x);return m&&/[ۘۗۚۜۙ]/.test(m[2])?+m[1]:0}).filter(Boolean)};
 async function verseSegs(s,a,x,sr,ws,pad){const t=((await chunk("a",s))||[])[a-1];if(!t)return null;const words=String(t).split(" "),N=words.length;
  const W=words.map(w=>Math.max(1,nz(w,true).length)),b=wordBounds(x,sr,W);if(!b)return null;
