@@ -5,6 +5,10 @@
 Quranic Arabic Corpus morphology v0.4 (Kais Dukes, https://corpus.quran.com) - licensed under the GNU General Public License.
 Root assignments are research data, not a fatwa/tafsir source; verify against classical lexicons where it matters.
 
+## Waqf marks (Research page, audio cut)
+
+- `quran-waqf.json`: positions of the waqf (stop) signs per verse, built by `tools/build-quran-waqf.py` from the Tanzil.net Uthmani Hafs text (CC BY 3.0, unmodified wording, see tanzil.net/docs/text_license) taken through [fawazahmed0/quran-api](https://github.com/fawazahmed0/quran-api) (`ara-quranuthmanihaf`). 13 verses whose word count does not match are skipped.
+
 ## Bangla (Research page)
 
 - `quran-wbw-bn.json` and the word meanings inside `quran-roots.json`: from

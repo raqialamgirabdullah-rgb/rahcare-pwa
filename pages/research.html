@@ -207,7 +207,7 @@ async function mp3Of(parts,sr,note){const L=await loadLame();let n=0;parts.forEa
  const f=enc.flush();if(f.length)out.push(f);return new Blob(out,{type:"audio/mpeg"})}
 // আয়াতের কোন কোন শব্দ সার্চে মিলেছে (আয়াত → শব্দ-নম্বরের সেট); মার্জ অডিওতে "শুধু সংশ্লিষ্ট অংশ" কাটার জন্য
 const WORDS=new Map();
-const cutMode=()=>{try{const v=localStorage.getItem("rsCut");if(v==="p3"||v==="p0")return v}catch(e){}return"full"};
+const cutMode=()=>{try{const v=localStorage.getItem("rsCut");if(v==="p3"||v==="p0"||v==="wq")return v}catch(e){}return"full"};
 // শব্দের সীমা অনুমান: অডিওর শক্তি-রেখার (energy) গর্তগুলো থেকে ডিপি দিয়ে বাছাই, শব্দের অক্ষর-সংখ্যার অনুপাতে সময় মিলিয়ে — তাই যেকোনো ক্বারীর অডিওতে চলে, বাইরের সার্ভিস লাগে না; ফল আনুমানিক
 function wordBounds(x,sr,W){
  const F=Math.round(sr*0.01),nF=Math.floor(x.length/F),N=W.length;if(N<1||nF<N*3)return null;
@@ -229,9 +229,13 @@ function wordBounds(x,sr,W){
  if(bj<0)return null;
  const nodes=new Array(N+1);nodes[N]=last;nodes[N-1]=bj;for(let k=N-1;k>=2;k--)nodes[k-1]=par[k-1][nodes[k]];nodes[0]=0;
  return nodes.map(n=>P[n]*F)}
+// ওয়াক্ফ চিহ্নের অবস্থান (quran-waqf.json: "সূরা:আয়াত" → "শব্দনম্বর+চিহ্ন,…"); কেবল থামার চিহ্ন (ۘ ۗ ۚ ۜ ۙ) অংশের সীমা; ۖ (মিলিয়ে পড়া) ও ۛ (দুইয়ের একটিতে থামা) সীমা ধরা হয় না
+let WQ=null;const wqLoad=async()=>{if(WQ)return WQ;try{WQ=await rsFetch(BASE+"quran-waqf.json?v="+DV)}catch(e){WQ={}}return WQ};
+const wqStops=(s,a)=>{const v=WQ&&WQ[s+":"+a];if(!v)return[];return v.split(",").map(x=>{const m=/^(\d+)(.+)$/.exec(x);return m&&/[ۘۗۚۜۙ]/.test(m[2])?+m[1]:0}).filter(Boolean)};
 async function verseSegs(s,a,x,sr,ws,pad){const t=((await chunk("a",s))||[])[a-1];if(!t)return null;const words=String(t).split(" "),N=words.length;
  const W=words.map(w=>Math.max(1,nz(w,true).length)),b=wordBounds(x,sr,W);if(!b)return null;
- const iv=[];[...ws].filter(w=>w>=1&&w<=N).sort((p,q)=>p-q).forEach(w=>{const lo=Math.max(1,w-pad),hi=Math.min(N,w+pad),l=iv[iv.length-1];if(l&&lo<=l[1]+1)l[1]=Math.max(l[1],hi);else iv.push([lo,hi])});
+ const stops=pad<0?wqStops(s,a):[];
+ const iv=[];[...ws].filter(w=>w>=1&&w<=N).sort((p,q)=>p-q).forEach(w=>{let lo=Math.max(1,w-pad),hi=Math.min(N,w+pad);if(pad<0){lo=1;for(const k of stops)if(k<w)lo=k+1;hi=N;for(const k of stops)if(k>=w){hi=k;break}}const l=iv[iv.length-1];if(l&&lo<=l[1]+1)l[1]=Math.max(l[1],hi);else iv.push([lo,hi])});
  if(!iv.length||(iv.length===1&&iv[0][0]===1&&iv[0][1]===N))return null;const mg=Math.round(sr*0.04);
  return iv.map(r=>[Math.max(0,b[r[0]-1]-mg),Math.min(x.length,b[r[1]]+mg)])}
 function i16(ch,a,b,fd){const n=Math.max(0,b-a),o=new Int16Array(n);for(let k=0;k<n;k++){let v=Math.max(-1,Math.min(1,ch[a+k]));if(fd){if(k<fd)v*=k/fd;else if(n-k<fd)v*=(n-k)/fd}o[k]=v<0?v*32768:v*32767}return o}
@@ -242,13 +246,13 @@ async function mergeAudio(list,out,note){if(!list.length)return;
  const sr=22050,AC=window.AudioContext||window.webkitAudioContext,ctx=new AC({sampleRate:sr}),enc=new L.Mp3Encoder(1,sr,64),mp3=[],B=1152,gap=new Int16Array(Math.round(sr*0.5));
  let wl=null;try{wl=await navigator.wakeLock.request("screen")}catch(e){}
  const push=pcm=>{for(let i=0;i<pcm.length;i+=B){const m=enc.encodeBuffer(pcm.subarray(i,i+B));if(m.length)mp3.push(new Uint8Array(m))}};
- const W=4,pf=[],get=i=>pf[i]||(pf[i]=fetchAud(list[i][0],list[i][1]).catch(()=>null));let ok=0,bad=0,cutN=0;const cm=cutMode(),gap2=new Int16Array(Math.round(sr*0.25));
+ const W=4,pf=[],get=i=>pf[i]||(pf[i]=fetchAud(list[i][0],list[i][1]).catch(()=>null));let ok=0,bad=0,cutN=0;const cm=cutMode();if(cm==="wq")await wqLoad();const gap2=new Int16Array(Math.round(sr*0.25));
  for(let i=0;i<list.length;i++){for(let j=i;j<Math.min(i+W,list.length);j++)get(j);
   note("অডিও নামানো ও জোড়া লাগানো হচ্ছে "+bn2(i+1)+"/"+bn2(list.length)+(bad?" (বাদ: "+bn2(bad)+")":"")+"…");
   const ab=await get(i);pf[i]=null;
   if(!ab){bad++;if(!ok&&bad>=5)break;continue}
   try{const d=await ctx.decodeAudioData(ab),ch=d.getChannelData(0);let sg=null;
-   if(cm!=="full"&&list[i][1]>1){const ws=WORDS.get(list[i][0]+":"+list[i][1]);if(ws&&ws.size){try{sg=await verseSegs(list[i][0],list[i][1],ch,sr,ws,cm==="p3"?3:0)}catch(e){sg=null}}}
+   if(cm!=="full"&&list[i][1]>1){const ws=WORDS.get(list[i][0]+":"+list[i][1]);if(ws&&ws.size){try{sg=await verseSegs(list[i][0],list[i][1],ch,sr,ws,cm==="p3"?3:cm==="wq"?-1:0)}catch(e){sg=null}}}
    if(sg){cutN++;sg.forEach((r,ix)=>{push(i16(ch,r[0],r[1],Math.round(sr*0.012)));if(ix<sg.length-1)push(gap2)})}else push(i16(ch,0,ch.length,0));
    push(gap);ok++}catch(e){bad++;if(!ok&&bad>=5)break}
   if(i%10===0)await new Promise(r=>setTimeout(r))}
@@ -264,7 +268,7 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
  b1.onclick=()=>mergeAudio(all,out,t=>note.textContent=t);
  b2.onclick=()=>{const l=[...SELV].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!l.length)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");mergeAudio(l,out,t=>note.textContent=t)};
  selUp.push(()=>{b2.textContent="🔊 বাছাই করা আয়াত মার্জ ("+bn2(SELV.size)+")"});
- const sc=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");[["full","পুরো আয়াত"],["p3","সংশ্লিষ্ট শব্দ + আগে-পরে ৩ শব্দ"],["p0","শুধু সংশ্লিষ্ট শব্দ"]].forEach(x=>{const o=document.createElement("option");o.value=x[0];o.textContent="অডিও: "+x[1];sc.appendChild(o)});sc.value=cutMode();
+ const sc=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");[["full","পুরো আয়াত"],["wq","সংশ্লিষ্ট অংশ (ওয়াক্ফ চিহ্ন অনুযায়ী)"],["p3","সংশ্লিষ্ট শব্দ + আগে-পরে ৩ শব্দ"],["p0","শুধু সংশ্লিষ্ট শব্দ"]].forEach(x=>{const o=document.createElement("option");o.value=x[0];o.textContent="অডিও: "+x[1];sc.appendChild(o)});sc.value=cutMode();
   const hint=()=>{note.textContent=(cutMode()!=="full"?"সংশ্লিষ্ট অংশ অডিও বিশ্লেষণ করে আনুমানিকভাবে কাটা হয়; শুরু/শেষে সামান্য এদিক-ওদিক হতে পারে, পুরো আয়াত বেছে নিলে কোনো কাটাছেঁড়া নেই। ":"")+(all.length>100?"আয়াত বেশি হলে সময় লাগবে — নেট চালু রাখুন ও পেজ খোলা রাখুন; সব আয়াত ক্রমানুসারে একটাই MP3 ফাইলে হবে":"")};sc.onchange=()=>{try{localStorage.setItem("rsCut",sc.value)}catch(e){}hint()};hint();
   row.append(sel,sc,b1,b2);box.append(row,note,out);info.appendChild(box)}
 const SB={n:0,t:0,m:new Map,set(u){this.t=u.size;this.m=new Map([...u].map((k,i)=>[k,i+1]))}};
