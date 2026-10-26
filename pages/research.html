@@ -354,7 +354,10 @@ ORG.forEach(o=>TOPICS.push({name:o[0],desc:o[1],intro:"কুরআনে “"+o
  const add=(pre,n)=>nm(n).terms.forEach(x=>T.push([pre+" — "+x[0]].concat(x.slice(1))));
  add("বদনজর","বদনজর");add("জাদু","জাদু");add("জাদু","জাদুর প্রকার");add("জিন","জিন");add("জিন (চালান)","চালানের প্রকার");
  ORG.forEach(o=>o[2].forEach(x=>T.push([ "অঙ্গ: "+o[0]+" — "+x[0]].concat(x.slice(1)))));
- TOPICS.unshift({name:"বদনজর · জাদু · জিন (সব একসাথে)",desc:"বদনজর → জাদু → জিন → প্রতিটি অঙ্গ-প্রত্যঙ্গ · মার্জ অডিও",ordered:true,intro:"ক্রম: প্রথমে বদনজর, তারপর জাদু (জাদুর প্রকারসহ), তারপর জিন (চালানের প্রকারসহ), সবশেষে শরীরের প্রতিটি অঙ্গ-প্রত্যঙ্গের আয়াত — অঙ্গে থাকা বদনজর, জাদু ও জিনের দুর্গ ভাঙার জন্য এগুলোও এর অন্তর্ভুক্ত। একই আয়াত একাধিক ভাগে এলে অডিও ও কপিতে শুধু প্রথমবারই আসে। প্রতিটি ভাগের ভেতরে আয়াত সূরার ক্রমে। এগুলো শব্দভিত্তিক সংগ্রহ।",terms:T})}
+ TOPICS.unshift({name:"বদনজর · জাদু · জিন (সব একসাথে)",desc:"বদনজর → জাদু → জিন → প্রতিটি অঙ্গ-প্রত্যঙ্গ · মার্জ অডিও",ordered:true,intro:"ক্রম: প্রথমে বদনজর, তারপর জাদু (জাদুর প্রকারসহ), তারপর জিন (চালানের প্রকারসহ), সবশেষে শরীরের প্রতিটি অঙ্গ-প্রত্যঙ্গের আয়াত — অঙ্গে থাকা বদনজর, জাদু ও জিনের দুর্গ ভাঙার জন্য এগুলোও এর অন্তর্ভুক্ত। একই আয়াত একাধিক ভাগে এলে অডিও ও কপিতে শুধু প্রথমবারই আসে। প্রতিটি ভাগের ভেতরে আয়াত সূরার ক্রমে। এগুলো শব্দভিত্তিক সংগ্রহ।",terms:T});
+ // শুধু অঙ্গ-প্রত্যঙ্গ, সব একসাথে (বদনজর/জাদু/জিন ছাড়া): প্রতিটি অঙ্গের আলাদা বিষয়ও আগের মতোই আছে
+ const T2=[];ORG.forEach(o=>o[2].forEach(x=>T2.push([o[0]+" — "+x[0]].concat(x.slice(1)))));
+ TOPICS.splice(1,0,{name:"অঙ্গ-প্রত্যঙ্গ (সব একসাথে)",desc:"মাথা → চুল → কপাল → মুখমণ্ডল → … সব অঙ্গ · মার্জ অডিও",ordered:true,org:true,intro:"কুরআনে শরীরের যেসব অঙ্গ-প্রত্যঙ্গের নাম এসেছে সবগুলোর আয়াত একসাথে, অঙ্গের ক্রমে। প্রতিটি অঙ্গের ভাগে আয়াত সূরার ক্রমে। একই আয়াত একাধিক ভাগে এলে অডিও ও কপিতে শুধু প্রথমবারই আসে। এগুলো শব্দভিত্তিক সংগ্রহ।",terms:T2})}
 // কমা দিয়ে একাধিক বিষয় (যেমন "জিনা, চুল"): প্রথমে প্রথম বিষয়ের সব আয়াত, তারপর পরের বিষয়ের; সিরিয়াল, কপি ও মার্জ অডিও সব বিষয় মিলিয়ে একসাথে
 // অঙ্গ-প্রত্যঙ্গের ছাঁকনি: রুটের অন্য অর্থের শব্দ (যেমন عين = ঝর্ণা, أذن = অনুমতি) বাদ দিতে। {m: বাংলা অর্থে যা থাকতে হবে, x: যা থাকলে বাদ, p: শব্দের ধরন (N = বিশেষ্য)}
 // আরবি রুটে ছাঁকনি থাকলে শুধু হুবহু সেই রুটই ধরা হয় (আংশিক মিল নয়)
@@ -372,7 +375,7 @@ function topicSet(t){const u=new Set();for(const pp of t.terms){const t0=typeof 
   items.forEach(it=>[...lst(it,it.sc===100)].forEach(f=>f.refs.forEach(r=>u.add(r.split(":").slice(0,2).join(":")))))}return u}
 async function fillCounts(cnt){try{await loadRoots()}catch(e){cnt.forEach(c=>c[1].textContent="");return}
  for(const [t,n] of cnt){if(t.ordered)continue;if(!TSET.has(t.name)){try{TSET.set(t.name,topicSet(t))}catch(e){TSET.set(t.name,new Set())}await new Promise(r=>setTimeout(r))}n.textContent=bn2(TSET.get(t.name).size)+" আয়াত"}
- for(const [t,n] of cnt)if(t.ordered){const u=new Set();TOPICS.forEach(x=>{if(!x.ordered&&TSET.has(x.name))TSET.get(x.name).forEach(k=>u.add(k))});n.textContent=bn2(u.size)+" আয়াত"}}
+ for(const [t,n] of cnt)if(t.ordered){const u=new Set();TOPICS.forEach(x=>{if(!x.ordered&&(!t.org||ORG.some(o=>o[0]===x.name))&&TSET.has(x.name))TSET.get(x.name).forEach(k=>u.add(k))});n.textContent=bn2(u.size)+" আয়াত"}}
 async function runMulti(parts,out,info,intro,ordered){
  await loadRoots();
  const intros=intro?[intro]:[];
