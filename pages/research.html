@@ -71,6 +71,10 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-rs .rs-ri:active,.rs-rs .rs-ri:hover{background:var(--primary);color:#fff}
 .rs-rs .rs-ri b{font-size:22px;font-weight:400;letter-spacing:.35em;font-family:"Amiri","Noto Naskh Arabic","Droid Arabic Naskh",serif}
 .rs-rs .rs-ri span{font-size:12px;opacity:.75;direction:ltr;white-space:nowrap}
+/* বিষয়ের তালিকা: নাম ওপরে এক লাইনে, বিবরণ নিচে (লম্বা হলে ভেঙে যাবে) */
+.rs-rs .rs-tr{flex-direction:column;align-items:stretch;justify-content:flex-start;gap:3px;direction:ltr;text-align:left;padding:10px 14px}
+.rs-rs .rs-tr b{font-family:inherit;font-size:16px;font-weight:700;letter-spacing:0;white-space:normal;line-height:1.4}
+.rs-rs .rs-tr span{white-space:normal;font-size:12px;line-height:1.5;opacity:.75}
 
 .rs-sum{font-size:14px;margin:4px 0 8px}
 .rs-sum .rs-ar{font-size:19px;color:var(--primary);unicode-bidi:isolate}
@@ -404,7 +408,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  $("rsTp").onclick=()=>{if(rs.classList.contains("on")&&rs.dataset.k==="topics"){rs.classList.remove("on");return}
   rs.innerHTML="";rs.dataset.k="topics";rs.classList.add("bn","on");pad.classList.remove("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   rs.appendChild(el("div","rs-rh2","বিষয়ভিত্তিক আয়াত — একটি বিষয় বেছে নিন"));
-  TOPICS.forEach(t=>{const row=el("div","rs-ri"),b=el("b",null,t.name),c=el("span",null,t.desc||"");row.append(b,c);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
+  TOPICS.forEach(t=>{const row=el("div","rs-ri rs-tr"),b=el("b",null,t.name),c=el("span",null,t.desc||"");row.append(b,c);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
