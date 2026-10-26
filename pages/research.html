@@ -127,7 +127,7 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
   if(sc)out.push({r,sc,mf,loose:1})}}
  return out.sort((a,b)=>b.sc-a.sc||b.r.n-a.r.n)}
 let ALLF=false,GEN=0;
-const fb=s=>String(s||"").replace(/[\u200c\u200d\u0981]/g,"").replace(/\u09df|য\u09bc/g,"য").replace(/ী/g,"ি").replace(/ূ/g,"ু").replace(/ঈ/g,"ই").replace(/ঊ/g,"উ").replace(/ণ/g,"ন").replace(/য/g,"জ").replace(/জ্দু/g,"জাদু");
+const fb=s=>String(s||"").replace(/[\u200c\u200d\u0981]/g,"").replace(/\u09c7\u09be/g,"\u09cb").replace(/\u09c7\u09d7/g,"\u09cc").replace(/\u09df|য\u09bc/g,"য").replace(/ী/g,"ি").replace(/ূ/g,"ু").replace(/ঈ/g,"ই").replace(/ঊ/g,"উ").replace(/ণ/g,"ন").replace(/য/g,"জ").replace(/জ্দু/g,"জাদু");
 /* শব্দের ভেতরের টুকরো নয়, পুরো শব্দ (বা অল্প প্রত্যয়সহ) মিললেই হিট — নইলে "রায়িনা"-তে "জিনা" মিলে যেত */
 const SUFRE=new RegExp("^(?:"+["দেরকে","েরকে","গুলোকে","গুলোর","গুলোতে","গুলো","সমূহকে","সমূহের","সমূহে","সমূহ","কারীদের","কারীরা","কারীর","কারী","গ্রস্তদের","গ্রস্ত","করদের","কররা","করকে","করের","করা","কর","দের","ের","রা","কে","তে","টি","টা","য়ে","ে","য়","র","ও","ই"].map(x=>fb(x)).join("|")+")(?:ও|ই)?$");
 // ছোট (২ অক্ষরের) শব্দ, যেমন "পা"/"মন": শুধু বিশেষ্যের প্রত্যয় চলবে — নইলে "পাও/পাই/পার" (পাওয়া) বা "মনে করো" ভুলে মিলে যায়
