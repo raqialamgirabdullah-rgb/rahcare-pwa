@@ -372,7 +372,7 @@ init();
 })();
 </script>
 <script type="module">
-import{db,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=33";
+import{db,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=34";
 import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; এটি পেছনে চলে, সার্চ পেজ খোলার সাথে সাথেই কাজ করে */
 requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}try{localStorage.setItem("rcMgmtUser",ok?"1":"0")}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");document.getElementById("rsBox").style.visibility="visible"});

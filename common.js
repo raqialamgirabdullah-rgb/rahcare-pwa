@@ -1040,7 +1040,7 @@ const IMG={logo:["logoUrl","logoActive","Logo"],invoice:["invoiceTemplateUrl","i
 UPLOAD_URL="https://imgbb-proxy.raqialamgirabdullah.workers.dev",
 imgBox=v("imgBox");
 let uDoc=null;const UNF="User not found";
-const updU=async p=>{await UD(D(db,"users",uDoc),p);uData&&(Object.assign(uData,p),refreshManifest())},
+const updU=async p=>{await UD(D(db,"users",uDoc),p);uData&&(Object.assign(uData,p),window.__rcUD&&Object.assign(window.__rcUD,p),refreshManifest())},
 setImg=(k,url,on)=>{v("row-"+k).classList.toggle("has",!!url);const p=v("pv-"+k);url?p.src=url:p.removeAttribute("src");v("up-"+k).innerText=url?"Change":"Upload";v("tg-"+k).checked=!!on;v("ts-"+k).innerText=on?"Custom":"Default"},
 upload=async(k,file)=>{if(!file)return;const[f,a]=IMG[k],b=v("up-"+k),o=b.innerText;if(file.size>33554432)return alert("Max 32MB");b.innerText="Uploading...";b.style.pointerEvents="none";try{if(!uDoc)throw new Error(UNF);const fd=new FormData;fd.append("image",file);const r=await(await fetch(UPLOAD_URL,{method:"POST",body:fd})).json();if(!r.success)throw new Error(r.error?.message||"Failed");await updU({[f]:r.data.url,[a]:!0});setImg(k,r.data.url,!0);alert("Uploaded!")}catch(e){alert("Failed: "+e.message);b.innerText=o}finally{b.style.pointerEvents="auto";v("fl-"+k).value=""}},
 initImg=async uid=>{const s=await GD(Q(C(db,"users"),W("uid","==",uid)));if(s.empty)return;uDoc=s.docs[0].id;const d=uData=s.docs[0].data();Object.entries(IMG).forEach(([k,[f,a]])=>setImg(k,d[f],!!d[f]&&d[a]!==!1));refreshManifest()};
@@ -1457,45 +1457,60 @@ if (!window.__rcDatePick) {
       setTimeout(function () { location.reload(); }, 220);
     };
 
-    /* install switch: same Default / Custom install as the admin panel */
+    /* install switch: Default / Custom install */
     (function () {
       var $ = function (i) { return side.querySelector("#" + i); }, tg = $("rc-in"), box = $("rc-inopt"), cu = $("rc-in-cu"), msgEl = $("rc-in-m");
-      var H = "https://rahcare.blogspot.com/", DI = "https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/icon-192.png", DN = "Rah Care", mKey = "", bt = 0, LSK = "rcInstalled";
+      var H = "https://rahcare.blogspot.com/", DI = "https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/icon-192.png", DN = "Rah Care", mKey = "", bt = 0, LSK = "rcInstalled", origHref = null;
+      var MENU = /iphone|ipad|ipod/i.test(navigator.userAgent) ? "📲 Safari: Share → 'Add to Home Screen'" : "📲 ব্রাউজার মেনু (⋮) → 'Install app'";
       var ud = function () { return window.__rcUD || {}; };
       var logo = function () { var d = ud(); return d.logoUrl && d.logoActive !== false ? d.logoUrl : DI; };
       var say = function (t) { clearTimeout(bt); msgEl.textContent = t || ""; };
-      var inst = function () { try { return lsGet(LSK) === "1" || matchMedia("(display-mode:standalone)").matches; } catch (e) { return false; } };
+      /* only "running inside the installed app" disables the buttons; a stale "installed" flag (app uninstalled / install failed) must never leave them dead */
+      var standalone = function () { try { return matchMedia("(display-mode:standalone)").matches; } catch (e) { return false; } };
       var paint = function () {
-        var on = inst() && !window.__bip;
+        var on = standalone();
         ["rc-in-d", "rc-in-c", "rc-in-g"].forEach(function (i) { var b = $(i); b.style.opacity = on ? ".4" : ""; b.style.filter = on ? "grayscale(1)" : ""; b.setAttribute("aria-disabled", on ? "true" : "false"); });
         if (on) cu.hidden = true;
       };
       var busy = function (on) { clearTimeout(bt); msgEl.textContent = on ? "Please wait..." : ""; if (on) bt = setTimeout(function () { msgEl.textContent = ""; }, 4000); };
+      /* Custom install: swap in a manifest with the centre's name + logo. A prompt event captured BEFORE the swap belongs to the old manifest, so it is dropped; the browser has to fire a fresh one */
       var setManifest = function (name, icon) {
         var n = name || DN, i = icon || DI, k = n + "|" + i;
         if (k === mKey) return false;
         mKey = k;
-        var old = document.querySelector('link[rel="manifest"]'); if (old) old.remove();
+        var old = document.querySelector('link[rel="manifest"]');
+        if (old && origHref === null) origHref = old.getAttribute("href") || "";
+        if (old) old.remove();
         var a = { name: n, short_name: n, start_url: H, scope: H, display: "standalone", orientation: "portrait", background_color: "#fff", theme_color: "#1a4731", icons: [192, 512].map(function (z) { return { src: i, sizes: z + "x" + z, type: "image/png", purpose: "any maskable" }; }) };
         var l = document.createElement("link"); l.rel = "manifest";
         l.href = URL.createObjectURL(new Blob([JSON.stringify(a)], { type: "application/json" }));
         document.head.appendChild(l);
+        window.__bip = null;
         return true;
       };
-      var install = async function (name, icon) {
-        if (matchMedia("(display-mode:standalone)").matches) return say("✅ অ্যাপ থেকেই চলছে");
-        if (setManifest(name, icon)) return busy(true);
+      /* Default install: use the page's own manifest. Nothing is touched unless Custom was used earlier in this session */
+      var restoreManifest = function () {
+        if (!mKey) return false;
+        mKey = "";
+        var cur = document.querySelector('link[rel="manifest"]'); if (cur) cur.remove();
+        if (origHref) { var l = document.createElement("link"); l.rel = "manifest"; l.href = origHref; document.head.appendChild(l); }
+        window.__bip = null;
+        return true;
+      };
+      var install = async function (dflt, name, icon) {
+        if (standalone()) return say("✅ অ্যাপ থেকেই চলছে");
+        if (dflt ? restoreManifest() : setManifest(name, icon)) return busy(true);
         var pr = window.__bip;
-        if (!pr) return say(/iphone|ipad|ipod/i.test(navigator.userAgent) ? "📲 Safari: Share → 'Add to Home Screen'" : "📲 ব্রাউজার মেনু (⋮) → 'Install app'");
-        try { pr.prompt(); var r = await pr.userChoice; say(r.outcome === "accepted" ? "✅ ইন্সটল হচ্ছে..." : "ইন্সটল বাতিল করা হয়েছে"); } catch (e) { say("⚠️ আবার চেষ্টা করুন"); }
-        window.__bip = null; mKey = "";
+        if (!pr) return say(MENU);
+        try { pr.prompt(); var r = await pr.userChoice; say(r.outcome === "accepted" ? "✅ ইন্সটল চলছে... কয়েক সেকেন্ড পর হোম স্ক্রিন দেখুন" : "ইন্সটল বাতিল করা হয়েছে"); } catch (e) { say("⚠️ আবার চেষ্টা করুন"); }
+        window.__bip = null;
       };
       tg.onchange = function () { box.hidden = !tg.checked; if (!tg.checked) { cu.hidden = true; say(""); } else paint(); };
-      $("rc-in-d").onclick = function () { if (inst() && !window.__bip) return; cu.hidden = true; install(DN, DI); };
-      $("rc-in-c").onclick = function () { if (inst() && !window.__bip) return; $("rc-in-n").value = ud().centreName || lsGet("rcSH") || DN; cu.hidden = false; if (setManifest($("rc-in-n").value.trim(), logo())) busy(true); };
+      $("rc-in-d").onclick = function () { if (standalone()) return say("✅ অ্যাপ থেকেই চলছে"); cu.hidden = true; install(true); };
+      $("rc-in-c").onclick = function () { if (standalone()) return say("✅ অ্যাপ থেকেই চলছে"); $("rc-in-n").value = ud().centreName || lsGet("rcSH") || DN; cu.hidden = false; if (setManifest($("rc-in-n").value.trim(), logo())) busy(true); };
       var dt = 0;
       $("rc-in-n").oninput = function () { clearTimeout(dt); busy(true); dt = setTimeout(function () { if (!setManifest($("rc-in-n").value.trim(), logo())) busy(false); }, 600); };
-      $("rc-in-g").onclick = function () { if (inst() && !window.__bip) return; install($("rc-in-n").value.trim() || DN, logo()); };
+      $("rc-in-g").onclick = function () { if (standalone()) return say("✅ অ্যাপ থেকেই চলছে"); install(false, $("rc-in-n").value.trim() || DN, logo()); };
       addEventListener("bip", function () { try { localStorage.removeItem(LSK); } catch (e) {} paint(); busy(false); });
       addEventListener("appinstalled", function () { window.__bip = null; try { localStorage.setItem(LSK, "1"); } catch (e) {} paint(); say("✅ ইন্সটল হয়েছে"); });
       paint();
