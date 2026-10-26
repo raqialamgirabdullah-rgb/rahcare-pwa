@@ -325,6 +325,15 @@ function applyFl(items,fl){const rg=s=>s?new RegExp(nfc(s)):null,m=rg(fl.m),x=rg
   const src=it.bn?it.mf:it.r.forms,mf=src.filter(f=>{const t=nfc(f.m);return(!m||m.test(t))&&(!x||!x.test(t))&&(!fl.p||f.p===fl.p)});
   if(mf.length)out.push({r:it.r,sc:it.bn?it.sc:80,mf,bn:it.bn,loose:it.loose})}
  return out}
+// বিষয়ের তালিকায় আয়াত সংখ্যা: runMulti-র মতো একই নিয়মে (সার্চ + ছাঁকনি) গোনা হয়, একই আয়াত একবারই
+const TSET=new Map();
+function topicSet(t){const u=new Set();for(const pp of t.terms){const t0=typeof pp==="string"?pp:pp[1],q=nz(t0),isBn=!q&&/[\u0980-\u09FF]/.test(t0);let items=[];
+  if(isBn){if(t0.length>=2)items=searchBn(t0)}else if(q){if(q.length>=2)items=search(q)}
+  const fl=typeof pp==="string"?null:pp[2];if(fl&&items.length)items=applyFl(items,fl);
+  items.forEach(it=>[...lst(it,it.sc===100)].forEach(f=>f.refs.forEach(r=>u.add(r.split(":").slice(0,2).join(":")))))}return u}
+async function fillCounts(cnt){try{await loadRoots()}catch(e){cnt.forEach(c=>c[1].textContent="");return}
+ for(const [t,n] of cnt){if(t.ordered)continue;if(!TSET.has(t.name)){try{TSET.set(t.name,topicSet(t))}catch(e){TSET.set(t.name,new Set())}await new Promise(r=>setTimeout(r))}n.textContent=bn2(TSET.get(t.name).size)+" আয়াত"}
+ for(const [t,n] of cnt)if(t.ordered){const u=new Set();TOPICS.forEach(x=>{if(!x.ordered&&TSET.has(x.name))TSET.get(x.name).forEach(k=>u.add(k))});n.textContent=bn2(u.size)+" আয়াত"}}
 async function runMulti(parts,out,info,intro,ordered){
  await loadRoots();
  const intros=intro?[intro]:[];
@@ -408,7 +417,7 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
  $("rsTp").onclick=()=>{if(rs.classList.contains("on")&&rs.dataset.k==="topics"){rs.classList.remove("on");return}
   rs.innerHTML="";rs.dataset.k="topics";rs.classList.add("bn","on");pad.classList.remove("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   rs.appendChild(el("div","rs-rh2","বিষয়ভিত্তিক আয়াত — একটি বিষয় বেছে নিন"));
-  TOPICS.forEach(t=>{const row=el("div","rs-ri rs-tr"),b=el("b",null,t.name),c=el("span",null,t.desc||"");row.append(b,c);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
+  const cnt=[];TOPICS.forEach(t=>{const row=el("div","rs-ri rs-tr"),hd=els("div","display:flex;justify-content:space-between;align-items:baseline;gap:10px"),b=el("b",null,t.name),n=els("span","font-size:12.5px;font-weight:700;opacity:.9;white-space:nowrap;color:var(--primary)",TSET.has(t.name)?bn2(TSET.get(t.name).size)+" আয়াত":"…"),c=el("span",null,t.desc||"");hd.append(b,n);row.append(hd,c);cnt.push([t,n]);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)});fillCounts(cnt)};
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
