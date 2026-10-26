@@ -94,7 +94,7 @@ body{background:var(--bg);margin:0;padding:10px 10px 96px;font-family:var(--font
 .rs-va{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 10px 10px}
 .rs-va .rs-wb{margin:0}.rs-va label{margin:0!important}
 .rs-ww{margin:0 10px 10px}
-</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" type="text" dir="auto" enterkeyhint="search" style="text-align:center" placeholder="সার্চ করুন" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button><button class="rs-ib" id="rsGo" type="button" title="সার্চ">🔍</button></div><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
+.rs-tp{display:block;width:100%;margin:8px 0 0;padding:8px 12px;border:1px dashed var(--border-light);background:none;color:var(--primary);border-radius:12px;font:inherit;font-size:14px;cursor:pointer}.rs-tp:active,.rs-tp:hover{background:var(--card-bg)}</style><div class="rs-box" id="rsBox" style="visibility:hidden"><h3 class="rs-title">🔬 Research</h3><div class="rs-bar"><button class="rs-ib" id="rsKb" type="button" title="আরবি কীবোর্ড">⌨</button><input id="rsQ" type="text" dir="auto" enterkeyhint="search" style="text-align:center" placeholder="সার্চ করুন" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="rs-ib" id="rsX" type="button" title="মুছুন">✕</button><button class="rs-ib" id="rsGo" type="button" title="সার্চ">🔍</button></div><button class="rs-tp" id="rsTp" type="button">📚 বিষয়ভিত্তিক আয়াত</button><div class="rs-pad" id="rsPad"></div><div class="rs-info" id="rsInfo"></div><div id="rsOut"></div></div>
 <script>
 (()=>{"use strict";
 const BASE="https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/",DV="2",$=i=>document.getElementById(i);
@@ -129,24 +129,34 @@ function search(q){const out=[];for(const r of R){let sc=0,mf=null;
 let ALLF=false,GEN=0;
 const fb=s=>String(s||"").replace(/[\u200c\u200d\u0981]/g,"").replace(/\u09df|য\u09bc/g,"য").replace(/ী/g,"ি").replace(/ূ/g,"ু").replace(/ঈ/g,"ই").replace(/ঊ/g,"উ").replace(/ণ/g,"ন").replace(/য/g,"জ").replace(/জ্দু/g,"জাদু");
 /* শব্দের ভেতরের টুকরো নয়, পুরো শব্দ (বা অল্প প্রত্যয়সহ) মিললেই হিট — নইলে "রায়িনা"-তে "জিনা" মিলে যেত */
-const SUFRE=new RegExp("^(?:"+["দেরকে","েরকে","গুলোকে","গুলোর","গুলোতে","গুলো","সমূহকে","সমূহ","কারীদের","কারীরা","কারীর","কারী","গ্রস্তদের","গ্রস্ত","করদের","কররা","করকে","করের","করা","কর","দের","ের","রা","কে","তে","টি","টা","ে","র","ও","ই"].map(x=>fb(x)).join("|")+")(?:ও|ই)?$");
-const wordHas=(fm,k)=>fm.split(/[\s,()।;:\-–—'"‘’“”]+/).filter(Boolean).some(w=>w===k||(w.startsWith(k)&&SUFRE.test(w.slice(k.length))));
+const SUFRE=new RegExp("^(?:"+["দেরকে","েরকে","গুলোকে","গুলোর","গুলোতে","গুলো","সমূহকে","সমূহের","সমূহে","সমূহ","কারীদের","কারীরা","কারীর","কারী","গ্রস্তদের","গ্রস্ত","করদের","কররা","করকে","করের","করা","কর","দের","ের","রা","কে","তে","টি","টা","য়ে","ে","য়","র","ও","ই"].map(x=>fb(x)).join("|")+")(?:ও|ই)?$");
+// ছোট (২ অক্ষরের) শব্দ, যেমন "পা"/"মন": শুধু বিশেষ্যের প্রত্যয় চলবে — নইলে "পাও/পাই/পার" (পাওয়া) বা "মনে করো" ভুলে মিলে যায়
+const SUFNOUN=new RegExp("^(?:"+["গুলোকে","গুলোর","গুলোতে","গুলো","সমূহকে","সমূহের","সমূহে","সমূহ","য়ের","য়ে","ের"].map(x=>fb(x)).join("|")+")$");
+const wordHas=(fm,k)=>fm.split(/[\s,()।;:\-–—'"‘’“”]+/).filter(Boolean).some(w=>w===k||(w.startsWith(k)&&(k.length<=2?SUFNOUN:SUFRE).test(w.slice(k.length))));
 /* এই শব্দ লিখলে নির্দিষ্ট আরবি রুটের সব আয়াত আসবে (অর্থে ঠিক ওই শব্দ না থাকলেও) */
 const BROOT=[[["জিনা","জেনা","যিনা","যেনা"],"زني"]];
 // একমুখী সংযোজন: প্রথম তালিকার যেকোনো শব্দ লিখলে দ্বিতীয় তালিকার শব্দগুলোর আয়াতও আসে (উল্টোটা হয় না)। যেমন "চোখ" লিখলে "অন্ধ"-ও, কিন্তু "অন্ধ" লিখলে সব চোখের আয়াত নয়
 const BEXT=[[["চোখ","নয়ন","চক্ষু","আঁখি","দৃষ্টি"],["অন্ধ"]]];
-function searchBn(q){const out=[];let qs=[q];for(const g of BSYN)if(g.some(x=>fb(x)===fb(q))){qs=g.slice();break}
+// বাদ-দেওয়া বাক্যাংশ: গুচ্ছের কোনো শব্দ লিখলে যেসব অর্থে (ইডিয়ম) আসল অঙ্গ বোঝায় না সেগুলো বাদ। যেমন "মুখ ফিরিয়ে নেওয়া" মুখের আয়াত নয়
+const BEXCL=[[["মুখ","চেহারা","মুখমণ্ডল","বদন","আনন"],["মুখ ফির","মুখ ফের","মুখ ঘুর"]]];
+function searchBn(q){const out=[];const xs=[];for(const[k,ph]of BEXCL)if(k.some(x=>fb(x)===fb(q)))ph.forEach(p=>xs.push(fb(p)));let qs=[q];for(const g of BSYN)if(g.some(x=>fb(x)===fb(q))){qs=g.slice();break}
  for(const[k,ex]of BEXT)if(k.some(x=>fb(x)===fb(q)))qs=qs.concat(ex.filter(x=>!qs.includes(x)));
  const fq=qs.map(fb);
  const rt=[];for(const[g,rr]of BROOT)if(g.some(x=>fb(x)===fb(q)))rt.push(rr);
- for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;const fm=f._b||(f._b=fb(f.m));if(fq.some(k=>fm===k))ex.push(f);else if(fq.some(k=>wordHas(fm,k)))pt.push(f)}
+ for(const r of R){const ex=[],pt=[];for(const f of r.forms){if(!f.m)continue;const fm=f._b||(f._b=fb(f.m));if(xs.length&&xs.some(p=>fm.includes(p)))continue;if(fq.some(k=>fm===k))ex.push(f);else if(fq.some(k=>wordHas(fm,k)))pt.push(f)}
   if(rt.some(rr=>r.r===rr||r.rn===nz(rr))){const seen=new Set(ex.concat(pt));r.forms.forEach(f=>{if(!seen.has(f))ex.push(f)})}
   if(ex.length||pt.length)out.push({r,sc:ex.length?60:40,mf:ex.concat(pt),bn:1})}
  return out.sort((a,b)=>b.sc-a.sc||b.mf.length-a.mf.length||b.r.n-a.r.n)}
+// কাছাকাছি শব্দ: কিছু না পেলে অনুবাদের শব্দভান্ডার থেকে ১ অক্ষর ভুল বা একই শুরুর শব্দ দেখায় (বেশি আয়াতে থাকা শব্দ আগে)
+let BWL=null;
+const near1=(a,b)=>{if(a===b)return true;const la=a.length,lb=b.length;if(Math.abs(la-lb)>1)return false;let i=0;while(i<la&&i<lb&&a[i]===b[i])i++;if(la===lb)return a.slice(i+1)===b.slice(i+1);if(la>lb)return a.slice(i+1)===b.slice(i);return b.slice(i+1)===a.slice(i)};
+async function bnSuggest(q){const fq=fb(bnw(q));if(fq.length<3)return[];BWL=BWL||(await rsFetch(BASE+"quran-bn-words.json?v="+DV+"w")).w;
+ const seen=new Set(),out=[];for(const x of BWL){const w=x[0],fw=fb(bnw(w));if(!fw||fw===fq||seen.has(fw))continue;if(near1(fw,fq)||(fq.length>=4&&fw.startsWith(fq))){seen.add(fw);out.push([w,x[2]||0])}}
+ return out.sort((a,b)=>b[1]-a[1]).slice(0,8).map(x=>x[0])}
 const BSTOP=new Set(["সহ","ও","এবং","এর","তার","তাদের","যে","এই","সে","কি","কী","না","তো","হয়","করে","থেকে","দ্বারা","জন্য","একটি","এক","তাঁর","তিনি","আর","বা","যারা","তারা","আমার","আমি","আমাকে","আমাদের","আমরা","আমাদেরকে","তোমার","তুমি","তোমাকে","তোমরা","তোমাদের","তাকে","তাঁকে","তাঁদের","তিনি","সে","এটি","ওই","ঐ","সেই","এর","ওর","তা","যা","কে","হে","নিশ্চয়","অবশ্যই","কিন্তু","যদি","তবে","পর","মধ্যে","উপর","প্রতি","সাথে","সঙ্গে","করা","করো","করুন","হবে","হল","হলো","ছিল","আছে","তাহলে","এবং","অথবা"]);
 const bnw=x=>x.replace(/[()\[\],.;:!?"'“”‘’।–—-]/g,"");
 function bnHit(w,toks){w=fb(bnw(w));if(w.length<2)return false;for(let k of toks){k=fb(k);if(w===k)return true;let n=0;const L=Math.min(w.length,k.length);while(n<L&&w[n]===k[n])n++;if(n>=3&&n>=Math.ceil(L*0.7))return true}return false}
-const BSYN=[["জিনা","জেনা","যিনা","যেনা"],["চুল","কেশ","কেশগুচ্ছ","কেশরাজি","কেশদাম","ঝুঁটি"],["মাথা","মস্তক","শির","শিরোদেশ"],["চোখ","নয়ন","চক্ষু","আঁখি","দৃষ্টি"],["হাত","হস্ত"],["পা","পদ","চরণ","পায়ে"],["মুখ","চেহারা","মুখমণ্ডল","বদন","আনন"],["কান","কর্ণ","শ্রবণ"],["পেট","উদর","জঠর"],["পিঠ","পৃষ্ঠ","পৃষ্ঠদেশ"],["বুক","বক্ষ","সিনা","ছাতি"],["ঘাড়","গর্দান","গ্রীবা","কণ্ঠ"],["অন্তর","হৃদয়","মন","কলব","দিল"],["রক্ত","খুন","শোণিত"],["কপাল","ললাট","ভ্রূ"],["জিহ্বা","জিভ","জবান","রসনা"],["দাঁত","দন্ত"],["নাক","নাসিকা","নাসারন্ধ্র"],["আঙুল","অঙ্গুলি","আঙ্গুল"]];
+const BSYN=[["জিনা","জেনা","যিনা","যেনা"],["চুল","কেশ","কেশগুচ্ছ","কেশরাজি","কেশদাম","ঝুঁটি"],["মাথা","মস্তক","শির","শিরোদেশ"],["চোখ","নয়ন","চক্ষু","আঁখি","দৃষ্টি"],["হাত","হস্ত"],["পা","চরণ"],["মুখ","চেহারা","মুখমণ্ডল","বদন","আনন"],["কান","কর্ণ","শ্রবণ"],["পেট","উদর","জঠর"],["পিঠ","পৃষ্ঠ","পৃষ্ঠদেশ"],["বুক","বক্ষ","সিনা","ছাতি"],["ঘাড়","গর্দান","গ্রীবা","গলা"],["কণ্ঠ","কণ্ঠদেশ","কণ্ঠনালী"],["অন্তর","হৃদয়","মন","কলব"],["রক্ত","খুন","শোণিত"],["কপাল","ললাট","ভ্রূ"],["জিহ্বা","জিভ","জবান","রসনা"],["দাঁত","দন্ত"],["নাক","নাসিকা","নাসারন্ধ্র"],["আঙুল","অঙ্গুলি","আঙ্গুল"]];
 function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||"").replace(/[()]/g," ")).split(/\s+/).map(bnw).filter(x=>x.length>1&&!BSTOP.has(x));for(const g of BSYN)if(toks.some(k=>bnHit(g[0],[k])||g.some(x=>fb(x)===fb(k))))for(const x of g)toks.push(x);
  const ws=String(text||"").split(" "),hit=ws.map(w=>toks.length&&bnHit(w,toks));let i=0;
  while(i<ws.length){if(i)box.appendChild(document.createTextNode(" "));if(hit[i]){let j=i;while(j+1<ws.length&&hit[j+1])j++;box.appendChild(el("mark",null,ws.slice(i,j+1).join(" ")));i=j+1}else{box.appendChild(document.createTextNode(ws[i]));i++}}}
@@ -260,17 +270,15 @@ async function refView(s,a,e){GEN++;const out=$("rsOut"),info=$("rsInfo");
   let wl=false;wb.onclick=async()=>{wh.classList.toggle("on");if(wl)return;wl=true;wh.textContent="লোড হচ্ছে…";
    try{const m=((await chunk("w",s))||[])[i-1].split("|");wh.textContent="";A[i-1].split(" ").forEach((x,k)=>{const c=el("div","rs-wc"),ar=el("div","rs-wa rs-ar",x),bm=el("div","rs-wm",m[k]||"");c.append(ar,bm);wh.appendChild(c)})}catch(e){wh.textContent="লোড করা যায়নি — আবার চাপুন";wl=false}};
   va.append(wb,copyBtn("📋 কপি",()=>vtext(s,i)),playBtn(s,i),selBox(s,i));box.append(rf,tx,tb,va,wh);out.appendChild(box)}}
-// বিষয়ভিত্তিক সংশ্লিষ্ট সার্চ: কুরআনে সরাসরি নেই এমন শব্দ (যেমন বদনজর) লিখলে সংশ্লিষ্ট শব্দগুলোর আয়াত আলাদা ভাগে দেখায়।
-// নতুন বিষয় যোগ করতে REL-এ একটা লাইন বাড়ান: [নামগুলো, ব্যাখ্যা, [[শিরোনাম, সার্চের শব্দ(বাংলা অর্থ বা আরবি)], ...]]
-const REL=[
- [["বদনজর","বদ নজর","নজর","নজর লাগা","চোখ লাগা","নজরলাগা"],"কুরআনে “বদনজর” শব্দটি সরাসরি নেই; এই বিষয়ের সাথে সংশ্লিষ্ট চোখ ও হাসাদ (হিংসা) সংক্রান্ত আয়াতগুলো আলাদা ভাগে দেখানো হচ্ছে",[["চোখ সংক্রান্ত আয়াত","চোখ"],["হাসাদ (হিংসা) সংক্রান্ত আয়াত","حسد"]]]
+// বিষয়ভিত্তিক আয়াত (আলাদা বোতামে): কুরআনে সরাসরি নেই এমন বিষয়, যেমন বদনজর — সংশ্লিষ্ট শব্দগুলোর আয়াত আলাদা ভাগে দেখায়।
+// নতুন বিষয় যোগ করতে TOPICS-এ একটা অংশ বাড়ান: {name:"বিষয়", desc:"তালিকায় ছোট বিবরণ", intro:"ফল দেখানোর আগের ব্যাখ্যা", terms:[["ভাগের শিরোনাম","সার্চের শব্দ (বাংলা অর্থ বা আরবি)"], ...]}
+const TOPICS=[
+ {name:"বদনজর",desc:"চোখ · হাসাদ (হিংসা)",intro:"কুরআনে “বদনজর” শব্দটি সরাসরি নেই; এই বিষয়ের সাথে সংশ্লিষ্ট চোখ ও হাসাদ (হিংসা) সংক্রান্ত আয়াতগুলো আলাদা ভাগে দেখানো হচ্ছে",terms:[["চোখ সংক্রান্ত আয়াত","চোখ"],["হাসাদ (হিংসা) সংক্রান্ত আয়াত","حسد"]]}
 ];
-const relOf=t=>{const k=x=>fb(x).replace(/\s+/g,"");const key=k(String(t||""));if(!key)return null;for(const[names,intro,terms]of REL)if(names.some(n=>k(n)===key))return{intro,terms};return null};
 // কমা দিয়ে একাধিক বিষয় (যেমন "জিনা, চুল"): প্রথমে প্রথম বিষয়ের সব আয়াত, তারপর পরের বিষয়ের; সিরিয়াল, কপি ও মার্জ অডিও সব বিষয় মিলিয়ে একসাথে
-async function runMulti(parts0,out,info){
+async function runMulti(parts,out,info,intro){
  await loadRoots();
- const parts=[],intros=[];
- for(const p of parts0){const rl=typeof p==="string"?relOf(p):null;if(rl){intros.push(rl.intro);rl.terms.forEach(x=>parts.push(x))}else parts.push(p)}
+ const intros=intro?[intro]:[];
  const G=[];
  for(const pp of parts){const t0=typeof pp==="string"?pp:pp[1],lab=typeof pp==="string"?pp:pp[0],t=t0,q=nz(t),isBn=!q&&/[\u0980-\u09FF]/.test(t);let items=[],note="";
   if(isBn){if(t.length<2)note="কমপক্ষে ২টি অক্ষর লিখুন";else items=searchBn(t)}
@@ -289,14 +297,16 @@ async function runMulti(parts0,out,info){
  G.forEach(g=>{
   out.appendChild(els("div","margin:16px 0 6px;padding:6px 12px;border-radius:10px;font-weight:700;background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary)","“"+g.t+"” — "+(g.u?bn2(g.u)+"টি আয়াত":(g.note||"কিছু পাওয়া যায়নি"))));
   g.items.forEach(it=>{const c=card(it,ex(it));out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,ex(it))).o,24)}})})}
-async function run(){GEN++;const raw=$("rsQ").value;window.__sq=raw;const q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
- {const parts=raw.split(/[,،，、]/).map(x=>x.trim()).filter(Boolean);if(parts.length>1||(parts.length===1&&relOf(parts[0])))return runMulti(parts,out,info)}
+async function run(topic){GEN++;if(topic&&!topic.terms)topic=null;const raw=topic?topic.name:$("rsQ").value;window.__sq=raw;const q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
+ if(topic)return runMulti(topic.terms,out,info,topic.intro);
+ {const parts=raw.split(/[,،，、]/).map(x=>x.trim()).filter(Boolean);if(parts.length>1)return runMulti(parts,out,info)}
  const bq=raw.trim();
  {const dg=bq.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)),mr=dg.match(/^(\d{1,3})\s*[:.\/]\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$/);
   if(mr)return refView(+mr[1],+mr[2],+(mr[3]||mr[2]));
   if(/^\d{1,3}$/.test(dg)){info.textContent="আয়াত খুঁজতে সূরা:আয়াত লিখুন — যেমন 10:49 বা 2:255-257";return}}
  if(!q&&/[\u0980-\u09FF]/.test(bq)){if(bq.length<2){info.textContent="কমপক্ষে ২টি অক্ষর লিখুন";return}
-  await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি — অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)";return}
+  await loadRoots();const rb=searchBn(bq);if(!rb.length){info.textContent="এই বাংলা অর্থে কিছু পাওয়া যায়নি।";let sg=[];try{sg=await bnSuggest(bq)}catch(e){}
+   if(sg.length){info.append(" কাছাকাছি শব্দ: ");sg.forEach(w=>{const b=els("button","margin:2px 3px;border:1px solid var(--border-light);background:var(--card-bg);color:var(--primary);border-radius:999px;padding:2px 12px;font-size:14px;cursor:pointer",w);b.type="button";b.onclick=()=>{$("rsQ").value=w;$("rsGo").click()};info.appendChild(b)})}else info.append(" অন্য শব্দ লিখে দেখুন (যেমন: কিতাব, জ্ঞান, দয়া)");return}
   const tv=(()=>{const u=new Set();let o=0;rb.forEach(it=>[...lst(it,!1)].sort((a,b)=>b.refs.length-a.refs.length).forEach(f=>f.refs.forEach(r=>{o++;u.add(r.split(":").slice(0,2).join(":"))})));return{o,u:u.size,s:u}})();SB.set(tv.s);info.textContent="সর্বমোট "+bn2(tv.o)+"টি ফলাফল"+(tv.o>tv.u?" ("+bn2(tv.u)+"টি আয়াত) · ":" · ")+"বাংলা অর্থে "+bn2(rb.length)+"টি রুট পাওয়া গেছে";
   {const cnt=f=>{const u=new Set();rb.forEach(it=>f(it).forEach(x=>x.refs.forEach(r=>u.add(r.split(":").slice(0,2).join(":")))));return u.size};
    const n1=cnt(it=>it.mf),n2=cnt(it=>it.r.forms),row=els("div","display:flex;flex-wrap:wrap;gap:6px;margin-top:8px");
@@ -342,6 +352,11 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
   const hd=el("div","rs-rh2","“"+[...p].join(" ")+"” দিয়ে শুরু "+bn2(l.length)+"টি রুট — একটি বেছে নিন");rs.appendChild(hd);
   l.slice().sort((a,b)=>a.rn<b.rn?-1:a.rn>b.rn?1:0).forEach(r=>{const row=el("div","rs-ri"),b=el("b",null,[...r.rn].join(" ")),c=el("span",null,bn2(r.n)+" বার");row.append(b,c);row.onclick=()=>{q.value=r.rn;rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
  const go=()=>(ALLF=false,run()).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
+ const goTopic=t=>(ALLF=false,run(t)).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
+ $("rsTp").onclick=()=>{if(rs.classList.contains("on")&&rs.dataset.k==="topics"){rs.classList.remove("on");return}
+  rs.innerHTML="";rs.dataset.k="topics";rs.classList.add("bn","on");pad.classList.remove("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
+  rs.appendChild(el("div","rs-rh2","বিষয়ভিত্তিক আয়াত — একটি বিষয় বেছে নিন"));
+  TOPICS.forEach(t=>{const row=el("div","rs-ri"),b=el("b",null,t.name),c=el("span",null,t.desc||"");row.append(b,c);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
