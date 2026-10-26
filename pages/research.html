@@ -169,7 +169,7 @@ function markBn(box,text,gloss){box.textContent="";const toks=bnw(String(gloss||
 async function vtext(s,a){const t=((await chunk("a",s))||[])[a-1],b=((await chunk(TR,s))||[])[a-1];return t==null?"":"সূরা "+SN[s-1]+" — "+s+":"+a+"\n"+t+"\n"+(b||"")}
 async function copyTxt(x){try{await navigator.clipboard.writeText(x);return true}catch(e){try{const t=document.createElement("textarea");t.value=x;t.style.cssText="position:fixed;opacity:0";document.body.appendChild(t);t.select();const ok=document.execCommand("copy");t.remove();return ok}catch(e2){return false}}}
 function copyBtn(label,get){const b=el("button","rs-wb",label);b.type="button";b.onclick=async()=>{b.disabled=true;const o=b.textContent;b.textContent="কপি হচ্ছে…";let ok=false;try{ok=await copyTxt(await get())}catch(e){}b.textContent=ok?"✅ কপি হয়েছে":"কপি করা যায়নি";setTimeout(()=>{b.textContent=o;b.disabled=false},1500)};return b}
-function allCopy(info,forms){const set=new Set();forms.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!all.length)return;
+function allCopy(info,forms,ord){const set=new Set();forms.forEach(f=>f.refs.forEach(r=>set.add(r.split(":").slice(0,2).join(":"))));const all=ord&&ord.length?ord:[...set].map(r=>r.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!all.length)return;
  const b=copyBtn("📋 সব আয়াত কপি ("+bn2(all.length)+")",async()=>{await Promise.all([...new Set(all.map(x=>x[0]))].map(z=>Promise.all([chunk("a",z),chunk(TR,z)])));const o=[];for(const [z,y] of all)o.push(await vtext(z,y));return o.join("\n\n")});
  b.style.cssText+=";display:block;margin:6px 0 0";info.appendChild(b);audioBar(info,all)}
 const AYN=[7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,7,3,6,3,5,4,5,6];
@@ -201,21 +201,27 @@ async function mp3Of(parts,sr,note){const L=await loadLame();let n=0;parts.forEa
  const enc=new L.Mp3Encoder(1,sr,64),out=[],B=1152;let t=0;
  for(let i=0;i<n;i+=B){const m=enc.encodeBuffer(pcm.subarray(i,i+B));if(m.length)out.push(m);if(++t%300===0){note("MP3 বানানো হচ্ছে "+bn2(Math.round(i/n*100))+"%…");await new Promise(r=>setTimeout(r))}}
  const f=enc.flush();if(f.length)out.push(f);return new Blob(out,{type:"audio/mpeg"})}
-async function mergeAudio(list,out,note){const MAX=150;if(!list.length)return;if(list.length>MAX){alert("একসাথে সর্বোচ্চ "+bn2(MAX)+"টি আয়াতের অডিও মার্জ করা যায়। টিক দিয়ে কম আয়াত বেছে নিন।");return}
+async function mergeAudio(list,out,note){const MAX=150;if(!list.length)return;if(list.length<=MAX)return mergeOne(list,out,note,"");
+ // অনেক আয়াত হলে ১০০টি করে ভাগে আলাদা MP3 (ফোনের মেমোরি বাঁচাতে); ক্রম ঠিক থাকে
+ const CH=100,n=Math.ceil(list.length/CH);out.textContent="";
+ for(let p=0;p<n;p++){const bx=els("div","margin-top:10px;padding-top:8px;border-top:1px dashed var(--border-light)");bx.appendChild(els("div","font-weight:700;font-size:13px","ভাগ "+bn2(p+1)+"/"+bn2(n)+" (আয়াত "+bn2(p*CH+1)+"–"+bn2(Math.min((p+1)*CH,list.length))+")"));const o=el("div");bx.appendChild(o);out.appendChild(bx);
+  const ok=await mergeOne(list.slice(p*CH,(p+1)*CH),o,t=>note("ভাগ "+bn2(p+1)+"/"+bn2(n)+" — "+t),"-ভাগ"+(p+1));if(!ok)break}
+ note("✅ "+bn2(list.length)+"টি আয়াতের অডিও "+bn2(n)+"টি ভাগে (ক্রমানুসারে) তৈরি হয়েছে — প্রতিটির নিচে ডাউনলোড লিংক")}
+async function mergeOne(list,out,note,sfx){
  out.textContent="";const sr=22050,AC=window.AudioContext||window.webkitAudioContext,ctx=new AC({sampleRate:sr}),parts=[],gap=new Float32Array(Math.round(sr*0.5));
  try{for(let i=0;i<list.length;i++){note("অডিও নামানো হচ্ছে "+bn2(i+1)+"/"+bn2(list.length)+"…");const ab=await fetchAud(list[i][0],list[i][1]),d=await ctx.decodeAudioData(ab),ch=d.getChannelData(0);parts.push(new Float32Array(ch),gap)}}
- catch(e){console.error(e);note("একটা ফাইলে জোড়া লাগানো যায়নি (অডিও সার্ভার ফাইল দিতে দেয়নি), তাই আয়াতগুলো ক্রমানুসারে একটার পর একটা চলছে");try{ctx.close()}catch(x){}out.textContent="";playList(list,out);return}
+ catch(e){console.error(e);note("একটা ফাইলে জোড়া লাগানো যায়নি (অডিও সার্ভার ফাইল দিতে দেয়নি), তাই আয়াতগুলো ক্রমানুসারে একটার পর একটা চলছে");try{ctx.close()}catch(x){}out.textContent="";playList(list,out);return false}
  try{ctx.close()}catch(x){}
  note("MP3 বানানো হচ্ছে…");let blob,ext="mp3";try{blob=await mp3Of(parts,sr,note)}catch(e){console.error(e);blob=wavOf(parts,sr);ext="wav";note("MP3 বানানো যায়নি (ইন্টারনেট দেখুন), তাই WAV ফাইল দেওয়া হচ্ছে")}
  const url=URL.createObjectURL(blob),au=document.createElement("audio");au.controls=true;au.setAttribute("controlsList","nodownload");au.src=url;au.style.cssText="display:block;width:100%;margin-top:8px";
- const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ "+ext.toUpperCase()+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");const FN=(String(window.__sq||"").trim().replace(/\s*[,،，、]\s*/g,"-").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g,"-").replace(/\s+/g,"_").replace(/^[-_.]+|[-_.]+$/g,"").slice(0,60)||"quran-audio")+"."+ext;dl.href=url;dl.textContent="⬇ "+FN+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)";dl.download=FN;out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");au.play().catch(()=>{})}
+ const dl=els("a","display:inline-block;margin-top:6px;font-size:13px;color:var(--primary)","⬇ "+ext.toUpperCase()+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)");const FN=(String(window.__sq||"").trim().replace(/\s*[,،，、]\s*/g,"-").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g,"-").replace(/\s+/g,"_").replace(/^[-_.]+|[-_.]+$/g,"").slice(0,60)||"quran-audio")+(sfx||"")+"."+ext;dl.href=url;dl.textContent="⬇ "+FN+" ডাউনলোড ("+Math.round(blob.size/1048576*10)/10+" MB)";dl.download=FN;out.append(au,dl);note("✅ "+bn2(list.length)+"টি আয়াতের অডিও তৈরি হয়েছে");if(!sfx)au.play().catch(()=>{});return true}
 function audioBar(info,all){if(!all.length)return;const box=els("div","margin-top:8px"),note=els("div","font-size:12px;color:var(--text-muted);margin-top:4px"),out=el("div"),row=els("div","display:flex;flex-wrap:wrap;gap:6px;align-items:center");
  const sel=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");RECS.forEach(r=>{const o=document.createElement("option");o.value=r[0];o.textContent=r[1];sel.appendChild(o)});sel.value=recId();sel.onchange=()=>{try{localStorage.setItem("rsRec",sel.value)}catch(e){}};
  const b1=el("button","rs-wb","🔊 সব আয়াত মার্জ অডিও ("+bn2(all.length)+")"),b2=el("button","rs-wb","🔊 বাছাই করা আয়াত মার্জ (০)");b1.type=b2.type="button";b1.style.margin=b2.style.margin="0";
  b1.onclick=()=>mergeAudio(all,out,t=>note.textContent=t);
  b2.onclick=()=>{const l=[...SELV].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);if(!l.length)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");mergeAudio(l,out,t=>note.textContent=t)};
  selUp.push(()=>{b2.textContent="🔊 বাছাই করা আয়াত মার্জ ("+bn2(SELV.size)+")"});
- row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
+ if(all.length>150)note.textContent="এতগুলো আয়াত ১০০টি করে ভাগে, ক্রম ঠিক রেখে আলাদা MP3 ফাইলে তৈরি হবে (সময় লাগবে, নেট চালু রাখুন ও পেজ খোলা রাখুন)";row.append(sel,b1,b2);box.append(row,note,out);info.appendChild(box)}
 const SB={n:0,t:0,m:new Map,set(u){this.t=u.size;this.m=new Map([...u].map((k,i)=>[k,i+1]))}};
 function verses(host,refs,fgl,off){let shown=0,fail=[];const step=15,g=GEN;
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
@@ -289,6 +295,12 @@ const TOPICS=[
 // নতুন অঙ্গ যোগ করতে ORG-এ একটা অংশ বাড়ালেই হবে
 const ORG=[["মাথা","رأس",[["মাথা (রা’স)","رأس",{"m":"মাথা","x":"মূলধন"}]]],["চুল","شعر · نصي · حلق",[["চুল","চুল",{"x":"তার চুলগুলো"}],["মাথা মুণ্ডন (হালক)","حلق",{"m":"মুণ্ডন"}]]],["কপাল","جبه · جبن · نصي",[["কপাল (জাবহা)","جبه",{"m":"কপাল"}],["কপালের পাশ (জাবীন)","جبن",{}],["কপালের সামনের অংশ (নাসিয়া)","نصي",{}]]],["মুখমণ্ডল (চেহারা)","وجه",[["মুখমণ্ডল (ওয়াজহ)","وجه",{"m":"মুখ|চেহারা|মুখমন্ডল|মুখমণ্ডল|গালে","x":"মুখ ফির|মুখ ফের|মুখ ঘুর|সত্তা"}]]],["মুখ (মুখগহ্বর)","فوه",[["মুখ (ফাম/আফওয়াহ)","فوه",{"m":"মুখ"}]]],["জিহ্বা","لسن",[["জিহ্বা (লিসান)","لسن",{"m":"জিহ্?বা|রসনা","x":"ভাষা"}]]],["ঠোঁট","شفه",[["ঠোঁট (শাফাহ)","شفه",{}]]],["দাঁত","سنن",[["দাঁত (সিন্ন)","سنن",{"m":"দাঁত"}]]],["চোখ","عين · بصر",[["চোখ (আইন)","عين",{"m":"চোখ|চক্ষু|নয়ন|দৃষ্টি|আয়তলোচনা","x":"ঝর্ণা|ঝরনা|জলাশয়|ফোয়ারা|পর্যবেক্ষণ|চাক্ষুস"}],["চোখ/দৃষ্টি (বাসার)","بصر",{"p":"N","m":"চোখ|চক্ষু|দৃষ্টি|দর্শনশক্তি","x":"অন্তর্দৃষ্টি|প্রত্যক্ষ|সূক্ষ্ম|চক্ষুষ্মান|দৃষ্টিসম্পন্ন|দৃষ্টি সম্পন্ন|উজ্জ্বল|প্রসারণ"}]]],["কান","أذن · سمع",[["কান (উযুন)","اذن",{"m":"কান"}],["কান/শ্রবণশক্তি (সামউ)","سمع",{"m":"কান|শ্রবণশক্তি","x":"শ্রবণশীল"}]]],["নাক","أنف",[["নাক (আনফ)","انف",{"m":"নাক"}]]],["গাল","خد",[["গাল (খাদ্দ)","خدد",{"m":"গাল"}]]],["চিবুক","ذقن",[["চিবুক (যাকান)","ذقن",{}]]],["ঘাড় ও গলা","عنق · جيد · ورد",[["ঘাড়/গলা (উনুক)","عنق",{}],["গলা (জীদ)","جيد",{}],["ঘাড়ের শিরা (ওয়ারীদ)","ورد",{"m":"ঘাড়"}]]],["কণ্ঠনালী ও কণ্ঠার হাড়","حلقوم · حنجر · ترق",[["কণ্ঠনালী (হুলকুম)","حلق",{"m":"কণ্ঠনালী"}],["কণ্ঠ (হানজারা)","حنجر",{}],["কণ্ঠার হাড় (তারাকী)","ترق",{}]]],["ধমনী","وتين",[["ধমনী (ওয়াতীন)","وتن",{}]]],["বুক ও বক্ষ","صدر · ترائب",[["বুক/বক্ষ (সাদ্র)","صدر",{"p":"N"}],["বক্ষপিঞ্জর (তারাইব)","ترب",{"m":"বক্ষপিঞ্জর"}]]],["অন্তর (হৃদয়)","قلب · فؤاد",[["অন্তর (কলব)","قلب",{"m":"অন্তর|হৃদয়|মন"}],["অন্তর (ফুয়াদ)","فاد",{}]]],["পেট","بطن",[["পেট (বাতন)","بطن",{"m":"পেট"}]]],["পিঠ ও মেরুদণ্ড","ظهر · صلب",[["পিঠ (যাহর)","ظهر",{"m":"পিঠ|পৃষ্ঠ"}],["মেরুদণ্ড (সুলব)","صلب",{"m":"মেরুদণ্ড|ঔরস"}]]],["পার্শ্বদেশ","جنب",[["পার্শ্বদেশ (জানব)","جنب",{"m":"পার্শ্ব|পাশগুলো|পাশগুলোর|পাশের তার"}]]],["হাত","يد · كف",[["হাত (ইয়াদ)","يدي",{}],["হাতের তালু (কাফ্‌ফ)","كفف",{"m":"হাত"}]]],["বাহু ও বগল","عضد · جناح",[["বাহু (আদুদ)","عضد",{"m":"বাহু"}],["বাহু/বগল (জানাহ)","جنح",{"m":"বাহু|বগল"}]]],["আঙুল","أصبع · بنان · أنامل",[["আঙুল (ইসবা)","صبع",{}],["আঙুলের অগ্রভাগ (বানান)","بنن",{}],["আঙুলের ডগা (আনামিল)","نمل",{"m":"আঙ্গুল"}]]],["পা","رجل · قدم · ساق",[["পা (রিজল)","رجل",{"m":"(?:^|[^\\u0980-\\u09FF])পা(?:য়|গুলো|সমূহ|\\s?গুলো|\\s?সমূহ|(?![\\u0980-\\u09FF]))"}],["পা (কাদাম)","قدم",{"m":"(?:^|[^\\u0980-\\u09FF])পা(?:য়|গুলো|সমূহ|\\s?গুলো|\\s?সমূহ|(?![\\u0980-\\u09FF]))"}],["পায়ের গোছা (সাক)","سوق",{"m":"পিণ্ডলী|পিন্ডলি|গোড়ালী|পাগুলোর"}]]],["গোড়ালি","عقب",[["গোড়ালি (আকিব)","عقب",{"m":"গোড়ালি|গোঁড়ালি|গোড়ালী"}]]],["চামড়া (ত্বক)","جلد",[["চামড়া (জিলদ)","جلد",{"m":"চামড়া|ত্বক|দেহ","x":"দোররা"}]]],["হাড়","عظم",[["হাড় (আযম)","عظم",{"m":"হাড়|অস্তি|মজ্জা"}]]],["মাংস","لحم",[["মাংস (লাহম)","لحم",{}]]],["রক্ত","دم",[["রক্ত (দাম)","دمو",{}]]],["লজ্জাস্থান","فرج · سوأة",[["লজ্জাস্থান (ফারজ)","فرج",{"m":"লজ্জাস্থান|সতীত্ব"}],["লজ্জাস্থান (সাউআহ)","سوأ",{"m":"লজ্জাস্থান"}]]],["গর্ভ (জরায়ু)","رحم",[["গর্ভ/জরায়ু (রাহিম)","رحم",{"m":"গর্ভ|জরায়ু"}]]],["অন্ত্র ও নাড়িভুঁড়ি","حوايا · أمعاء",[["অন্ত্র (হাওয়ায়া)","حوي",{"m":"অন্ত্র"}],["নাড়িভুঁড়ি (আমআ)","معي",{}]]],["দাড়ি","لحية",[["দাড়ি (লিহইয়া)","لحي",{}]]]];
 ORG.forEach(o=>TOPICS.push({name:o[0],desc:o[1],intro:"কুরআনে “"+o[0]+"” যেসব আয়াতে এসেছে সেগুলো আরবি রুট ধরে আলাদা ভাগে দেখানো হচ্ছে; একই রুটের অন্য অর্থের শব্দ (যেমন চোখের রুটে ঝর্ণা) বাদ দেওয়া হয়েছে",terms:o[2]}));
+// সম্মিলিত বিষয়: বদনজর → জাদু → জিন (চালানসহ) → অঙ্গ-প্রত্যঙ্গ — প্রতিটি অঙ্গের আয়াতও এই তিনের অন্তর্ভুক্ত (অঙ্গে থাকা গিঁট/দুর্গ ভাঙার জন্য); এই ক্রমেই আয়াত, কপি ও মার্জ অডিও হয়, একই আয়াত দুবার এলে প্রথমবারেই থাকে
+{const nm=n=>TOPICS.find(t=>t.name===n),T=[];
+ const add=(pre,n)=>nm(n).terms.forEach(x=>T.push([pre+" — "+x[0]].concat(x.slice(1))));
+ add("বদনজর","বদনজর");add("জাদু","জাদু");add("জাদু","জাদুর প্রকার");add("জিন","জিন");add("জিন (চালান)","চালানের প্রকার");
+ ORG.forEach(o=>o[2].forEach(x=>T.push([ "অঙ্গ: "+o[0]+" — "+x[0]].concat(x.slice(1)))));
+ TOPICS.unshift({name:"বদনজর · জাদু · জিন (সব একসাথে)",desc:"বদনজর → জাদু → জিন → প্রতিটি অঙ্গ-প্রত্যঙ্গ · মার্জ অডিও",ordered:true,intro:"ক্রম: প্রথমে বদনজর, তারপর জাদু (জাদুর প্রকারসহ), তারপর জিন (চালানের প্রকারসহ), সবশেষে শরীরের প্রতিটি অঙ্গ-প্রত্যঙ্গের আয়াত — অঙ্গে থাকা বদনজর, জাদু ও জিনের দুর্গ ভাঙার জন্য এগুলোও এর অন্তর্ভুক্ত। একই আয়াত একাধিক ভাগে এলে অডিও ও কপিতে শুধু প্রথমবারই আসে। প্রতিটি ভাগের ভেতরে আয়াত সূরার ক্রমে। এগুলো শব্দভিত্তিক সংগ্রহ।",terms:T})}
 // কমা দিয়ে একাধিক বিষয় (যেমন "জিনা, চুল"): প্রথমে প্রথম বিষয়ের সব আয়াত, তারপর পরের বিষয়ের; সিরিয়াল, কপি ও মার্জ অডিও সব বিষয় মিলিয়ে একসাথে
 // অঙ্গ-প্রত্যঙ্গের ছাঁকনি: রুটের অন্য অর্থের শব্দ (যেমন عين = ঝর্ণা, أذن = অনুমতি) বাদ দিতে। {m: বাংলা অর্থে যা থাকতে হবে, x: যা থাকলে বাদ, p: শব্দের ধরন (N = বিশেষ্য)}
 // আরবি রুটে ছাঁকনি থাকলে শুধু হুবহু সেই রুটই ধরা হয় (আংশিক মিল নয়)
@@ -298,7 +310,7 @@ function applyFl(items,fl){const rg=s=>s?new RegExp(nfc(s)):null,m=rg(fl.m),x=rg
   const src=it.bn?it.mf:it.r.forms,mf=src.filter(f=>{const t=nfc(f.m);return(!m||m.test(t))&&(!x||!x.test(t))&&(!fl.p||f.p===fl.p)});
   if(mf.length)out.push({r:it.r,sc:it.bn?it.sc:80,mf,bn:it.bn,loose:it.loose})}
  return out}
-async function runMulti(parts,out,info,intro){
+async function runMulti(parts,out,info,intro,ordered){
  await loadRoots();
  const intros=intro?[intro]:[];
  const G=[];
@@ -313,15 +325,17 @@ async function runMulti(parts,out,info,intro){
  const key=r=>r.split(":").slice(0,2).join(":"),all=new Set();let o=0;
  G.forEach(g=>{const u=new Set();g.items.forEach(it=>fl(it).forEach(f=>f.refs.forEach(r=>{o++;u.add(key(r));all.add(key(r))})));g.u=u.size});
  SB.set(all);
+ let ORD=null;
+ if(ordered){const seen=new Set();ORD=[];G.forEach(g=>{const u=new Set();g.items.forEach(it=>fl(it).forEach(f=>f.refs.forEach(r=>u.add(key(r)))));[...u].filter(k=>!seen.has(k)).map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]).forEach(x=>{seen.add(x[0]+":"+x[1]);ORD.push(x)})})}
  info.textContent="সর্বমোট "+bn2(o)+"টি ফলাফল"+(o>all.size?" ("+bn2(all.size)+"টি আয়াত)":"")+" · "+G.map(g=>"“"+g.t+"” "+(g.u?bn2(g.u)+"টি আয়াত":"পাওয়া যায়নি")).join(" · ");
  intros.forEach(x=>info.appendChild(els("div","margin:6px 0;font-size:13px;opacity:.85",x)));
- allCopy(info,G.flatMap(g=>g.items.flatMap(it=>lst(it,ex(it)))));
+ allCopy(info,G.flatMap(g=>g.items.flatMap(it=>lst(it,ex(it)))),ORD);
  let bud=60;
  G.forEach(g=>{
   out.appendChild(els("div","margin:16px 0 6px;padding:6px 12px;border-radius:10px;font-weight:700;background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary)","“"+g.t+"” — "+(g.u?bn2(g.u)+"টি আয়াত":(g.note||"কিছু পাওয়া যায়নি"))));
   g.items.forEach(it=>{const c=card(it,ex(it));out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,ex(it))).o,24)}})})}
 async function run(topic){GEN++;if(topic&&!topic.terms)topic=null;const raw=topic?topic.name:$("rsQ").value;window.__sq=raw;const q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
- if(topic)return runMulti(topic.terms,out,info,topic.intro);
+ if(topic)return runMulti(topic.terms,out,info,topic.intro,topic.ordered);
  {const parts=raw.split(/[,،，、]/).map(x=>x.trim()).filter(Boolean);if(parts.length>1)return runMulti(parts,out,info)}
  const bq=raw.trim();
  {const dg=bq.replace(/[০-৯]/g,d=>"০১২৩৪৫৬৭৮৯".indexOf(d)).replace(/[٠-٩]/g,d=>"٠١٢٣٤٥٦٧٨٩".indexOf(d)),mr=dg.match(/^(\d{1,3})\s*[:.\/]\s*(\d{1,3})(?:\s*[-–]\s*(\d{1,3}))?$/);
