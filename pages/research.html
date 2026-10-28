@@ -266,7 +266,8 @@ async function mergeAudio(list,out,note){if(!list.length)return;
   if(!ab){bad++;if(!ok&&bad>=5)break;continue}
   try{const d=await ctx.decodeAudioData(ab),ch=d.getChannelData(0);let sg=null;
    if(cm!=="full"&&list[i][1]>1){const ws=WORDS.get(list[i][0]+":"+list[i][1]);if(ws&&ws.size){try{sg=await verseSegs(list[i][0],list[i][1],ch,sr,ws,cm==="p3"?3:cm==="wq"?-1:0)}catch(e){sg=null}}}
-   const rp=repOf(list[i][0],list[i][1]);if(sg)cutN++;
+   {const cr=CUT.get(list[i][0]+":"+list[i][1]);if(cr){const a0=Math.max(0,Math.floor(cr[0]*sr)),b0=Math.min(ch.length,Math.ceil(cr[1]*sr));if(b0>a0)sg=[[a0,b0]]}}
+    const rp=repOf(list[i][0],list[i][1]);if(sg)cutN++;
    for(let q=0;q<rp;q++){if(sg){sg.forEach((r,ix)=>{push(i16(ch,r[0],r[1],Math.round(sr*0.012)));if(ix<sg.length-1)push(gap2)})}else push(i16(ch,0,ch.length,0));
     push(gap)}
    ok++}catch(e){bad++;if(!ok&&bad>=5)break}
@@ -276,7 +277,72 @@ async function mergeAudio(list,out,note){if(!list.length)return;
  const f=enc.flush();if(f.length)mp3.push(new Uint8Array(f));const blob=new Blob(mp3,{type:"audio/mpeg"}),ext="mp3";
  const url=URL.createObjectURL(blob),au=document.createElement("audio");au.controls=true;au.setAttribute("controlsList","nodownload");au.src=url;au.style.cssText="display:block;width:100%;margin-top:8px";
  const dl=els("a","display:inline-flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px;padding:9px 22px;border-radius:12px;background:var(--primary);color:#fff;text-decoration:none;font-weight:600;line-height:1.3","");const FN=(String(window.__sq||"").trim().replace(/\s*[,،，、]\s*/g,"-").replace(/[\\\/:*?"<>|\u0000-\u001f]+/g,"-").replace(/\s+/g,"_").replace(/^[-_.]+|[-_.]+$/g,"").slice(0,60)||"quran-audio")+"."+ext;dl.href=url;{const t1=document.createElement("span"),t2=document.createElement("span");t1.textContent="⬇ Download";t2.textContent=(Math.round(blob.size/1048576*10)/10)+" MB";t2.style.cssText="font-size:12px;font-weight:400;opacity:.9";dl.append(t1,t2)}dl.download=FN;out.append(au,dl);
- note("✅ "+bn2(ok)+"টি আয়াতের অডিও একটি ফাইলে তৈরি হয়েছে"+(cm!=="full"?" (শুধু সংশ্লিষ্ট অংশ কাটা: "+bn2(cutN)+"টি আয়াত)":"")+(bad?" · "+bn2(bad)+"টির অডিও পাওয়া যায়নি, বাদ গেছে":""));au.play().catch(()=>{})}
+ note("✅ "+bn2(ok)+"টি আয়াতের অডিও একটি ফাইলে তৈরি হয়েছে"+(cutN?" (অংশ কাটা: "+bn2(cutN)+"টি আয়াত)":"")+(bad?" · "+bn2(bad)+"টির অডিও পাওয়া যায়নি, বাদ গেছে":""));au.play().catch(()=>{})}
+// ---------- আয়াতের অডিও থেকে অংশ কাটা ----------
+const CUT=new Map(); // "সূরা:আয়াত" → [শুরু সেকেন্ড, শেষ সেকেন্ড]
+const selList=()=>[...SELV].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]);
+const mkBtn=(t,f)=>{const b=el("button","rs-wb",t);b.type="button";b.onclick=f;return b};
+let CURT=null,SHOWT=null;
+function cutEditor(list,host,res,note,topic){
+ host.textContent="";res.textContent="";
+ if(list.length>40){alert("অংশ কাটার জন্য একবারে সর্বোচ্চ "+bn2(40)+"টি আয়াত বাছুন");return}
+ const fmt=x=>bn2((Math.round(x*10)/10).toFixed(1))+" সে.";
+ host.append(els("div","font-size:12.5px;color:var(--primary);margin:6px 0","✂ প্রতিটি আয়াতের যতটুকু দরকার ততটুকু বেছে নিন: অডিও চালিয়ে যেখানে শুরু করতে চান সেখানে ‘শুরু এখানে’, যেখানে শেষ করতে চান সেখানে ‘শেষ এখানে’ চাপুন (বা স্লাইডার টানুন)। কিছু না বদলালে পুরো আয়াত যাবে।"));
+ const sum=els("div","font-size:12.5px;margin:6px 0"),S={};
+ const upd=()=>{let t=0,c=0;list.forEach(([a,b])=>{const x=S[a+":"+b];if(x&&x.d){t+=x.e-x.s;if(x.s>0.05||x.e<x.d-0.05)c++}});sum.textContent="কাটা হয়েছে "+bn2(c)+"টি আয়াতে · বেছে নেওয়া অংশ মোট প্রায় "+bn2(Math.round(t))+" সেকেন্ড (আয়াতের মাঝে ০.৫ সেকেন্ড করে বিরতি যোগ হবে)"};
+ list.forEach(([s,a])=>{
+  const k=s+":"+a,x=S[k]={d:0,s:0,e:0},row=els("div","border:1px solid var(--border-light);border-radius:10px;padding:8px;margin:6px 0"),head=els("div","font-weight:700;font-size:13px","সূরা "+SN[s-1]+" — "+bn2(s)+":"+bn2(a)),au=document.createElement("audio");
+  au.controls=true;au.preload="metadata";au.setAttribute("controlsList","nodownload");au.style.cssText="display:block;width:100%;margin:6px 0";
+  const urls=audUrls(s,a);let ui=0;au.src=urls[0];au.onerror=()=>{if(++ui<urls.length)au.src=urls[ui];else head.textContent+=" — অডিও পাওয়া যায়নি"};
+  const r1=document.createElement("input"),r2=document.createElement("input"),l1=els("div","font-size:12.5px"),l2=els("div","font-size:12.5px");
+  [r1,r2].forEach(r=>{r.type="range";r.min="0";r.max="1";r.step="0.05";r.value="0";r.style.cssText="width:100%;margin:2px 0 6px"});
+  const set=(sv,ev)=>{if(!x.d)return;let A=Math.max(0,Math.min(+sv||0,x.d)),B=Math.max(0,Math.min(+ev||0,x.d));if(B-A<0.1){if(A+0.1<=x.d)B=A+0.1;else A=Math.max(0,B-0.1)}
+   x.s=A;x.e=B;r1.value=A;r2.value=B;l1.textContent="শুরু: "+fmt(A);l2.textContent="শেষ: "+fmt(B)+" (পুরো অডিও "+fmt(x.d)+")";
+   if(A>0.05||B<x.d-0.05)CUT.set(k,[A,B]);else CUT.delete(k);upd()};
+  au.addEventListener("loadedmetadata",()=>{if(!isFinite(au.duration)||!au.duration)return;x.d=au.duration;r1.max=r2.max=String(x.d);const c=CUT.get(k);set(c?c[0]:0,c?c[1]:x.d)});
+  r1.oninput=()=>set(r1.value,x.e);r2.oninput=()=>set(x.s,r2.value);
+  const bs=mkBtn("শুরু এখানে",()=>set(au.currentTime,x.e)),be=mkBtn("শেষ এখানে",()=>set(x.s,au.currentTime)),
+   bp=mkBtn("▶ নির্বাচিত অংশ শুনুন",()=>{if(!x.d)return;au.currentTime=x.s;au.play().catch(()=>{});const stop=()=>{if(au.currentTime>=x.e-0.02){au.pause();au.removeEventListener("timeupdate",stop)}};au.addEventListener("timeupdate",stop)}),
+   br=mkBtn("↺ পুরোটা",()=>set(0,x.d)),bt=els("div","display:flex;flex-wrap:wrap;gap:6px;margin-top:4px");bt.append(bs,be,bp,br);
+  row.append(head,au,l1,r1,l2,r2,bt);host.appendChild(row)});
+ const go=mkBtn("🔊 বেছে নেওয়া অংশগুলো মার্জ ও ডাউনলোড",async()=>{if(topic){topic.cuts={};CUT.forEach((v,k)=>{if(topic.refs.includes(k))topic.cuts[k]=v});TS.save()}await mergeAudio(list,res,note)});
+ go.style.margin="6px 0";host.append(sum,go)}
+
+// ---------- নিজের বিষয়-তালিকা (সংরক্ষণ: নিজের ইউজার-ডকুমেন্টে + এই ডিভাইসে) ----------
+const TS={list:[],ok:false,
+ local(){try{return JSON.parse(localStorage.getItem("rsTopics")||"null")}catch(e){return null}},
+ async cloud(){for(let i=0;i<20&&!window.__rsCloud;i++)await new Promise(r=>setTimeout(r,200));return window.__rsCloud||null},
+ clean(d){return(d&&Array.isArray(d.topics)?d.topics:[]).filter(t=>t&&typeof t.name==="string"&&Array.isArray(t.refs)).map(t=>({id:String(t.id||("t"+Math.random().toString(36).slice(2,8))),name:t.name.slice(0,60),refs:t.refs.filter(r=>/^\d{1,3}:\d{1,3}$/.test(r)),cuts:t.cuts&&typeof t.cuts==="object"?t.cuts:{}}))},
+ async load(force){if(this.ok&&!force)return this.list;let d=null;try{const c=await this.cloud();if(c){const v=await c.get();if(v)d=JSON.parse(v)}}catch(e){console.error(e)}
+  if(!d)d=this.local();this.list=this.clean(d);this.ok=true;return this.list},
+ async save(){const v=JSON.stringify({v:1,topics:this.list});try{localStorage.setItem("rsTopics",v)}catch(e){}let ok=false;try{const c=await this.cloud();if(c){await c.set(v);ok=true}}catch(e){console.error(e)}return ok},
+ addRefs(name,keys){name=name.trim().slice(0,60);let t=this.list.find(x=>x.name===name);const isNew=!t;if(!t){t={id:"t"+Date.now().toString(36)+Math.random().toString(36).slice(2,5),name,refs:[],cuts:{}};this.list.push(t)}
+  const have=new Set(t.refs);let added=0;keys.forEach(k=>{if(!have.has(k)){have.add(k);added++}});
+  t.refs=[...have].map(k=>k.split(":").map(Number)).sort((x,y)=>x[0]-y[0]||x[1]-y[1]).map(x=>x[0]+":"+x[1]);return{t,added,isNew}}};
+async function topicAddPanel(host){
+ if(host.firstChild){host.textContent="";return}
+ if(!SELV.size)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");
+ await TS.load();
+ const w=els("div","border:1px solid var(--border-light);border-radius:10px;padding:8px;margin:6px 0"),inp=document.createElement("input"),dl=document.createElement("datalist"),msg=els("div","font-size:12.5px;margin-top:6px");
+ dl.id="rsTl"+Date.now();TS.list.forEach(t=>{const o=document.createElement("option");o.value=t.name;dl.appendChild(o)});
+ inp.setAttribute("list",dl.id);inp.placeholder="বিষয়ের নাম (নতুন লিখুন বা তালিকা থেকে বাছুন)";inp.maxLength=60;inp.style.cssText="width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--border-light);border-radius:8px;background:var(--card-bg);color:inherit;font:inherit;margin-bottom:6px";
+ const go=mkBtn("➕ যোগ করুন",async()=>{const name=inp.value.trim();if(!name){msg.textContent="বিষয়ের নাম লিখুন";return}
+  const r=TS.addRefs(name,selList().map(x=>x[0]+":"+x[1]));go.disabled=true;msg.textContent="সংরক্ষণ হচ্ছে…";const cloud=await TS.save();go.disabled=false;
+  msg.textContent=(r.isNew?"নতুন বিষয় “"+name+"” তৈরি হয়েছে। ":"")+bn2(r.added)+"টি আয়াত “"+name+"” বিষয়ে যোগ হয়েছে (মোট "+bn2(r.t.refs.length)+"টি)"+(cloud?"":" — ⚠ শুধু এই ডিভাইসে সংরক্ষিত, সার্ভারে নয়")});
+ w.append(inp,dl,go,msg);host.appendChild(w);inp.focus()}
+function topicTools(t){const d=els("div","display:flex;flex-wrap:wrap;gap:6px;margin-top:6px");
+ d.append(
+  mkBtn("🗑 বাছাই করা আয়াত বিষয় থেকে বাদ দিন",async()=>{const l=[...SELV].filter(k=>t.refs.includes(k));if(!l.length)return alert("আগে যে আয়াত বাদ দেবেন তার নিচের “বাছাই” বক্সে টিক দিন");
+   t.refs=t.refs.filter(k=>!l.includes(k));l.forEach(k=>{SELV.delete(k);delete t.cuts[k];CUT.delete(k)});selChange();await TS.save();openTopic(t)}),
+  mkBtn("✏ নাম বদলান",async()=>{const n=prompt("বিষয়ের নতুন নাম",t.name);if(n&&n.trim()){t.name=n.trim().slice(0,60);await TS.save();openTopic(t)}}),
+  mkBtn("❌ বিষয়টি মুছুন",async()=>{if(!confirm("“"+t.name+"” বিষয়টি (এর "+bn2(t.refs.length)+"টি আয়াতের তালিকাসহ) মুছে ফেলবেন? আয়াত নিজে মুছবে না, শুধু এই তালিকাটা।"))return;TS.list=TS.list.filter(x=>x!==t);await TS.save();$("rsOut").innerHTML="";$("rsInfo").textContent="";CURT=null;SHOWT&&SHOWT(true)}));return d}
+async function openTopic(t){GEN++;CURT=t;SELV.clear();selChange();const out=$("rsOut"),info=$("rsInfo");out.innerHTML="";info.textContent="";window.__sq=t.name;
+ CUT.clear();Object.keys(t.cuts||{}).forEach(k=>{const v=t.cuts[k];if(Array.isArray(v)&&v.length===2)CUT.set(k,v)});
+ if(!t.refs.length){info.textContent="“"+t.name+"” বিষয়ে এখনো কোনো আয়াত নেই। সার্চ করে আয়াত বাছাই করে ‘বিষয়ে যোগ’ করুন।";info.appendChild(topicTools(t));return}
+ SB.set(new Set(t.refs));info.textContent="📚 বিষয়: “"+t.name+"” — "+bn2(t.refs.length)+"টি আয়াত (আপনার সংরক্ষিত তালিকা)";
+ allCopy(info,[{refs:t.refs}],t.refs.map(r=>r.split(":").map(Number)));info.appendChild(topicTools(t));verses(out,t.refs.map(r=>r+":0"),"",0)}
+function exportTopics(){const b=new Blob([JSON.stringify({v:1,topics:TS.list},null,1)],{type:"application/json"}),a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="research-topics-backup.json";document.body.appendChild(a);a.click();a.remove()}
+async function importTopics(file){try{const d=TS.clean(JSON.parse(await file.text()));let n=0;d.forEach(t=>{const r=TS.addRefs(t.name,t.refs);Object.assign(r.t.cuts,t.cuts);n+=r.added});await TS.save();alert(bn2(d.length)+"টি বিষয় ফেরানো হয়েছে ("+bn2(n)+"টি আয়াত যোগ হয়েছে)");SHOWT&&SHOWT(true)}catch(e){alert("ফাইলটি পড়া যায়নি — এটি এই পেজ থেকে নামানো ব্যাকআপ ফাইল তো?")}}
 function audioBar(info,all){if(!all.length)return;const box=els("div","margin-top:8px"),note=els("div","font-size:12px;color:var(--text-muted);margin-top:4px"),out=el("div"),row=els("div","display:flex;flex-wrap:wrap;gap:6px;align-items:center");
  const sel=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");RECS.forEach(r=>{const o=document.createElement("option");o.value=r[0];o.textContent=r[1];sel.appendChild(o)});sel.value=recId();sel.onchange=()=>{try{localStorage.setItem("rsRec",sel.value)}catch(e){}};
  const b1=el("button","rs-wb","🔊 সব আয়াত মার্জ অডিও ("+bn2(all.length)+")"),b2=el("button","rs-wb","🔊 বাছাই করা আয়াত মার্জ (০)");b1.type=b2.type="button";b1.style.margin=b2.style.margin="0";
@@ -287,7 +353,11 @@ function audioBar(info,all){if(!all.length)return;const box=els("div","margin-to
   const rp=els("select","border:1px solid var(--border-light);border-radius:8px;padding:5px;background:var(--card-bg);color:inherit;font-size:13px");[1,2,3,4,5,7,10].forEach(n=>{const o=document.createElement("option");o.value=n;o.textContent="প্রতিটি আয়াত: "+bn2(n)+" বার";rp.appendChild(o)});rp.value=String(repAll());
   rp.onchange=()=>{try{localStorage.setItem("rsRep",rp.value)}catch(e){}};
   const hint=()=>{note.textContent=(cutMode()!=="full"?"সংশ্লিষ্ট অংশ অডিও বিশ্লেষণ করে আনুমানিকভাবে কাটা হয়; শুরু/শেষে সামান্য এদিক-ওদিক হতে পারে, পুরো আয়াত বেছে নিলে কোনো কাটাছেঁড়া নেই। ":"")+(all.length>100?"আয়াত বেশি হলে সময় লাগবে — নেট চালু রাখুন ও পেজ খোলা রাখুন; সব আয়াত ক্রমানুসারে একটাই MP3 ফাইলে হবে":"")};sc.onchange=()=>{try{localStorage.setItem("rsCut",sc.value)}catch(e){}hint()};hint();
-  row.append(sel,sc,rp,b1,b2);box.append(row,note,out);info.appendChild(box)}
+  const b3=el("button","rs-wb","📚 বাছাই করা আয়াত বিষয়ে যোগ ("+bn2(SELV.size)+")"),b4=el("button","rs-wb","✂ বাছাই করা আয়াতের অংশ কেটে মার্জ"),pn=el("div"),ed=el("div");b3.type=b4.type="button";b3.style.margin=b4.style.margin="0";
+  b3.onclick=()=>topicAddPanel(pn);
+  b4.onclick=()=>{const l=selList();if(!l.length)return alert("আগে আয়াতের নিচের “বাছাই” বক্সে টিক দিন");cutEditor(l,ed,out,t=>note.textContent=t,CURT)};
+  selUp.push(()=>{b3.textContent="📚 বাছাই করা আয়াত বিষয়ে যোগ ("+bn2(SELV.size)+")"});
+  row.append(sel,sc,rp,b1,b2,b4,b3);box.append(row,note,pn,ed,out);info.appendChild(box)}
 const SB={n:0,t:0,m:new Map,set(u){this.t=u.size;this.m=new Map([...u].map((k,i)=>[k,i+1]))}};
 function verses(host,refs,fgl,off){let shown=0,fail=[];const step=15,g=GEN;
  const more=el("button","rs-more","আয়াত লোড হচ্ছে…");more.type="button";
@@ -335,7 +405,7 @@ function card(it,exact){const r=it.r,c=el("div","rs-root"),h=el("div","rs-rh"),
   if(it.mf&&it.sc!==60&&list.length<r.forms.length){const all=el("button","rs-more","এই রুটের সব রূপ দেখান ("+bn2(r.forms.length)+")");all.type="button";all.onclick=()=>{fb.innerHTML="";built=false;it.sc=100;c.classList.remove("open");h.onclick()};fb.append(all)}};
  return c}
 let tm=0;
-async function refView(s,a,e){GEN++;const out=$("rsOut"),info=$("rsInfo");
+async function refView(s,a,e){GEN++;CURT=null;const out=$("rsOut"),info=$("rsInfo");
  if(s<1||s>114){info.textContent="সূরা নম্বর ১ থেকে ১১৪-এর মধ্যে হতে হবে";return}
  info.textContent="⏳ আয়াত লোড হচ্ছে…";let A,B;
  try{[A,B]=await Promise.all([chunk("a",s),chunk(TR,s)])}catch(x){info.textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন";return}
@@ -417,7 +487,7 @@ async function runMulti(parts,out,info,intro,ordered){
  G.forEach(g=>{
   out.appendChild(els("div","margin:16px 0 6px;padding:6px 12px;border-radius:10px;font-weight:700;background:color-mix(in srgb,var(--primary) 14%,transparent);color:var(--primary)","“"+g.t+"” — "+(g.u?bn2(g.u)+"টি আয়াত":(g.note||"কিছু পাওয়া যায়নি"))));
   g.items.forEach(it=>{const c=card(it,ex(it));out.appendChild(c);if(bud>0){c.querySelector(".rs-rh").click();bud-=Math.min(vset(lst(it,ex(it))).o,24)}})})}
-async function run(topic){GEN++;if(topic&&!topic.terms)topic=null;const raw=topic?topic.name:$("rsQ").value;window.__sq=raw;const q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
+async function run(topic){GEN++;CURT=null;if(topic&&!topic.terms)topic=null;const raw=topic?topic.name:$("rsQ").value;window.__sq=raw;const q=nz(raw),out=$("rsOut"),info=$("rsInfo");out.innerHTML="";if(!R)info.textContent="⏳ ডেটা লোড হচ্ছে… (প্রথমবার ইন্টারনেট ধীর হলে সময় লাগে, পরে দ্রুত হবে)";
  if(topic)return runMulti(topic.terms,out,info,topic.intro,topic.ordered);
  {const parts=raw.split(/[,،，、]/).map(x=>x.trim()).filter(Boolean);if(parts.length>1)return runMulti(parts,out,info)}
  const bq=raw.trim();
@@ -473,10 +543,17 @@ function init(){const q=$("rsQ"),pad=$("rsPad");let mode="ar",BW=null,kb=false;
   l.slice().sort((a,b)=>a.rn<b.rn?-1:a.rn>b.rn?1:0).forEach(r=>{const row=el("div","rs-ri"),b=el("b",null,[...r.rn].join(" ")),c=el("span",null,bn2(r.n)+" বার");row.append(b,c);row.onclick=()=>{q.value=r.rn;rs.classList.remove("on");go();window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)})};
  const go=()=>(ALLF=false,run()).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
  const goTopic=t=>(ALLF=false,run(t)).catch(e=>{console.error(e);$("rsInfo").textContent="ডেটা লোড করা যায়নি — ইন্টারনেট দেখে আবার চেষ্টা করুন"});
- $("rsTp").onclick=()=>{if(rs.classList.contains("on")&&rs.dataset.k==="topics"){rs.classList.remove("on");return}
-  rs.innerHTML="";rs.dataset.k="topics";rs.classList.add("bn","on");pad.classList.remove("on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
+ const showTopics=async force=>{if(!force&&rs.classList.contains("on")&&rs.dataset.k==="topics"){rs.classList.remove("on");return}
+  pad.classList.remove("on");rs.innerHTML="";rs.dataset.k="topics";rs.classList.add("bn","on");$("rsOut").innerHTML="";$("rsInfo").textContent="";
   rs.appendChild(el("div","rs-rh2","বিষয়ভিত্তিক আয়াত — একটি বিষয় বেছে নিন"));
-  const cnt=[];TOPICS.forEach(t=>{const row=el("div","rs-ri rs-tr"),hd=els("div","display:flex;justify-content:space-between;align-items:baseline;gap:10px"),b=el("b",null,t.name),n=els("span","font-size:12.5px;font-weight:700;opacity:.9;white-space:nowrap;color:var(--primary)",TSET.has(t.name)?bn2(TSET.get(t.name).size)+" আয়াত":"…"),c=el("span",null,t.desc||"");hd.append(b,n);row.append(hd,c);cnt.push([t,n]);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)});fillCounts(cnt)};
+  let L=[];try{L=await TS.load()}catch(e){}
+  if(rs.dataset.k!=="topics"||!rs.classList.contains("on"))return;
+  L.forEach(t=>{const row=el("div","rs-ri rs-tr"),hd=els("div","display:flex;justify-content:space-between;align-items:baseline;gap:10px"),b=el("b",null,t.name),n=els("span","font-size:12.5px;font-weight:700;opacity:.9;white-space:nowrap;color:var(--primary)",bn2(t.refs.length)+" আয়াত"),c=el("span",null,"📚 আপনার তালিকা");hd.append(b,n);row.append(hd,c);row.onclick=()=>{q.value="";setDir();rs.classList.remove("on");openTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)});
+  if(!L.length)rs.appendChild(el("div","rs-rh2","নিজের বিষয় বানাতে: সার্চ করুন → আয়াতের নিচে ‘বাছাই’ টিক দিন → ‘📚 বিষয়ে যোগ’ চাপুন"));
+  const cnt=[];TOPICS.forEach(t=>{const row=el("div","rs-ri rs-tr"),hd=els("div","display:flex;justify-content:space-between;align-items:baseline;gap:10px"),b=el("b",null,t.name),n=els("span","font-size:12.5px;font-weight:700;opacity:.9;white-space:nowrap;color:var(--primary)",TSET.has(t.name)?bn2(TSET.get(t.name).size)+" আয়াত":"…"),c=el("span",null,t.desc||"");hd.append(b,n);row.append(hd,c);cnt.push([t,n]);row.onclick=()=>{q.value=t.name;setDir();rs.classList.remove("on");goTopic(t);window.scrollTo({top:rs.getBoundingClientRect().top+scrollY-60,behavior:"smooth"})};rs.appendChild(row)});fillCounts(cnt);
+  const ft=el("div","rs-rh2"),fi=document.createElement("input");fi.type="file";fi.accept=".json,application/json";fi.style.display="none";fi.onchange=()=>{if(fi.files[0])importTopics(fi.files[0]);fi.value=""};
+  ft.append(mkBtn("📥 নিজের তালিকার ব্যাকআপ নামান",exportTopics),mkBtn("📤 ব্যাকআপ ফেরান",()=>fi.click()),fi);ft.style.position="static";rs.appendChild(ft)};
+ SHOWT=showTopics;$("rsTp").onclick=()=>showTopics();
  document.querySelectorAll(".rs-ex").forEach(b=>b.onclick=()=>{q.value=b.dataset.q;go()});
  go();loadRoots().catch(()=>{})}
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; ওয়ার্কার বা অন্য কেউ হলে সরিয়ে দেওয়া হয় */
@@ -493,7 +570,7 @@ init();
 </script>
 <script type="module">
 import{db,requireAuth}from"https://raqialamgirabdullah-rgb.github.io/rahcare-pwa/common.js?v=35";
-import{doc,getDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
+import{doc,getDoc,updateDoc}from"https://www.gstatic.com/firebasejs/12.15.0/firebase-firestore.js";
 /* শুধু ম্যানেজমেন্ট ইউজার (users/{uid} আছে) দেখতে পারবেন; এটি পেছনে চলে, সার্চ পেজ খোলার সাথে সাথেই কাজ করে */
-requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}try{localStorage.setItem("rcMgmtUser",ok?"1":"0")}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");document.getElementById("rsBox").style.visibility="visible"});
+requireAuth(async u=>{let ok=!1;try{ok=(await getDoc(doc(db,"users",u.uid))).exists()}catch(e){}try{localStorage.setItem("rcMgmtUser",ok?"1":"0")}catch(e){}if(!ok)return void location.replace("https://rahcare.blogspot.com/p/dashboard.html");window.__rsCloud={get:async()=>{const d=await getDoc(doc(db,"users",u.uid));return d.exists()?(d.data().researchTopics||null):null},set:v=>updateDoc(doc(db,"users",u.uid),{researchTopics:v})};document.getElementById("rsBox").style.visibility="visible"});
 </script>
